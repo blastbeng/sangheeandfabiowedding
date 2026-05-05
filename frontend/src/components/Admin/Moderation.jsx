@@ -11,7 +11,7 @@ const AdminModeration = () => {
 
   const fetchMedia = () => {
     const params = new URLSearchParams(filters);
-    fetch(`http://localhost:8000/api/auth/media/moderation/?${params}`, {
+    fetch(`http://localhost:8032/api/auth/media/moderation/?${params}`, {
       headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
     })
       .then(res => res.json())
@@ -48,7 +48,7 @@ const AdminModeration = () => {
       return;
     }
 
-    fetch('http://localhost:8000/api/auth/media/moderation/', {
+    fetch('http://localhost:8032/api/auth/media/moderation/', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -72,7 +72,7 @@ const AdminModeration = () => {
       return;
     }
 
-    fetch(`http://localhost:8000/api/auth/media/moderation/${id}/`, {
+    fetch(`http://localhost:8032/api/auth/media/moderation/${id}/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -86,7 +86,7 @@ const AdminModeration = () => {
   };
 
   const confirmReject = () => {
-    fetch('http://localhost:8000/api/auth/media/moderation/', {
+    fetch('http://localhost:8032/api/auth/media/moderation/', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

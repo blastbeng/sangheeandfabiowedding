@@ -5,7 +5,7 @@ const MyUploads = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('http://localhost:8000/api/auth/media/my-uploads/', {
+    fetch('http://localhost:8032/api/auth/media/my-uploads/', {
       headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
     })
       .then(res => res.json())

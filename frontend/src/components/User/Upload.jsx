@@ -14,7 +14,7 @@ const Upload = () => {
     formData.append('media_type', file.type.startsWith('video') ? 'video' : 'image');
 
     try {
-      const res = await fetch('http://localhost:8000/api/auth/media/upload/', {
+      const res = await fetch('http://localhost:8032/api/auth/media/upload/', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` },
         body: formData

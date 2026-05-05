@@ -21,7 +21,7 @@ const Profile = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const res = await fetch('http://localhost:8000/api/auth/profile/', {
+        const res = await fetch('http://localhost:8032/api/auth/profile/', {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
         });
         if (res.ok) {
@@ -63,7 +63,7 @@ const Profile = () => {
     setSuccess('');
 
     try {
-      const res = await fetch('http://localhost:8000/api/auth/profile/', {
+      const res = await fetch('http://localhost:8032/api/auth/profile/', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -94,7 +94,7 @@ const Profile = () => {
     }
 
     try {
-      const res = await fetch('http://localhost:8000/api/auth/profile/', {
+      const res = await fetch('http://localhost:8032/api/auth/profile/', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

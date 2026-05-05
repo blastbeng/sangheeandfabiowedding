@@ -5,7 +5,7 @@ const Gallery = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('http://localhost:8000/api/auth/media/')
+    fetch('http://localhost:8032/api/auth/media/')
       .then(res => res.json())
       .then(res => res.json())
       .then(data => {
@@ -41,8 +41,6 @@ const Gallery = () => {
         </div>
       ))}
       {media.length === 0 && <p className="col-span-3 text-center text-gray-500">No content yet.</p>}
-        </div>
-      ))}
     </div>
   );
 };
