@@ -8,10 +8,11 @@ const AdminModeration = () => {
   const [rejectionReason, setRejectionReason] = useState('');
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [bulkAction, setBulkAction] = useState('');
+  const API_URL = import.meta.env.VITE_API_URL;
 
   const fetchMedia = () => {
     const params = new URLSearchParams(filters);
-    fetch(`http://localhost:8032/api/auth/media/moderation/?${params}`, {
+    fetch(`${API_URL}/api/auth/media/moderation/?${params}`, {
       headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
     })
       .then(res => res.json())
@@ -48,7 +49,7 @@ const AdminModeration = () => {
       return;
     }
 
-    fetch('http://localhost:8032/api/auth/media/moderation/', {
+    fetch(`${API_URL}/api/auth/media/moderation/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -72,7 +73,7 @@ const AdminModeration = () => {
       return;
     }
 
-    fetch(`http://localhost:8032/api/auth/media/moderation/${id}/`, {
+    fetch(`${API_URL}/api/auth/media/moderation/${id}/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -86,7 +87,7 @@ const AdminModeration = () => {
   };
 
   const confirmReject = () => {
-    fetch('http://localhost:8032/api/auth/media/moderation/', {
+    fetch(`${API_URL}/api/auth/media/moderation/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

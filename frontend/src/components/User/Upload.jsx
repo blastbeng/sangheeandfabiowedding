@@ -5,6 +5,7 @@ const Upload = () => {
   const [file, setFile] = useState(null);
   const [caption, setCaption] = useState('');
   const navigate = useNavigate();
+  const API_URL = import.meta.env.VITE_API_URL;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -14,7 +15,7 @@ const Upload = () => {
     formData.append('media_type', file.type.startsWith('video') ? 'video' : 'image');
 
     try {
-      const res = await fetch('http://localhost:8032/api/auth/media/upload/', {
+      const res = await fetch(`${API_URL}/api/auth/media/upload/`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` },
         body: formData

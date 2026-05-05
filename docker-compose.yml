@@ -24,7 +24,7 @@ services:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
-      - DEBUG=1
+      - DEBUG=${DEBUG}
     depends_on:
       - db
 
@@ -37,7 +37,7 @@ services:
     ports:
       - "5173:5173"
     environment:
-      - VITE_API_URL=http://web:8032
+      - VITE_API_URL=${VITE_API_URL}
     depends_on:
       - web
 

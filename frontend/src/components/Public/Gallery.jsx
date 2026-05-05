@@ -3,9 +3,10 @@ import { useEffect, useState } from 'react';
 const Gallery = () => {
   const [media, setMedia] = useState([]);
   const [loading, setLoading] = useState(true);
+  const API_URL = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
-    fetch('http://localhost:8032/api/auth/media/')
+    fetch(`${API_URL}/api/auth/media/`)
       .then(res => res.json())
       .then(res => res.json())
       .then(data => {

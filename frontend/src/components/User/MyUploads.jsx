@@ -3,9 +3,10 @@ import { useEffect, useState } from 'react';
 const MyUploads = () => {
   const [uploads, setUploads] = useState([]);
   const [loading, setLoading] = useState(true);
+  const API_URL = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
-    fetch('http://localhost:8032/api/auth/media/my-uploads/', {
+    fetch(`${API_URL}/api/auth/media/my-uploads/`, {
       headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
     })
       .then(res => res.json())

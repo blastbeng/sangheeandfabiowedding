@@ -17,11 +17,12 @@ const Profile = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const navigate = useNavigate();
+  const API_URL = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const res = await fetch('http://localhost:8032/api/auth/profile/', {
+        const res = await fetch(`${API_URL}/api/auth/profile/`, {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
         });
         if (res.ok) {
@@ -63,7 +64,7 @@ const Profile = () => {
     setSuccess('');
 
     try {
-      const res = await fetch('http://localhost:8032/api/auth/profile/', {
+      const res = await fetch(`${API_URL}/api/auth/profile/`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -94,7 +95,7 @@ const Profile = () => {
     }
 
     try {
-      const res = await fetch('http://localhost:8032/api/auth/profile/', {
+      const res = await fetch(`${API_URL}/api/auth/profile/`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
