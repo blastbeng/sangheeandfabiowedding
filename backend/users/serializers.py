@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
 from .models import CustomUser
+from .models import Media
 
 
 class CustomUserSerializer(serializers.ModelSerializer):
@@ -37,3 +38,10 @@ class CustomUserSerializer(serializers.ModelSerializer):
 
         instance.save()
         return instance
+
+
+class MediaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Media
+        fields = ['id', 'file', 'media_type', 'caption', 'uploaded_at', 'user']
+        read_only_fields = ['user', 'uploaded_at']

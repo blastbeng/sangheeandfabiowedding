@@ -28,3 +28,26 @@ class CustomUser(AbstractUser):
 
     class Meta:
         db_table = 'users_customuser'
+        ordering = ['-uploaded_at']
+
+
+class Media(models.Model):
+    """
+    Model for storing guest and spouse uploads
+    """
+    MEDIA_TYPES = (
+        ('image', 'Image'),
+        ('video', 'Video'),
+    )
+    user = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True)
+    file = models.FileField(upload_to='wedding_uploads/')
+    media_type = models.CharField(max_length=10, choices=MEDIA_TYPES)
+    caption = models.TextField(blank=True, null=True)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.media_type} by {self.user.email if self.user else 'Guest'}"
+
+    class Meta:
+        db_table = 'users_media'
+        ordering = ['-uploaded_at']

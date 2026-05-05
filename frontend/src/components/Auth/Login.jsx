@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 
-const Login = () => {
+const Login = ({ setIsAuthenticated }) => {
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -34,7 +34,8 @@ const Login = () => {
       if (response.ok) {
         localStorage.setItem('accessToken', data.access);
         localStorage.setItem('refreshToken', data.refresh);
-        navigate('/dashboard');
+        if (setIsAuthenticated) setIsAuthenticated(true);
+        navigate('/gallery');
       } else {
         setError(data.detail || 'Login failed');
       }

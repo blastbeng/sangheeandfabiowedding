@@ -2,10 +2,14 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
 from .models import CustomUser
 from .serializers import CustomUserSerializer, LoginSerializer
 from django.contrib.auth import authenticate
+from .models import Media
+from .serializers import MediaSerializer
+from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework import serializers
 
 
@@ -26,6 +30,31 @@ class RegisterView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+class MediaListView(APIView):
+    """
+    List all media (Public)
+    """
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        media = Media.objects.all()
+        serializer = MediaSerializer(media, many=True)
+        return Response(serializer.data)
+
+
+class MediaUploadView(APIView):
+    """
+    Upload new media (Authenticated)
+    """
+    permission_classes = [IsAuthenticated]
+    parser_classes = (MultiPartParser, FormParser)
+
+    def post(self, request):
+        serializer = MediaSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(user=request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 class ProfileView(APIView):
     """
     Retrieve or update user profile
@@ -44,6 +73,31 @@ class ProfileView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+class MediaListView(APIView):
+    """
+    List all media (Public)
+    """
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        media = Media.objects.all()
+        serializer = MediaSerializer(media, many=True)
+        return Response(serializer.data)
+
+
+class MediaUploadView(APIView):
+    """
+    Upload new media (Authenticated)
+    """
+    permission_classes = [IsAuthenticated]
+    parser_classes = (MultiPartParser, FormParser)
+
+    def post(self, request):
+        serializer = MediaSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(user=request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 class LogoutView(APIView):
     """
     Logout user by blacklisting the refresh token
