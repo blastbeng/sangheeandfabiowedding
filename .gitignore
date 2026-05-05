@@ -1,2 +1,12 @@
 
 .aider*
+
+# Docker
+.env
+docker-compose.override.yml
+
+# Backend
+/backend/__pycache__/
+/backend/*.pyc
+/backend/db.sqlite3
+/backend/staticfiles/
