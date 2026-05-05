@@ -3978,15 +3978,6 @@ class MediaFileView(APIView):
     """
     permission_classes = [AllowAny]
 
-            media_type=media_type,
-            caption=caption,
-            status='pending'
-        )
-
-        serializer = MediaSerializer(media)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-
 class MyUploadsView(APIView):
     """
     List current user's uploads with status (Authenticated)
@@ -7511,15 +7502,6 @@ class MediaFileView(APIView):
     Retrieve media file from cache or cloud
     """
     permission_classes = [AllowAny]
-
-            media_type=media_type,
-            caption=caption,
-            status='pending'
-        )
-
-        serializer = MediaSerializer(media)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
 
 class MyUploadsView(APIView):
     """
