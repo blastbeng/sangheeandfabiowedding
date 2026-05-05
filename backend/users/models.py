@@ -28,7 +28,6 @@ class CustomUser(AbstractUser):
 
     class Meta:
         db_table = 'users_customuser'
-        ordering = ['-uploaded_at']
 
 
 class Media(models.Model):

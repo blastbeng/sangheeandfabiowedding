@@ -1,3 +1,29 @@
+from rest_framework import serializers
+from django.contrib.auth import authenticate
+
+class LoginSerializer(serializers.Serializer):
+    """
+    Serializer for login endpoint
+    """
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True)
+
+    def validate(self, attrs):
+        email = attrs.get('email')
+        password = attrs.get('password')
+
+        if email and password:
+            user = authenticate(request=self.context.get('request'),
+                                email=email, password=password)
+
+            if not user:
+                raise serializers.ValidationError('Unable to log in with provided credentials.')
+
+            attrs['user'] = user
+            return attrs
+        else:
+            raise serializers.ValidationError('Must include "email" and "password".')
+
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -6,7 +32,6 @@ from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
 from .models import CustomUser
 from .serializers import CustomUserSerializer, LoginSerializer
-from django.contrib.auth import authenticate
 from .models import Media
 from .serializers import MediaSerializer
 from rest_framework.parsers import MultiPartParser, FormParser
@@ -114,25 +139,3 @@ class LogoutView(APIView):
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
-class LoginSerializer(serializers.Serializer):
-    """
-    Serializer for login endpoint
-    """
-    email = serializers.EmailField()
-    password = serializers.CharField(write_only=True)
-
-    def validate(self, attrs):
-        email = attrs.get('email')
-        password = attrs.get('password')
-
-        if email and password:
-            user = authenticate(request=self.context.get('request'),
-                                email=email, password=password)
-
-            if not user:
-                raise serializers.ValidationError('Unable to log in with provided credentials.')
-
-            attrs['user'] = user
-            return attrs
-        else:
-            raise serializers.ValidationError('Must include "email" and "password".')
