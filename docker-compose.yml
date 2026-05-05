@@ -27,8 +27,6 @@ services:
       - DEBUG=1
     depends_on:
       - db
-volumes:
-  postgres_data:
 
   frontend:
     build: ./frontend
@@ -43,3 +41,5 @@ volumes:
     depends_on:
       - web
 
+volumes:
+  postgres_data:
