@@ -27,6 +27,19 @@ services:
       - DEBUG=1
     depends_on:
       - db
-
 volumes:
   postgres_data:
+
+  frontend:
+    build: ./frontend
+    command: npm run dev -- --host 0.0.0.0
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://web:8000
+    depends_on:
+      - web
+
