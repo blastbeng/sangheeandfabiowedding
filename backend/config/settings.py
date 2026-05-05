@@ -175,32 +175,6 @@ SOCIALACCOUNT_PROVIDERS = {
     }
 }
 
-# Django Allauth Configuration
-SITE_ID = 1
-ACCOUNT_AUTHENTICATION_METHOD = 'email'
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_USERNAME_REQUIRED = False
-ACCOUNT_USER_MODEL_USERNAME_FIELD = None
-SOCIALACCOUNT_AUTO_SIGNUP = True
-SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
-
-# Social Providers Configuration
-SOCIALACCOUNT_PROVIDERS = {
-    'google': {
-        'APP': {
-            'client_id': os.environ.get('GOOGLE_CLIENT_ID', ''),
-            'secret': os.environ.get('GOOGLE_CLIENT_SECRET', ''),
-            'key': ''
-        },
-        'SCOPE': ['profile', 'email'],
-        'AUTH_PARAMS': {'access_type': 'online'},
-    },
-    'facebook': {
-        'APP': {
-            'client_id': os.environ.get('FACEBOOK_APP_ID', ''),
-            'secret': os.environ.get('FACEBOOK_APP_SECRET', ''),
-            'key': ''
-        },
-        'SCOPE': ['email', 'public_profile'],
-    }
-}
+# Admin Configuration
+ADMIN_USERNAME = os.environ.get('ADMIN_USERNAME', 'admin')
+ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'admin$')

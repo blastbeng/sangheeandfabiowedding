@@ -35,7 +35,9 @@ const Login = ({ setIsAuthenticated }) => {
       if (response.ok) {
         localStorage.setItem('accessToken', data.access);
         localStorage.setItem('refreshToken', data.refresh);
+        localStorage.setItem('userData', JSON.stringify(data.user));
         if (setIsAuthenticated) setIsAuthenticated(true);
+        if (setIsAdmin && data.user.is_staff) setIsAdmin(true);
         navigate('/gallery');
       } else {
         setError(data.detail || 'Login failed');

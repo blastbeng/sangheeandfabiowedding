@@ -41,10 +41,27 @@ class CustomUserSerializer(serializers.ModelSerializer):
 
 
 class MediaSerializer(serializers.ModelSerializer):
+    file_url = serializers.SerializerMethodField()
+    reviewer_username = serializers.CharField(source='reviewed_by.username', read_only=True, allow_null=True)
+
     class Meta:
         model = Media
-        fields = ['id', 'file', 'media_type', 'caption', 'uploaded_at', 'user']
+        fields = ['id', 'file', 'file_url', 'media_type', 'caption', 'uploaded_at', 'user', 'status', 'reviewed_at', 'reviewer_username', 'rejection_reason']
         read_only_fields = ['user', 'uploaded_at']
+
+    def get_file_url(self, obj):
+        return f'/api/auth/media/{obj.id}/file/'
+
+
+class MediaModerationSerializer(serializers.ModelSerializer):
+    """Serializer for admin moderation with additional fields"""
+    username = serializers.CharField(source='user.username', read_only=True, allow_null=True)
+    user_email = serializers.CharField(source='user.email', read_only=True, allow_null=True)
+
+    class Meta:
+        model = Media
+        fields = ['id', 'file', 'media_type', 'caption', 'uploaded_at', 'status', 'username', 'user_email', 'rejection_reason']
+        read_only_fields = ['uploaded_at', 'username', 'user_email']
 class SocialLoginSerializer(serializers.Serializer):
     """
     Serializer for social authentication
