@@ -107,6 +107,16 @@ const Register = () => {
           </div>
           <button type="submit" className="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition duration-200">Register</button>
         </form>
+        <div className="mt-4">
+          <p className="text-center text-gray-500 mb-2">Or register with</p>
+          <div className="flex justify-center">
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={handleGoogleError}
+              text="signup"
+            />
+          </div>
+        </div>
         <div className="mt-4 text-center">
           <p>Already have an account? <Link to="/login" className="text-blue-600 hover:underline">Login</Link></p>
         </div>
@@ -115,7 +125,6 @@ const Register = () => {
   );
 };
 
-export default Register;
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
       const res = await fetch('http://localhost:8000/api/auth/social/login/', {
@@ -142,16 +151,4 @@ export default Register;
   const handleGoogleError = () => {
     setError('Google registration failed');
   };
-        <button type="submit" className="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition duration-200">Register</button>
-        </form>
-
-        <div className="mt-4">
-          <p className="text-center text-gray-500 mb-2">Or register with</p>
-          <div className="flex justify-center">
-            <GoogleLogin
-              onSuccess={handleGoogleSuccess}
-              onError={handleGoogleError}
-              text="signup"
-            />
-          </div>
-        </div>
+export default Register;
