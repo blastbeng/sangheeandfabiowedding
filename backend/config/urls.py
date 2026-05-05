@@ -19,9 +19,28 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 
+from users.views import (
+    RegisterView, LoginView, LogoutView, ProfileView,
+    MediaListView, MediaUploadView, MediaFileView, MediaDeleteView,
+    MyUploadsView, MediaModerationView, MediaModerateSingleView,
+    SocialLoginView
+)
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/auth/', include('users.urls')),
+    path('api/auth/register/', RegisterView.as_view(), name='register'),
+    path('api/auth/login/', LoginView.as_view(), name='login'),
+    path('api/auth/logout/', LogoutView.as_view(), name='logout'),
+    path('api/auth/profile/', ProfileView.as_view(), name='profile'),
+    path('api/auth/social/login/', SocialLoginView.as_view(), name='social-login'),
+    path('api/auth/media/', MediaListView.as_view(), name='media-list'),
+    path('api/auth/media/upload/', MediaUploadView.as_view(), name='media-upload'),
+    path('api/auth/media/<int:media_id>/file/', MediaFileView.as_view(), name='media-file'),
+    path('api/auth/media/<int:media_id>/', MediaDeleteView.as_view(), name='media-delete'),
+    path('api/auth/media/my-uploads/', MyUploadsView.as_view(), name='my-uploads'),
+    path('api/auth/media/moderation/', MediaModerationView.as_view(), name='media-moderation'),
+    path('api/auth/media/moderation/<int:media_id>/', MediaModerateSingleView.as_view(), name='media-moderate-single'),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
