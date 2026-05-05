@@ -74,12 +74,6 @@ class MediaUploadView(APIView):
     permission_classes = [IsAuthenticated]
     parser_classes = (MultiPartParser, FormParser)
 
-    def post(self, request):
-        serializer = MediaSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save(user=request.user)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 class ProfileView(APIView):
     """
     Retrieve or update user profile
@@ -117,12 +111,6 @@ class MediaUploadView(APIView):
     permission_classes = [IsAuthenticated]
     parser_classes = (MultiPartParser, FormParser)
 
-    def post(self, request):
-        serializer = MediaSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save(user=request.user)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 class LogoutView(APIView):
     """
     Logout user by blacklisting the refresh token
@@ -139,3 +127,81 @@ class LogoutView(APIView):
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
+from allauth.socialaccount.models import SocialAccount
+import requests
+class SocialLoginView(APIView):
+    """
+    Handle social authentication from frontend
+    """
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        provider = request.data.get('provider')
+        access_token = request.data.get('access_token')
+
+        if not provider or not access_token:
+            return Response(
+                {'error': 'Provider and access_token required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            if provider == 'google':
+                response = requests.get(
+                    'https://www.googleapis.com/oauth2/v3/userinfo',
+                    headers={'Authorization': f'Bearer {access_token}'}
+                )
+            elif provider == 'facebook':
+                response = requests.get(
+                    'https://graph.facebook.com/me',
+                    params={'fields': 'id,name,email', 'access_token': access_token}
+                )
+            else:
+                return Response(
+                    {'error': 'Invalid provider'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            if response.status_code != 200:
+                return Response(
+                    {'error': 'Failed to verify token'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            user_data = response.json()
+            email = user_data.get('email')
+
+            if not email:
+                return Response(
+                    {'error': 'Email not provided'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            user, created = CustomUser.objects.get_or_create(
+                email=email,
+                defaults={
+                    'username': email.split('@')[0],
+                    'first_name': user_data.get('given_name', '') or user_data.get('name', ''),
+                }
+            )
+
+            SocialAccount.objects.get_or_create(
+                user=user,
+                provider=provider,
+                uid=user_data.get('id')
+            )
+
+            refresh = RefreshToken.for_user(user)
+
+            return Response({
+                'access': str(refresh.access_token),
+                'refresh': str(refresh),
+                'user': CustomUserSerializer(user).data,
+                'created': created
+            })
+
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

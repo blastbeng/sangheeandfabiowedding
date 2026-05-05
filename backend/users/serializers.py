@@ -45,3 +45,9 @@ class MediaSerializer(serializers.ModelSerializer):
         model = Media
         fields = ['id', 'file', 'media_type', 'caption', 'uploaded_at', 'user']
         read_only_fields = ['user', 'uploaded_at']
+class SocialLoginSerializer(serializers.Serializer):
+    """
+    Serializer for social authentication
+    """
+    provider = serializers.CharField(required=True)
+    access_token = serializers.CharField(required=True)

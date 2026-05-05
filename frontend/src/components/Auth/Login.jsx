@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { GoogleLogin } from '@react-oauth/google';
 
 const Login = ({ setIsAuthenticated }) => {
   const [formData, setFormData] = useState({
@@ -85,3 +86,43 @@ const Login = ({ setIsAuthenticated }) => {
 };
 
 export default Login;
+  const handleGoogleSuccess = async (credentialResponse) => {
+    try {
+      const res = await fetch('http://localhost:8000/api/auth/social/login/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          provider: 'google',
+          access_token: credentialResponse.credential
+        })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        localStorage.setItem('accessToken', data.access);
+        localStorage.setItem('refreshToken', data.refresh);
+        if (setIsAuthenticated) setIsAuthenticated(true);
+        navigate('/gallery');
+      } else {
+        setError(data.error || 'Google login failed');
+      }
+    } catch (err) {
+      setError('An error occurred during Google login');
+    }
+  };
+
+  const handleGoogleError = () => {
+    setError('Google login failed');
+  };
+        <button type="submit" className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition duration-200">Login</button>
+        </form>
+
+        <div className="mt-4">
+          <p className="text-center text-gray-500 mb-2">Or login with</p>
+          <div className="flex justify-center">
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={handleGoogleError}
+              useOneTap
+            />
+          </div>
+        </div>
