@@ -3,12 +3,15 @@ import { useNavigate, Link } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
 
 const Login = ({ setIsAuthenticated }) => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const setIsAdmin = props.setIsAdmin;
 
   const handleChange = (e) => {
     setFormData({
@@ -37,7 +40,7 @@ const Login = ({ setIsAuthenticated }) => {
         localStorage.setItem('refreshToken', data.refresh);
         localStorage.setItem('userData', JSON.stringify(data.user));
         if (setIsAuthenticated) setIsAuthenticated(true);
-        if (setIsAdmin && data.user.is_staff) setIsAdmin(true);
+        if (setIsAdmin) setIsAdmin(data.user.is_staff);
         navigate('/gallery');
       } else {
         setError(data.detail || 'Login failed');
@@ -112,6 +115,7 @@ const Login = ({ setIsAuthenticated }) => {
         localStorage.setItem('accessToken', data.access);
         localStorage.setItem('refreshToken', data.refresh);
         if (setIsAuthenticated) setIsAuthenticated(true);
+        if (setIsAdmin) setIsAdmin(data.user.is_staff);
         navigate('/gallery');
       } else {
         setError(data.error || 'Google login failed');

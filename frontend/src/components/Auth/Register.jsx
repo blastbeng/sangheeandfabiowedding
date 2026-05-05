@@ -3,6 +3,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
 
 const Register = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -11,6 +13,7 @@ const Register = () => {
   });
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const setIsAdmin = props.setIsAdmin;
 
   const handleChange = (e) => {
     setFormData({
@@ -42,7 +45,10 @@ const Register = () => {
       if (response.ok) {
         localStorage.setItem('accessToken', data.access);
         localStorage.setItem('refreshToken', data.refresh);
+        localStorage.setItem('userData', JSON.stringify(data.user));
         navigate('/dashboard');
+        if (setIsAuthenticated) setIsAuthenticated(true);
+        if (setIsAdmin) setIsAdmin(data.user.is_staff);
       } else {
         setError(Object.values(data)[0] || 'Registration failed');
       }
@@ -139,7 +145,10 @@ const Register = () => {
       if (res.ok) {
         localStorage.setItem('accessToken', data.access);
         localStorage.setItem('refreshToken', data.refresh);
+        localStorage.setItem('userData', JSON.stringify(data.user));
         navigate('/gallery');
+        if (setIsAuthenticated) setIsAuthenticated(true);
+        if (setIsAdmin) setIsAdmin(data.user.is_staff);
       } else {
         setError(data.error || 'Google registration failed');
       }
