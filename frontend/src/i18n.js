@@ -59,7 +59,7 @@ const resources = {
       "Join Us": "Unisciti a Noi ✨",
       "See You Soon!": "A Presto! 💕",
       "Events": "Eventi 📅",
-      "Event": "Evento",
+      "Event": "Evento 📅",
       "Our Wedding Events": "I Nostri Eventi Nuziali 💕",
       "All the details of our big day": "Tutti i dettagli del nostro grande giorno",
       "Ceremony": "Cerimonia 💒",
@@ -107,7 +107,13 @@ const resources = {
       "footer_crafted": "Realizzato con Amore Infinito",
       "footer_thank_you": "Grazie per far parte del nostro bellissimo viaggio insieme 💕",
       "footer_project": "Progetto Memoria del Nostro Matrimonio",
-      "footer_forever": "Per Sempre e Sempre"
+      "footer_forever": "Per Sempre e Sempre",
+      "gallery_title": "La Nostra Galleria 📸",
+      "gallery_subtitle": "Momenti bellissimi catturati con amore 💕",
+      "loading_memories": "Caricamento dei ricordi preziosi...",
+      "no_photos_yet": "Nessuna foto ancora!",
+      "be_first_to_share": "Sii il primo a condividere un ricordo 💕",
+      "beautiful_moment": "✨ Un momento bellissimo"
     }
   },
   ko: {
@@ -167,7 +173,7 @@ const resources = {
       "Join Us": "참여하기 ✨",
       "See You Soon!": "곧 만나요! 💕",
       "Events": "이벤트 📅",
-      "Event": "이벤트",
+      "Event": "이벤트 📅",
       "Our Wedding Events": "우리의 웨딩 이벤트 💕",
       "All the details of our big day": "우리의 큰 날에 대한 모든 세부 정보",
       "Ceremony": "식 💒",
@@ -215,7 +221,13 @@ const resources = {
       "footer_crafted": "끝없는 사랑으로 만들었습니다",
       "footer_thank_you": "저희의 아름다운 여정에 함께해 주셔서 감사합니다 💕",
       "footer_project": "우리 결혼 메모리 프로젝트",
-      "footer_forever": "영원히 그리고 항상"
+      "footer_forever": "영원히 그리고 항상",
+      "gallery_title": "우리 갤러리 📸",
+      "gallery_subtitle": "사랑으로 담아낸 아름다운 순간들 💕",
+      "loading_memories": "소중한 추억을 로딩 중...",
+      "no_photos_yet": "아직 사진이 없습니다!",
+      "be_first_to_share": "첫 번째로 추억을 공유해주세요 💕",
+      "beautiful_moment": "✨ 아름다운 순간"
     }
   },
   en: {
@@ -275,7 +287,7 @@ const resources = {
       "Join Us": "Join Us ✨",
       "See You Soon!": "See You Soon! 💕",
       "Events": "Events 📅",
-      "Event": "Event",
+      "Event": "Event 📅",
       "Our Wedding Events": "Our Wedding Events 💕",
       "All the details of our big day": "All the details of our big day",
       "Ceremony": "Ceremony 💒",
@@ -323,7 +335,13 @@ const resources = {
       "footer_crafted": "Crafted with Endless Love",
       "footer_thank_you": "Thank you for being part of our beautiful journey together 💕",
       "footer_project": "Our Wedding Memory Project",
-      "footer_forever": "Forever & Always"
+      "footer_forever": "Forever & Always",
+      "gallery_title": "Our Gallery 📸",
+      "gallery_subtitle": "Beautiful moments captured with love 💕",
+      "loading_memories": "Loading precious memories...",
+      "no_photos_yet": "No photos yet!",
+      "be_first_to_share": "Be the first to share a memory 💕",
+      "beautiful_moment": "✨ A beautiful moment"
     }
   }
 };

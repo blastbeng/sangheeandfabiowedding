@@ -65,7 +65,7 @@ function App() {
             <nav className="flex flex-wrap gap-4 items-center justify-center">
               <a href="/" className="hover:text-yellow-200 transition font-medium text-sm md:text-base whitespace-nowrap">{t('Home')}</a>
               <a href="/events" className="hover:text-yellow-200 transition font-medium text-sm md:text-base whitespace-nowrap">
-                📅 {t('Event')}
+                {t('Event')}
               </a>
               <a href="/gallery" className="hover:text-yellow-200 transition font-medium text-sm md:text-base whitespace-nowrap">{t('Gallery')}</a>
             </nav>
