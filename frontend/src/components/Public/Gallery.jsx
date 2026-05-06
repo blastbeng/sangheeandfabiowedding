@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const Gallery = () => {
+  const { t } = useTranslation();
   const [media, setMedia] = useState([]);
   const [loading, setLoading] = useState(true);
   const API_URL = import.meta.env.VITE_API_URL;
@@ -18,30 +20,61 @@ const Gallery = () => {
       });
   }, []);
 
-  if (loading) return <div className="text-center p-8">Loading gallery...</div>;
+  const getStatusBadge = (status) => {
+    const badges = {
+      pending: 'status-pending',
+      approved: 'status-approved',
+      rejected: 'status-rejected'
+    };
+    const icons = { pending: '⏳', approved: '✅', rejected: '❌' };
+    return <span className={`status-badge ${badges[status]}`}>{icons[status]} {t(status)}</span>;
+  };
+
+  if (loading) {
+    return (
+      <div className="text-center py-20">
+        <span className="text-5xl heart-decoration inline-block">💝</span>
+        <p className="mt-4 text-gray-600 text-lg">Loading precious memories...</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      {media.map(item => (
-        <div key={item.id} className="bg-white p-2 rounded shadow">
-          {item.media_type === 'video' ? (
-            <video src={item.file_url} controls className="w-full" />
-          ) : (
-            <img src={item.file_url} alt={item.caption} className="w-full" />
-          )}
-          <div className="flex items-center mt-2">
-            <img 
-              src={item.user?.profile_picture || 'https://i.imgur.com/V4RclNb.png'} 
-              alt={item.user?.username || 'User'} 
-              className="w-8 h-8 rounded-full mr-2 object-cover"
-            />
-            <span className="text-sm font-semibold">{item.user?.username || 'Anonymous'}</span>
-          </div>
-          <p className="text-sm text-gray-600">{item.caption}</p>
+    <div className="max-w-6xl mx-auto p-4">
+      <div className="text-center mb-8">
+        <h2 className="text-4xl wedding-title mb-2">📸 Our Gallery</h2>
+        <p className="text-gray-600 italic">Beautiful moments captured with love 💕</p>
+        <div className="floral-divider">✿ ─────── ✿ ─────── ✿</div>
+      </div>
+
+      {media.length === 0 ? (
+        <div className="text-center py-20 wedding-card">
+          <span className="text-6xl">🌸</span>
+          <p className="mt-4 text-gray-600 text-lg">No photos yet!</p>
+          <p className="text-gray-500 text-sm">Be the first to share a memory</p>
         </div>
-      ))}
-      {media.length === 0 && <p className="col-span-3 text-center text-gray-500">No content yet.</p>}
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {media.map((item) => (
+            <div key={item.id} className="gallery-item bg-white shadow-lg">
+              <div className="relative">
+                {item.media_type === 'video' ? (
+                  <video src={`${API_URL}${item.file_url}`} className="w-full h-48 object-cover" controls />
+                ) : (
+                  <img src={`${API_URL}${item.file_url}`} alt={item.caption || 'Wedding memory'} className="w-full h-48 object-cover" />
+                )}
+                <div className="absolute top-2 right-2">{getStatusBadge(item.status)}</div>
+              </div>
+              <div className="p-4">
+                <p className="text-gray-700 text-sm mb-2 line-clamp-2">{item.caption || '✨ A beautiful moment'}</p>
+                <p className="text-gray-500 text-xs">📅 {new Date(item.uploaded_at).toLocaleDateString()}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
+
 export default Gallery;

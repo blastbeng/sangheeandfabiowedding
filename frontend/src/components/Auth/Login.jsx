@@ -80,10 +80,11 @@ const Login = ({ setIsAuthenticated, setIsAdmin }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-        <h2 className="text-2xl font-bold mb-6 text-center">{t('Login')}</h2>
-        {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">{error}</div>}
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+      <div className="wedding-card p-10 w-full max-w-md">
+        <h2 className="text-4xl wedding-title text-center mb-2">Welcome Back!</h2>
+        <p className="text-center text-gray-600 mb-6 italic">Log in to access your account and share your memories 💕</p>
+        {error && <div className="bg-red-50 border-2 border-red-300 text-red-700 px-4 py-3 rounded-xl mb-4 text-center">💔 {error}</div>}
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label htmlFor="email" className="block text-gray-700 text-sm font-bold mb-2">{t('Email')}</label>
@@ -93,7 +94,7 @@ const Login = ({ setIsAuthenticated, setIsAdmin }) => {
               name="email"
               value={formData.email}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="wedding-input w-full"
               required
             />
           </div>
@@ -105,24 +106,17 @@ const Login = ({ setIsAuthenticated, setIsAdmin }) => {
               name="password"
               value={formData.password}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="wedding-input w-full"
               required
             />
           </div>
-          <button type="submit" className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition duration-200">{t('Login')}</button>
+          <button type="submit" className="wedding-btn w-full mb-4">{t('Login')}</button>
         </form>
-        <div className="mt-4">
-          <p className="text-center text-gray-500 mb-2">{t('Or login with')}</p>
-          <div className="flex justify-center">
-            <GoogleLogin
-              onSuccess={handleGoogleSuccess}
-              onError={handleGoogleError}
-              useOneTap
-            />
-          </div>
-        </div>
+        <div className="floral-divider">✿ ─────── ✿ ─────── ✿</div>
         <div className="mt-4 text-center">
-          <p>{t("Don't have an account?")} <Link to="/register" className="text-blue-600 hover:underline">{t('Register')}</Link></p>
+          <p className="text-gray-600">
+            Don't have an account? <Link to="/register" className="text-pink-600 hover:text-pink-800 font-bold underline">{t('Register')}</Link>
+          </p>
         </div>
       </div>
     </div>

@@ -49,9 +49,9 @@ function App() {
   return (
     <Router>
       <div className="min-h-screen bg-gray-100 flex flex-col">
-        <header className="bg-blue-600 text-white p-4">
+        <header className="wedding-header text-white p-4">
           <div className="max-w-6xl mx-auto flex justify-between items-center">
-            <h1 className="text-2xl font-bold">Wedding Media</h1>
+            <h1 className="text-2xl font-bold wedding-title">Wedding Media</h1>
             <nav className="flex gap-4">
               <a href="/" className="hover:underline">Gallery</a>
               {isAuthenticated ? (

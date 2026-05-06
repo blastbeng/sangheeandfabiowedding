@@ -1,3 +1,136 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:wght@400;600;700&family=Lato:wght@300;400;700&display=swap');
+
+:root {
+  --wedding-gold: #D4AF37;
+  --wedding-rose: #E8B4B8;
+  --wedding-blush: #FADADD;
+  --wedding-cream: #FFFDD0;
+  --wedding-sage: #9CAF88;
+}
+
+* {
+  font-family: 'Lato', sans-serif;
+}
+
+body {
+  background: linear-gradient(135deg, #fff5f7 0%, #f0e6f0 50%, #f5f0e6 100%);
+  min-height: 100vh;
+}
+
+h1, h2, h3, h4 {
+  font-family: 'Playfair Display', serif;
+}
+
+.wedding-title {
+  font-family: 'Great Vibes', cursive;
+  color: var(--wedding-gold);
+  text-shadow: 2px 2px 4px rgba(212, 175, 55, 0.3);
+}
+
+.wedding-card {
+  background: rgba(255, 255, 255, 0.95);
+  border: 2px solid var(--wedding-gold);
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(212, 175, 55, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.wedding-card::before {
+  content: '💕';
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  font-size: 24px;
+  opacity: 0.6;
+}
+
+.wedding-card::after {
+  content: '🌸';
+  position: absolute;
+  bottom: 10px;
+  left: 15px;
+  font-size: 24px;
+  opacity: 0.6;
+}
+
+.wedding-btn {
+  background: linear-gradient(135deg, var(--wedding-rose) 0%, var(--wedding-gold) 100%);
+  color: white;
+  border: none;
+  border-radius: 25px;
+  padding: 12px 30px;
+  font-family: 'Playfair Display', serif;
+  font-weight: 600;
+  letter-spacing: 1px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+}
+
+.wedding-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(212, 175, 55, 0.5);
+}
+
+.wedding-input {
+  border: 2px solid var(--wedding-rose);
+  border-radius: 15px;
+  padding: 12px 20px;
+  background: rgba(255, 255, 255, 0.9);
+  transition: all 0.3s ease;
+}
+
+.wedding-input:focus {
+  outline: none;
+  border-color: var(--wedding-gold);
+  box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
+}
+
+.wedding-header {
+  background: linear-gradient(135deg, var(--wedding-rose) 0%, var(--wedding-gold) 100%);
+  box-shadow: 0 4px 20px rgba(212, 175, 55, 0.3);
+}
+
+.heart-decoration {
+  animation: heartbeat 1.5s ease-in-out infinite;
+}
+
+@keyframes heartbeat {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.floral-divider {
+  text-align: center;
+  margin: 20px 0;
+  color: var(--wedding-gold);
+  font-size: 20px;
+}
+
+.status-badge {
+  padding: 5px 15px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.status-pending {
+  background: linear-gradient(135deg, #FFE5B4 0%, #FFD700 100%);
+  color: #8B6914;
+}
+
+.status-approved {
+  background: linear-gradient(135deg, #B4FFE5 0%, #98FB98 100%);
+  color: #2E8B57;
+}
+
+.status-rejected {
+  background: linear-gradient(135deg, #FFB4B4 0%, #FF9999 100%);
+  color: #8B0000;
+}

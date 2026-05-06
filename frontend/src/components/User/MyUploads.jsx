@@ -1,18 +1,18 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const MyUploads = () => {
+  const { t } = useTranslation();
   const [uploads, setUploads] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const API_URL = import.meta.env.VITE_API_URL;
 
-  const refreshUploads = () => {
-    setRefreshTrigger(prev => prev + 1);
-  };
+  const refreshUploads = () => setRefreshTrigger(prev => prev + 1);
 
   const handleDelete = async (id) => {
     if (!confirm('Delete this file from all cloud storage?')) return;
-    
     try {
       const res = await fetch(`${API_URL}/api/auth/media/${id}/`, {
         method: 'DELETE',
@@ -29,58 +29,71 @@ const MyUploads = () => {
       headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
     })
       .then(res => res.json())
-      .then(data => {
-        setUploads(data);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error(err);
-        setLoading(false);
-      });
+      .then(data => { setUploads(data); setLoading(false); })
+      .catch(err => { console.error(err); setLoading(false); });
   }, [refreshTrigger]);
 
-  const getStatusColor = (status) => {
-    switch(status) {
-      case 'approved': return 'text-green-600';
-      case 'pending': return 'text-yellow-600';
-      case 'rejected': return 'text-red-600';
-      default: return 'text-gray-600';
-    }
+  const getStatusBadge = (status) => {
+    const badges = { pending: 'status-pending', approved: 'status-approved', rejected: 'status-rejected' };
+    const icons = { pending: '⏳', approved: '✅', rejected: '❌' };
+    return <span className={`status-badge ${badges[status]}`}>{icons[status]} {t(status)}</span>;
   };
 
-  if (loading) return <div className="text-center p-8">Loading...</div>;
+  if (loading) {
+    return (
+      <div className="text-center py-10">
+        <span className="text-4xl heart-decoration inline-block">💝</span>
+        <p className="mt-4 text-gray-600">Loading your memories...</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <h2 className="text-2xl font-bold mb-6">My Uploads</h2>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {uploads.map(item => (
-          <div key={item.id} className="bg-white p-2 rounded shadow">
-            {item.media_type === 'video' ? (
-              <video src={item.file_url} controls className="w-full" />
-            ) : (
-              <img src={item.file_url} alt={item.caption} className="w-full" />
-            )}
-            <div className={`mt-2 font-semibold ${getStatusColor(item.status)}`}>
-              Status: {item.status.toUpperCase()}
-            </div>
-            {item.status === 'rejected' && item.rejection_reason && (
-              <p className="text-sm text-red-500 mt-1">Reason: {item.rejection_reason}</p>
-            )}
-            <p className="text-sm text-gray-600">{item.caption}</p>
-            <p className="text-xs text-gray-400">{new Date(item.uploaded_at).toLocaleDateString()}</p>
-            {item.status === 'approved' && (
-              <button
-                onClick={() => handleDelete(item.id)}
-                className="mt-2 text-red-600 text-sm hover:underline"
-              >
-                Delete
-              </button>
-            )}
+    <div className="max-w-4xl mx-auto p-4">
+      <div className="wedding-card p-8">
+        <h2 className="text-3xl wedding-title text-center mb-2">📁 My Memories</h2>
+        <p className="text-center text-gray-600 mb-6 italic">All your beautiful uploads in one place 💕</p>
+
+        {uploads.length === 0 ? (
+          <div className="text-center py-10">
+            <span className="text-6xl">📸</span>
+            <p className="mt-4 text-gray-600 text-lg">No uploads yet!</p>
+            <p className="text-gray-500 text-sm">Share your first memory with us 🌸</p>
+            <Link to="/upload" className="wedding-btn inline-block mt-4">✨ Upload Now</Link>
           </div>
-        ))}
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b-2 border-pink-200">
+                  <th className="text-left py-3 text-pink-600">🖼️ Preview</th>
+                  <th className="text-left py-3 text-pink-600">📝 Caption</th>
+                  <th className="text-left py-3 text-pink-600">📅 Uploaded</th>
+                  <th className="text-left py-3 text-pink-600">💫 Status</th>
+                  <th className="text-left py-3 text-pink-600">⚡ Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {uploads.map((upload) => (
+                  <tr key={upload.id} className="border-b border-pink-100 hover:bg-pink-50">
+                    <td className="py-3">
+                      {upload.file_url ? (
+                        <img src={`${API_URL}${upload.file_url}`} alt="preview" className="w-16 h-16 object-cover rounded-lg border-2 border-pink-200" />
+                      ) : <span className="text-2xl">🎬</span>}
+                    </td>
+                    <td className="py-3 text-gray-700">{upload.caption || '-'}</td>
+                    <td className="py-3 text-gray-600 text-sm">{new Date(upload.uploaded_at).toLocaleDateString()}</td>
+                    <td className="py-3">{getStatusBadge(upload.status)}</td>
+                    <td className="py-3">
+                      <button onClick={() => handleDelete(upload.id)} className="text-red-500 hover:text-red-700 text-sm">🗑️ Delete</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
-      {uploads.length === 0 && <p className="text-center text-gray-500">No uploads yet.</p>}
     </div>
   );
 };
