@@ -11,9 +11,10 @@ class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = ('id', 'username', 'email', 'first_name', 'last_name', 
-                  'date_of_birth', 'password', 'password_confirm')
+                  'date_of_birth', 'password', 'password_confirm', 'language')
         extra_kwargs = {
             'email': {'required': True},
+            'language': {'required': False},
         }
 
     def validate(self, attrs):
@@ -23,6 +24,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         validated_data.pop('password_confirm')
+        validated_data.setdefault('language', 'it')
         user = CustomUser.objects.create_user(**validated_data)
         return user
 

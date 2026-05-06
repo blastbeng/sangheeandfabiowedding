@@ -5,6 +5,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.permissions import IsAuthenticated
 from django.http import Http404
 from django.utils import timezone
+from django.utils.translation import gettext as _
 from .models import Media
 from .serializers import MediaSerializer, MediaModerationSerializer
 from django.shortcuts import get_object_or_404
@@ -129,7 +130,7 @@ class MediaUploadView(APIView):
         media_types = request.data.getlist('media_types')
 
         if not files:
-            return Response({'error': 'No files provided'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': _('No files provided')}, status=status.HTTP_400_BAD_REQUEST)
 
         import base64
         
@@ -149,9 +150,9 @@ class MediaUploadView(APIView):
         task = upload_media_task.delay(request.user.id, file_data_list)
 
         return Response({
-            'message': 'Upload queued for processing',
+            'message': _('Upload queued for processing'),
             'task_id': task.id,
-            'status': 'Files are being processed in the background'
+            'status': _('Files are being processed in the background')
         }, status=status.HTTP_202_ACCEPTED)
 
 
@@ -162,7 +163,7 @@ class MediaDeleteView(APIView):
         try:
             media = Media.objects.get(id=media_id, user=request.user)
         except Media.DoesNotExist:
-            return Response({'error': 'Media not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': _('Media not found')}, status=status.HTTP_404_NOT_FOUND)
 
         # Queue the deletion task
         from .tasks import delete_media_task
@@ -172,7 +173,7 @@ class MediaDeleteView(APIView):
         media.delete()
 
         return Response({
-            'message': 'Deletion queued for processing',
+            'message': _('Deletion queued for processing'),
             'task_id': task.id
         }, status=status.HTTP_202_ACCEPTED)
 
@@ -186,7 +187,7 @@ class MediaFileView(APIView):
         try:
             media = Media.objects.get(id=media_id, user=request.user)
         except Media.DoesNotExist:
-            return Response({'error': 'Media not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': _('Media not found')}, status=status.HTTP_404_NOT_FOUND)
 
         # Return file response or redirect to cloud storage
         # Implementation depends on specific requirements
@@ -200,7 +201,7 @@ class MediaModerationView(APIView):
     def get(self, request):
         # Only admins can access this
         if not request.user.is_staff:
-            return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+            return Response({'error': _('Permission denied')}, status=status.HTTP_403_FORBIDDEN)
         
         media_list = Media.objects.all().order_by('-uploaded_at')
         serializer = MediaModerationSerializer(media_list, many=True)
@@ -209,18 +210,18 @@ class MediaModerationView(APIView):
     def patch(self, request, media_id):
         """Approve or reject media"""
         if not request.user.is_staff:
-            return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+            return Response({'error': _('Permission denied')}, status=status.HTTP_403_FORBIDDEN)
         
         try:
             media = Media.objects.get(id=media_id)
         except Media.DoesNotExist:
-            return Response({'error': 'Media not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': _('Media not found')}, status=status.HTTP_404_NOT_FOUND)
 
         status_update = request.data.get('status')
         rejection_reason = request.data.get('rejection_reason', '')
 
         if status_update not in ['approved', 'rejected']:
-            return Response({'error': 'Invalid status. Must be "approved" or "rejected"'}, 
+            return Response({'error': _('Invalid status. Must be "approved" or "rejected"')}, 
                           status=status.HTTP_400_BAD_REQUEST)
 
         media.status = status_update
@@ -229,4 +230,4 @@ class MediaModerationView(APIView):
         media.reviewed_at = timezone.now()
         media.save()
 
-        return Response({'message': f'Media {status_update} successfully'})
+        return Response({'message': _('Media {status} successfully').format(status=status_update)})

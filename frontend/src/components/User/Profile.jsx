@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const Profile = () => {
+  const { t, i18n } = useTranslation();
   const [user, setUser] = useState(null);
   const [formData, setFormData] = useState({
     username: '',
@@ -127,14 +129,14 @@ const Profile = () => {
 
   return (
     <div className="max-w-2xl mx-auto bg-white p-6 rounded shadow">
-      <h2 className="text-2xl font-bold mb-6">Profile</h2>
+      <h2 className="text-2xl font-bold mb-6">{t('Profile')}</h2>
 
       {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">{error}</div>}
       {success && <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">{success}</div>}
 
       <form onSubmit={handleSubmit} className="mb-8">
         <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2">Username</label>
+          <label className="block text-gray-700 text-sm font-bold mb-2">{t('Username')}</label>
           <input
             type="text"
             name="username"
@@ -144,7 +146,7 @@ const Profile = () => {
           />
         </div>
         <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2">First Name</label>
+          <label className="block text-gray-700 text-sm font-bold mb-2">{t('First Name')}</label>
           <input
             type="text"
             name="first_name"
@@ -154,7 +156,7 @@ const Profile = () => {
           />
         </div>
         <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2">Last Name</label>
+          <label className="block text-gray-700 text-sm font-bold mb-2">{t('Last Name')}</label>
           <input
             type="text"
             name="last_name"
@@ -164,7 +166,7 @@ const Profile = () => {
           />
         </div>
         <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2">Email</label>
+          <label className="block text-gray-700 text-sm font-bold mb-2">{t('Email')}</label>
           <input
             type="email"
             name="email"
@@ -173,13 +175,13 @@ const Profile = () => {
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
-        <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">Update Profile</button>
+        <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">{t('Update Profile')}</button>
       </form>
 
-      <h3 className="text-xl font-bold mb-4">Change Password</h3>
+      <h3 className="text-xl font-bold mb-4">{t('Change Password')}</h3>
       <form onSubmit={handlePasswordSubmit}>
         <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2">Current Password</label>
+          <label className="block text-gray-700 text-sm font-bold mb-2">{t('Current Password')}</label>
           <input
             type="password"
             name="current_password"
@@ -189,7 +191,7 @@ const Profile = () => {
           />
         </div>
         <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2">New Password</label>
+          <label className="block text-gray-700 text-sm font-bold mb-2">{t('New Password')}</label>
           <input
             type="password"
             name="new_password"
@@ -199,7 +201,7 @@ const Profile = () => {
           />
         </div>
         <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2">Confirm New Password</label>
+          <label className="block text-gray-700 text-sm font-bold mb-2">{t('Confirm New Password')}</label>
           <input
             type="password"
             name="new_password_confirm"
@@ -208,8 +210,24 @@ const Profile = () => {
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
-        <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded">Change Password</button>
+        <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded">{t('Change Password')}</button>
       </form>
+
+      <div className="mt-8">
+        <h3 className="text-xl font-bold mb-4">{t('Language')}</h3>
+        <select
+          value={i18n.language}
+          onChange={(e) => {
+            i18n.changeLanguage(e.target.value);
+            localStorage.setItem('language', e.target.value);
+          }}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md"
+        >
+          <option value="it">{t('Italiano')}</option>
+          <option value="ko">{t('한국어')}</option>
+          <option value="en">{t('English')}</option>
+        </select>
+      </div>
     </div>
   );
 };

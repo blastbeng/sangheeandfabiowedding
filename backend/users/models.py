@@ -13,6 +13,11 @@ class CustomUser(AbstractUser):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
+    language = models.CharField(max_length=10, default='it', choices=[
+        ('it', 'Italiano'),
+        ('ko', '한국어'),
+        ('en', 'English'),
+    ])
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']

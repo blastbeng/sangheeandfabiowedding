@@ -36,6 +36,8 @@ services:
       - DEBUG=${DEBUG}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - TIME_ZONE=Europe/Rome
+      - DEFAULT_LANGUAGE=it
     depends_on:
       - db
       - redis
@@ -61,6 +63,8 @@ services:
       - GOOGLE_DRIVE_CLIENT_SECRET=${GOOGLE_DRIVE_CLIENT_SECRET}
       - GOOGLE_DRIVE_TOKEN=${GOOGLE_DRIVE_TOKEN}
       - GOOGLE_DRIVE_FOLDER_ID=${GOOGLE_DRIVE_FOLDER_ID}
+      - TIME_ZONE=Europe/Rome
+      - DEFAULT_LANGUAGE=it
     depends_on:
       - db
       - redis
@@ -75,5 +79,7 @@ services:
       - "5173:5173"
     environment:
       - VITE_API_URL=${VITE_API_URL}
+      - VITE_DEFAULT_LANGUAGE=it
+      - VITE_SUPPORTED_LANGUAGES=it,ko,en
     depends_on:
       - web

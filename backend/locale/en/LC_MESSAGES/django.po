@@ -1,0 +1,61 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Wedding Media\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "pending"
+msgstr "Pending"
+
+msgid "approved"
+msgstr "Approved"
+
+msgid "rejected"
+msgstr "Rejected"
+
+msgid "Media not found"
+msgstr "Media not found"
+
+msgid "Permission denied"
+msgstr "Permission denied"
+
+msgid "Invalid status. Must be \"approved\" or \"rejected\""
+msgstr "Invalid status. Must be \"approved\" or \"rejected\""
+
+msgid "No files provided"
+msgstr "No files provided"
+
+msgid "Upload queued for processing"
+msgstr "Upload queued for processing"
+
+msgid "Files are being processed in the background"
+msgstr "Files are being processed in the background"
+
+msgid "Deletion queued for processing"
+msgstr "Deletion queued for processing"
+
+msgid "File deleted successfully"
+msgstr "File deleted successfully"
+
+msgid "User not found"
+msgstr "User not found"
+
+msgid "Some files failed to upload"
+msgstr "Some files failed to upload"
+
+msgid "Login failed"
+msgstr "Login failed"
+
+msgid "Profile updated successfully"
+msgstr "Profile updated successfully"
+
+msgid "Password updated successfully"
+msgstr "Password updated successfully"
+
+msgid "Passwords don't match"
+msgstr "Passwords don't match"
+
+msgid "Current password is incorrect"
+msgstr "Current password is incorrect"
