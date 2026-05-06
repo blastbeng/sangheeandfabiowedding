@@ -40,10 +40,10 @@ const Home = () => {
           🌸 Two Hearts, One Beautiful Journey 🌸
         </p>
 
-        {/* Welcome Message - More Romantic */}
+        {/* Welcome Message - More Casual */}
         <div className="max-w-4xl mx-auto mb-10">
           <p className="text-xl text-gray-700 leading-relaxed mb-6">
-            💌 Hi there!
+            💌 Hey friends!
           </p>
           <p className="text-lg text-gray-700 leading-relaxed mb-6">
             Welcome to our wedding memory collection – a special place where love stories come alive 
