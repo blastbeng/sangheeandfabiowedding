@@ -54,7 +54,7 @@ const Upload = () => {
       });
       const data = await res.json();
       if (res.ok) {
-        setSuccess(`${data.uploaded?.length || files.length} file(s) uploaded successfully`);
+        setSuccess(`${files.length} file(s) queued for processing`);
         setTimeout(() => navigate('/my-uploads'), 2000);
       } else {
         setError(data.error || 'Upload failed');
