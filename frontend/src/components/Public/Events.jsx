@@ -1,12 +1,23 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useState, useEffect } from 'react';
 import scheduleImage from '../../static/images/SangHee_and_Fabio_schedule.png';
 import ceremonyLocationImage from '../../static/images/ComeRaggiungerci-cerimonia.png';
 
 const Events = () => {
   const { t, i18n } = useTranslation();
+  const [currentLang, setCurrentLang] = useState(i18n.language || 'it');
 
-  const currentLang = i18n.language || 'it';
+  useEffect(() => {
+    const handleLanguageChange = () => {
+      setCurrentLang(i18n.language || 'it');
+    };
+    
+    i18n.on('languageChanged', handleLanguageChange);
+    return () => {
+      i18n.off('languageChanged', handleLanguageChange);
+    };
+  }, [i18n]);
 
   // Event data extracted from PSD invitation files
   const events = [
@@ -74,7 +85,7 @@ const Events = () => {
       <div className="wedding-card mx-4 mt-8 p-8 md:p-12 text-center ribbon wedding-glow">
         <span className="text-6xl mb-4 inline-block floating-heart">📅</span>
         <h1 className="text-5xl md:text-7xl wedding-title mb-4 sparkle">
-          💕 Our Wedding Events 💕
+          {t('Our Wedding Events')}
         </h1>
         <p className="text-xl text-gray-600 mb-6 italic">
           {currentLang === 'it' && "Tutti i dettagli del nostro grande giorno"}
@@ -83,7 +94,7 @@ const Events = () => {
         </p>
         <p className="text-lg text-gray-700 max-w-3xl mx-auto leading-relaxed mb-8">
           {currentLang === 'it' && "Siamo così entusiasti di condividere questi momenti speciali con voi! Ecco tutti i dettagli su dove e quando celebreremo il nostro amore."}
-          {currentLang === 'ko' && "이 특별한 순간을 여러분과 함께하게 되어 정말 설레입니다! 저희의 사랑을 축하할 장소와 시간에 대한 모든 세부 사항을 알려드립니다."}
+          {currentLang === 'ko' && "이 특별한 순간을 여러분과 함께하게 되어 정말 설레습니다! 저희의 사랑을 축하할 장소와 시간에 대한 모든 세부 사항을 알려드립니다."}
           {currentLang === 'en' && "We're so excited to share these special moments with you! Here are all the details on where and when we'll celebrate our love."}
         </p>
         <div className="bg-gradient-to-r from-pink-50 to-yellow-50 rounded-xl p-6 mt-6 border-2 border-pink-200">

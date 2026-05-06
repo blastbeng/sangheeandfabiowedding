@@ -88,7 +88,20 @@ const resources = {
       "Allow New Registrations": "Consenti Nuove Registrazioni",
       "Max Upload Size (MB)": "Dimensione Max Upload (MB)",
       "Require Media Approval": "Richiedi Approvazione Media",
-      "Default Language": "Lingua Predefinita"
+      "Default Language": "Lingua Predefinita",
+      "welcome_message_1": "Benvenuti al nostro sito di matrimonio. Qui potrete condividere i vostri ricordi e rivivere insieme i momenti speciali del nostro grande giorno.",
+      "welcome_message_2": "Caricate le vostre foto e video nella galleria condivisa per aiutarci a creare un album completo di questa giornata indimenticabile.",
+      "how_it_works": "Come Funziona",
+      "step1_title": "Registrati",
+      "step1_desc": "Crea il tuo account",
+      "step2_title": "Carica",
+      "step2_desc": "Condividi foto e video",
+      "step3_title": "Descrivi",
+      "step3_desc": "Aggiungi una didascalia",
+      "step4_title": "Condividi",
+      "step4_desc": "Rivivi i momenti",
+      "join_us_title": "Unisciti a Noi",
+      "join_us_message": "Aiutaci a completare il nostro album di matrimonio con i tuoi scatti più belli."
     }
   },
   ko: {
@@ -177,7 +190,20 @@ const resources = {
       "Allow New Registrations": "새 등록 허용",
       "Max Upload Size (MB)": "최대 업로드 크기 (MB)",
       "Require Media Approval": "미디어 승인 필요",
-      "Default Language": "기본 언어"
+      "Default Language": "기본 언어",
+      "welcome_message_1": "저희 결혼식 웹사이트에 오신 것을 환영합니다. 이곳에서 여러분의 추억을 공유하고 저희의 특별한 날을 함께 되새길 수 있습니다.",
+      "welcome_message_2": "공유 갤러리에 사진과 동영상을 업로드하여 이 잊을 수 없는 날의 완벽한 앨범을 만들 수 있도록 도와주세요.",
+      "how_it_works": "이용 방법",
+      "step1_title": "등록",
+      "step1_desc": "계정 만들기",
+      "step2_title": "업로드",
+      "step2_desc": "사진과 동영상 공유",
+      "step3_title": "설명",
+      "step3_desc": "캡션 추가",
+      "step4_title": "공유",
+      "step4_desc": "추억 되새기기",
+      "join_us_title": "함께하세요",
+      "join_us_message": "여러분의 가장 아름다운 사진으로 저희 결혼 앨범을 완성해주세요."
     }
   },
   en: {
@@ -266,7 +292,20 @@ const resources = {
       "Allow New Registrations": "Allow New Registrations",
       "Max Upload Size (MB)": "Max Upload Size (MB)",
       "Require Media Approval": "Require Media Approval",
-      "Default Language": "Default Language"
+      "Default Language": "Default Language",
+      "welcome_message_1": "Welcome to our wedding website. Here you can share your memories and relive the special moments of our big day together.",
+      "welcome_message_2": "Upload your photos and videos to the shared gallery to help us create a complete album of this unforgettable day.",
+      "how_it_works": "How It Works",
+      "step1_title": "Register",
+      "step1_desc": "Create your account",
+      "step2_title": "Upload",
+      "step2_desc": "Share photos and videos",
+      "step3_title": "Describe",
+      "step3_desc": "Add a caption",
+      "step4_title": "Share",
+      "step4_desc": "Relive the moments",
+      "join_us_title": "Join Us",
+      "join_us_message": "Help us complete our wedding album with your most beautiful shots."
     }
   }
 };

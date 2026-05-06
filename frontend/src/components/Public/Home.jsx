@@ -1,7 +1,10 @@
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import coupleImage from '../../static/images/SangHeeAndFabio.png';
 
 const Home = () => {
+  const { t } = useTranslation();
+
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
@@ -30,15 +33,13 @@ const Home = () => {
           2024 — Costigliole d'Asti
         </p>
 
-        {/* Welcome Message - Simplified */}
+        {/* Welcome Message - Using i18n */}
         <div className="max-w-3xl mx-auto mb-10">
           <p className="text-lg text-gray-700 leading-relaxed mb-4">
-            Benvenuti al nostro sito di matrimonio. Qui potrete condividere i vostri ricordi 
-            e rivivere insieme i momenti speciali del nostro grande giorno.
+            {t('welcome_message_1')}
           </p>
           <p className="text-lg text-gray-700 leading-relaxed">
-            Caricate le vostre foto e video nella galleria condivisa per aiutarci a creare 
-            un album completo di questa giornata indimenticabile.
+            {t('welcome_message_2')}
           </p>
         </div>
 
@@ -47,37 +48,37 @@ const Home = () => {
         {/* CTA Buttons */}
         <div className="flex gap-6 justify-center flex-wrap mt-10">
           <Link to="/gallery" className="wedding-btn text-lg px-8 py-4">
-            Galleria
+            {t('Gallery')}
           </Link>
           <Link to="/upload" className="wedding-btn text-lg px-8 py-4">
-            Carica Foto
+            {t('Upload')}
           </Link>
         </div>
       </div>
 
       {/* How It Works - Simplified */}
       <div className="max-w-6xl mx-auto p-4 mt-12">
-        <h2 className="text-4xl wedding-title text-center mb-8">Come Funziona</h2>
+        <h2 className="text-4xl wedding-title text-center mb-8">{t('how_it_works')}</h2>
         <div className="grid md:grid-cols-4 gap-6">
           <div className="wedding-card p-8 text-center wedding-glow">
             <div className="text-4xl mb-4 text-pink-600 font-bold">1</div>
-            <h4 className="font-bold text-gray-800 mb-2 text-lg">Registrati</h4>
-            <p className="text-gray-600 text-sm">Crea il tuo account</p>
+            <h4 className="font-bold text-gray-800 mb-2 text-lg">{t('step1_title')}</h4>
+            <p className="text-gray-600 text-sm">{t('step1_desc')}</p>
           </div>
           <div className="wedding-card p-8 text-center wedding-glow">
             <div className="text-4xl mb-4 text-pink-600 font-bold">2</div>
-            <h4 className="font-bold text-gray-800 mb-2 text-lg">Carica</h4>
-            <p className="text-gray-600 text-sm">Condividi foto e video</p>
+            <h4 className="font-bold text-gray-800 mb-2 text-lg">{t('step2_title')}</h4>
+            <p className="text-gray-600 text-sm">{t('step2_desc')}</p>
           </div>
           <div className="wedding-card p-8 text-center wedding-glow">
             <div className="text-4xl mb-4 text-pink-600 font-bold">3</div>
-            <h4 className="font-bold text-gray-800 mb-2 text-lg">Descrivi</h4>
-            <p className="text-gray-600 text-sm">Aggiungi una didascalia</p>
+            <h4 className="font-bold text-gray-800 mb-2 text-lg">{t('step3_title')}</h4>
+            <p className="text-gray-600 text-sm">{t('step3_desc')}</p>
           </div>
           <div className="wedding-card p-8 text-center wedding-glow">
             <div className="text-4xl mb-4 text-pink-600 font-bold">4</div>
-            <h4 className="font-bold text-gray-800 mb-2 text-lg">Condividi</h4>
-            <p className="text-gray-600 text-sm">Rivivi i momenti</p>
+            <h4 className="font-bold text-gray-800 mb-2 text-lg">{t('step4_title')}</h4>
+            <p className="text-gray-600 text-sm">{t('step4_desc')}</p>
           </div>
         </div>
       </div>
@@ -85,12 +86,12 @@ const Home = () => {
       {/* Final CTA */}
       <div className="text-center p-8 mt-12 mb-8">
         <div className="wedding-card mx-auto max-w-2xl p-10 ribbon wedding-glow">
-          <p className="text-2xl wedding-title mb-4">Unisciti a Noi</p>
+          <p className="text-2xl wedding-title mb-4">{t('join_us_title')}</p>
           <p className="text-gray-600 mb-6 leading-relaxed">
-            Aiutaci a completare il nostro album di matrimonio con i tuoi scatti più belli.
+            {t('join_us_message')}
           </p>
           <Link to="/register" className="wedding-btn text-lg px-8 py-3">
-            Crea Account
+            {t('Create Account')}
           </Link>
         </div>
       </div>
