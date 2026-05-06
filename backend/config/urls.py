@@ -23,7 +23,9 @@ from users.views import (
     RegisterView, LoginView, LogoutView, ProfileView,
     MediaListView, MediaUploadView, MediaFileView, MediaDeleteView,
     MyUploadsView, MediaModerationView, MediaModerateSingleView,
-    SocialLoginView
+    SocialLoginView,
+    AdminDashboardView, AdminUserManagementView, AdminUserDetailView,
+    AdminToggleStaffView, AdminSettingsView
 )
 
 urlpatterns = [
@@ -41,6 +43,11 @@ urlpatterns = [
     path('api/auth/media/my-uploads/', MyUploadsView.as_view(), name='my-uploads'),
     path('api/auth/media/moderation/', MediaModerationView.as_view(), name='media-moderation'),
     path('api/auth/media/moderation/<int:media_id>/', MediaModerateSingleView.as_view(), name='media-moderate-single'),
+    path('api/auth/admin/dashboard/', AdminDashboardView.as_view(), name='admin-dashboard'),
+    path('api/auth/admin/users/', AdminUserManagementView.as_view(), name='admin-users'),
+    path('api/auth/admin/users/<int:user_id>/', AdminUserDetailView.as_view(), name='admin-user-detail'),
+    path('api/auth/admin/users/<int:user_id>/toggle-staff/', AdminToggleStaffView.as_view(), name='admin-toggle-staff'),
+    path('api/auth/admin/settings/', AdminSettingsView.as_view(), name='admin-settings'),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

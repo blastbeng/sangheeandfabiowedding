@@ -76,3 +76,37 @@ class SocialLoginSerializer(serializers.Serializer):
     """
     provider = serializers.CharField(required=True)
     access_token = serializers.CharField(required=True)
+
+
+class AdminUserSerializer(serializers.ModelSerializer):
+    """Serializer for admin user management"""
+    is_staff = serializers.BooleanField(default=False)
+    is_superuser = serializers.BooleanField(default=False)
+    
+    class Meta:
+        model = CustomUser
+        fields = ('id', 'username', 'email', 'first_name', 'last_name', 
+                  'date_of_birth', 'is_active', 'is_staff', 'is_superuser', 
+                  'created_at', 'language')
+        read_only_fields = ('created_at',)
+
+    def create(self, validated_data):
+        password = validated_data.pop('password', 'defaultpassword123')
+        user = CustomUser.objects.create_user(password=password, **validated_data)
+        return user
+
+    def update(self, instance, validated_data):
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        return instance
+
+
+class WebAppSettingsSerializer(serializers.Serializer):
+    """Serializer for webapp configuration"""
+    site_name = serializers.CharField(max_length=100, required=False)
+    maintenance_mode = serializers.BooleanField(default=False)
+    allow_registrations = serializers.BooleanField(default=True)
+    max_upload_size_mb = serializers.IntegerField(default=50)
+    require_approval = serializers.BooleanField(default=True)
+    default_language = serializers.CharField(max_length=10, default='it')

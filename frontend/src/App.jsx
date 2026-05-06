@@ -8,6 +8,9 @@ import Upload from './components/User/Upload';
 import MyUploads from './components/User/MyUploads';
 import Gallery from './components/Public/Gallery';
 import AdminModeration from './components/Admin/Moderation';
+import AdminDashboard from './components/Admin/AdminDashboard';
+import UserManagement from './components/Admin/UserManagement';
+import Settings from './components/Admin/Settings';
 import Home from './components/Public/Home';
 import Events from './components/Public/Events';
 
@@ -65,7 +68,7 @@ function App() {
                   <a href="/my-uploads" className="hover:text-yellow-200 transition font-medium">{t('My Uploads')}</a>
                   <a href="/profile" className="hover:text-yellow-200 transition font-medium">{t('Profile')}</a>
                   {isAdmin && (
-                    <a href="/admin/moderation" className="hover:text-yellow-200 transition font-medium">⭐ {t('Moderation')}</a>
+                    <a href="/admin" className="hover:text-yellow-200 transition font-medium">⭐ Admin Panel</a>
                   )}
                   <button onClick={handleLogout} className="wedding-btn text-sm px-4 py-2">
                     {t('Logout')}
@@ -124,6 +127,30 @@ function App() {
                 element={
                   <ProtectedRoute isAuthenticated={isAuthenticated}>
                     <MyUploads />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin" 
+                element={
+                  <ProtectedRoute isAuthenticated={isAuthenticated} isAdminOnly={true} isAdmin={isAdmin}>
+                    <AdminDashboard />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/users" 
+                element={
+                  <ProtectedRoute isAuthenticated={isAuthenticated} isAdminOnly={true} isAdmin={isAdmin}>
+                    <UserManagement />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/settings" 
+                element={
+                  <ProtectedRoute isAuthenticated={isAuthenticated} isAdminOnly={true} isAdmin={isAdmin}>
+                    <Settings />
                   </ProtectedRoute>
                 } 
               />

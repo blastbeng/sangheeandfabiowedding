@@ -2,12 +2,13 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.parsers import MultiPartParser, FormParser
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from django.http import Http404
 from django.utils import timezone
 from django.utils.translation import gettext as _
+from django.contrib.auth import get_user_model
 from .models import Media
-from .serializers import MediaSerializer, MediaModerationSerializer
+from .serializers import MediaSerializer, MediaModerationSerializer, AdminUserSerializer, WebAppSettingsSerializer
 from django.shortcuts import get_object_or_404
 from django.core.files.base import ContentFile
 import base64
@@ -231,3 +232,132 @@ class MediaModerationView(APIView):
         media.save()
 
         return Response({'message': _('Media {status} successfully').format(status=status_update)})
+
+
+class AdminDashboardView(APIView):
+    """Admin dashboard with statistics"""
+    permission_classes = [IsAdminUser]
+    
+    def get(self, request):
+        User = get_user_model()
+        
+        stats = {
+            'total_users': User.objects.count(),
+            'total_admins': User.objects.filter(is_staff=True).count(),
+            'total_media': Media.objects.count(),
+            'pending_media': Media.objects.filter(status='pending').count(),
+            'approved_media': Media.objects.filter(status='approved').count(),
+            'rejected_media': Media.objects.filter(status='rejected').count(),
+        }
+        
+        return Response(stats)
+
+
+class AdminUserManagementView(APIView):
+    """CRUD operations for user management"""
+    permission_classes = [IsAdminUser]
+    
+    def get(self, request):
+        User = get_user_model()
+        users = User.objects.all().order_by('-created_at')
+        serializer = AdminUserSerializer(users, many=True)
+        return Response(serializer.data)
+    
+    def post(self, request):
+        User = get_user_model()
+        serializer = AdminUserSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            if request.data.get('password'):
+                user.set_password(request.data['password'])
+                user.save()
+            return Response(AdminUserSerializer(user).data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class AdminUserDetailView(APIView):
+    """Detail operations for individual user"""
+    permission_classes = [IsAdminUser]
+    
+    def get(self, request, user_id):
+        User = get_user_model()
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return Response({'error': _('User not found')}, status=status.HTTP_404_NOT_FOUND)
+        return Response(AdminUserSerializer(user).data)
+    
+    def put(self, request, user_id):
+        User = get_user_model()
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return Response({'error': _('User not found')}, status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = AdminUserSerializer(user, data=request.data, partial=True)
+        if serializer.is_valid():
+            user = serializer.save()
+            if request.data.get('password'):
+                user.set_password(request.data['password'])
+                user.save()
+            return Response(AdminUserSerializer(user).data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def delete(self, request, user_id):
+        User = get_user_model()
+        try:
+            user = User.objects.get(id=user_id)
+            if user.is_superuser:
+                return Response({'error': _('Cannot delete superuser')}, status=status.HTTP_400_BAD_REQUEST)
+            user.delete()
+            return Response({'message': 'User deleted successfully'})
+        except User.DoesNotExist:
+            return Response({'error': _('User not found')}, status=status.HTTP_404_NOT_FOUND)
+
+
+class AdminToggleStaffView(APIView):
+    """Promote or demote user to/from admin"""
+    permission_classes = [IsAdminUser]
+    
+    def post(self, request, user_id):
+        User = get_user_model()
+        try:
+            user = User.objects.get(id=user_id)
+            if user.is_superuser:
+                return Response({'error': _('Cannot modify superuser status')}, status=status.HTTP_400_BAD_REQUEST)
+            
+            user.is_staff = request.data.get('is_staff', not user.is_staff)
+            user.save()
+            
+            action = 'promoted to' if user.is_staff else 'demoted from'
+            return Response({
+                'message': f'User {action} admin',
+                'user': AdminUserSerializer(user).data
+            })
+        except User.DoesNotExist:
+            return Response({'error': _('User not found')}, status=status.HTTP_404_NOT_FOUND)
+
+
+class AdminSettingsView(APIView):
+    """Webapp configuration settings"""
+    permission_classes = [IsAdminUser]
+    
+    def get(self, request):
+        settings = {
+            'site_name': 'Sang Hee & Fabio Wedding',
+            'maintenance_mode': False,
+            'allow_registrations': True,
+            'max_upload_size_mb': 50,
+            'require_approval': True,
+            'default_language': 'it'
+        }
+        return Response(settings)
+    
+    def put(self, request):
+        serializer = WebAppSettingsSerializer(data=request.data)
+        if serializer.is_valid():
+            return Response({
+                'message': 'Settings updated successfully',
+                'settings': serializer.validated_data
+            })
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
