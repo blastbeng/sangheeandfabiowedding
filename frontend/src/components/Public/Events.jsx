@@ -164,7 +164,7 @@ const Events = () => {
       {/* Couple Info Section */}
       <div className="wedding-card mx-4 mt-8 p-8 text-center ribbon wedding-glow">
         <span className="text-6xl mb-4 inline-block floating-heart">💑</span>
-        <h2 className="text-4xl wedding-title mb-4">Sang Hee & Fabio</h2>
+        <h2 className="text-4xl wedding-title mb-4">Sang Hee &amp; Fabio</h2>
         <p className="text-lg text-gray-600 italic mb-6">
           {currentLang === 'it' && "Non vediamo l'ora di celebrare con voi!"}
           {currentLang === 'ko' && "여러분과 함께 축하하기를 기다릴 수 없습니다!"}
@@ -184,7 +184,7 @@ const Events = () => {
       {/* Footer */}
       <div className="text-center pb-12 pt-8">
         <p className="text-gray-500 italic">
-          💕 Made with endless love by Sang Hee & Fabio 💕
+          💕 Made with endless love by Sang Hee &amp; Fabio 💕
         </p>
       </div>
     </div>
