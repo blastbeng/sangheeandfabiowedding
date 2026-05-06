@@ -30,7 +30,7 @@ const Home = () => {
         
         {/* Tagline */}
         <p className="text-xl md:text-2xl text-pink-600 mb-8 italic font-playfair">
-          2024 — Costigliole d'Asti
+          2026 — Costigliole d'Asti
         </p>
 
         {/* Welcome Message - Using i18n */}

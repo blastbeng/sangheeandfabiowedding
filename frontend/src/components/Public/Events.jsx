@@ -30,24 +30,24 @@ const Events = () => {
         en: 'Civil Ceremony'
       },
       subtitle: {
-        it: 'Presso la Sala Consiglio del Comune di Costigliore d\'Asti',
+        it: 'Presso la Sala Consiglio del Comune di Costigliole d\'Asti',
         ko: '코스틸리올레 다스티 시의회 회의실에서',
-        en: 'At the Council Hall of Costigliore d\'Asti Municipality'
+        en: 'At the Council Hall of Costigliole d\'Asti Municipality'
       },
       icon: '💒',
       description: {
-        it: 'Unisciti a noi per scambiare i nostri voti in una cerimonia intima e significativa nel cuore di Costigliore d\'Asti.',
+        it: 'Unisciti a noi per scambiare i nostri voti in una cerimonia intima e significativa nel cuore di Costigliole d\'Asti.',
         ko: '코스틸리올레 다스티 중심부에서 진행되는 친밀하고 의미 있는 예식에서 저희의 서약을 함께 나누어 주세요.',
-        en: 'Join us as we exchange our vows in an intimate and meaningful ceremony in the heart of Costigliore d\'Asti.'
+        en: 'Join us as we exchange our vows in an intimate and meaningful ceremony in the heart of Costigliole d\'Asti.'
       },
       locationImage: ceremonyLocationImage,
       details: [
-        { label: { it: 'Luogo', ko: '장소', en: 'Venue' }, value: 'Sala Consiglio, Comune di Costigliore d\'Asti' },
-        { label: { it: 'Indirizzo', ko: '주소', en: 'Address' }, value: 'Piazza Roma, Costigliore d\'Asti, AT, Italia' },
+        { label: { it: 'Luogo', ko: '장소', en: 'Venue' }, value: 'Sala Consiglio, Comune di Costigliole d\'Asti' },
+        { label: { it: 'Indirizzo', ko: '주소', en: 'Address' }, value: 'Piazza Roma, Costigliole d\'Asti, AT, Italia' },
         { label: { it: 'Data', ko: '날짜', en: 'Date' }, value: '16/05/2026' },
       ],
       color: 'from-pink-400 to-rose-400',
-      psdFile: 'Cerimonia presso in Sala Consglio del Comune di Costigliore d\'Asti.psd'
+      psdFile: 'Cerimonia presso in Sala Consiglio del Comune di Costigliole d\'Asti.psd'
     },
     {
       id: 2,
