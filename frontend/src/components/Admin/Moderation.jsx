@@ -171,9 +171,9 @@ const AdminModeration = () => {
             />
             <div className="mb-2">
               {item.media_type === 'video' ? (
-                <video src={item.file} controls className="w-full h-48 object-cover" />
+                <video src={`${API_URL}${item.file_url}`} controls className="w-full h-48 object-cover" />
               ) : (
-                <img src={item.file} alt={item.caption} className="w-full h-48 object-cover" />
+                <img src={`${API_URL}${item.file_url}`} alt={item.caption} className="w-full h-48 object-cover" />
               )}
             </div>
             <div className="flex items-center gap-2 mb-2">

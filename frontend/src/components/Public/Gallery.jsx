@@ -8,7 +8,6 @@ const Gallery = () => {
   useEffect(() => {
     fetch(`${API_URL}/api/auth/media/`)
       .then(res => res.json())
-      .then(res => res.json())
       .then(data => {
         setMedia(data);
         setLoading(false);
