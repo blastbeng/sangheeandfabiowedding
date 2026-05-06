@@ -2,13 +2,15 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.parsers import MultiPartParser, FormParser
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
 from django.http import Http404
 from django.utils import timezone
 from django.utils.translation import gettext as _
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, login, logout
+from django.contrib.auth.password_validation import validate_password
+from rest_framework_simplejwt.tokens import RefreshToken
 from .models import Media
-from .serializers import MediaSerializer, MediaModerationSerializer, AdminUserSerializer, WebAppSettingsSerializer
+from .serializers import CustomUserSerializer, MediaSerializer, MediaModerationSerializer, AdminUserSerializer, WebAppSettingsSerializer
 from django.shortcuts import get_object_or_404
 from django.core.files.base import ContentFile
 import base64
@@ -24,6 +26,126 @@ from config.settings import (
     NEXTCLOUD_URL, NEXTCLOUD_USERNAME, NEXTCLOUD_PASSWORD, NEXTCLOUD_FOLDER,
     GOOGLE_DRIVE_CLIENT_ID, GOOGLE_DRIVE_CLIENT_SECRET, GOOGLE_DRIVE_TOKEN, GOOGLE_DRIVE_FOLDER_ID
 )
+
+
+class RegisterView(APIView):
+    """User registration view"""
+    permission_classes = [AllowAny]
+    
+    def post(self, request):
+        serializer = CustomUserSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            user.set_password(request.data['password'])
+            user.save()
+            
+            # Generate JWT tokens
+            refresh = RefreshToken.for_user(user)
+            
+            return Response({
+                'user': CustomUserSerializer(user).data,
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+            }, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class LoginView(APIView):
+    """User login view"""
+    permission_classes = [AllowAny]
+    
+    def post(self, request):
+        from django.contrib.auth import authenticate
+        email = request.data.get('email')
+        password = request.data.get('password')
+        
+        User = get_user_model()
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({'error': _('Invalid credentials')}, status=status.HTTP_400_BAD_REQUEST)
+        
+        user = authenticate(username=user.username, password=password)
+        if user is None:
+            return Response({'error': _('Invalid credentials')}, status=status.HTTP_400_BAD_REQUEST)
+        
+        refresh = RefreshToken.for_user(user)
+        
+        return Response({
+            'user': CustomUserSerializer(user).data,
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+        })
+
+
+class LogoutView(APIView):
+    """User logout view"""
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request):
+        try:
+            refresh_token = request.data.get('refresh')
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+            return Response({'message': _('Successfully logged out')})
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ProfileView(APIView):
+    """User profile view"""
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        serializer = CustomUserSerializer(request.user)
+        return Response(serializer.data)
+    
+    def put(self, request):
+        serializer = CustomUserSerializer(request.user, data=request.data, partial=True)
+        if serializer.is_valid():
+            user = serializer.save()
+            if request.data.get('password'):
+                user.set_password(request.data['password'])
+                user.save()
+            return Response(CustomUserSerializer(user).data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class MediaListView(APIView):
+    """List all approved media"""
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        media_list = Media.objects.filter(status='approved').order_by('-uploaded_at')
+        serializer = MediaSerializer(media_list, many=True)
+        return Response(serializer.data)
+
+
+class MyUploadsView(APIView):
+    """List current user's uploads"""
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        media_list = Media.objects.filter(user=request.user).order_by('-uploaded_at')
+        serializer = MediaSerializer(media_list, many=True)
+        return Response(serializer.data)
+
+
+class SocialLoginView(APIView):
+    """Social login view"""
+    permission_classes = [AllowAny]
+    
+    def post(self, request):
+        provider = request.data.get('provider')
+        token = request.data.get('token')
+        
+        if not provider or not token:
+            return Response({'error': _('Provider and token required')}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Validate social token and get/create user
+        # Implementation depends on specific social provider
+        # For now, return placeholder
+        return Response({'error': _('Social login not fully implemented')}, status=status.HTTP_501_NOT_IMPLEMENTED)
 
 
 class NextcloudClient:
