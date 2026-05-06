@@ -356,6 +356,46 @@ class MediaModerationView(APIView):
         return Response({'message': _('Media {status} successfully').format(status=status_update)})
 
 
+class MediaModerateSingleView(APIView):
+    """Admin moderation view for single media item"""
+    permission_classes = [IsAdminUser]
+
+    def get(self, request, media_id):
+        """Get single media details for moderation"""
+        try:
+            media = Media.objects.get(id=media_id)
+        except Media.DoesNotExist:
+            return Response({'error': _('Media not found')}, status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = MediaModerationSerializer(media)
+        return Response(serializer.data)
+
+    def patch(self, request, media_id):
+        """Approve or reject single media"""
+        try:
+            media = Media.objects.get(id=media_id)
+        except Media.DoesNotExist:
+            return Response({'error': _('Media not found')}, status=status.HTTP_404_NOT_FOUND)
+
+        status_update = request.data.get('status')
+        rejection_reason = request.data.get('rejection_reason', '')
+
+        if status_update not in ['approved', 'rejected']:
+            return Response({'error': _('Invalid status. Must be "approved" or "rejected"')}, 
+                          status=status.HTTP_400_BAD_REQUEST)
+
+        media.status = status_update
+        media.rejection_reason = rejection_reason
+        media.reviewed_by = request.user
+        media.reviewed_at = timezone.now()
+        media.save()
+
+        return Response({
+            'message': _('Media {status} successfully').format(status=status_update),
+            'media': MediaModerationSerializer(media).data
+        })
+
+
 class AdminDashboardView(APIView):
     """Admin dashboard with statistics"""
     permission_classes = [IsAdminUser]
