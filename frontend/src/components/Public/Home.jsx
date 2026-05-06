@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import coupleImage from '../static/images/SangHeeAndFabio.png';
+import coupleImage from '../../static/images/SangHeeAndFabio.png';
 
 const Home = () => {
   return (
