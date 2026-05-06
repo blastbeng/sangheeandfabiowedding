@@ -113,7 +113,9 @@ const resources = {
       "loading_memories": "Caricamento dei ricordi preziosi...",
       "no_photos_yet": "Nessuna foto ancora!",
       "be_first_to_share": "Sii il primo a condividere un ricordo 💕",
-      "beautiful_moment": "✨ Un momento bellissimo"
+      "beautiful_moment": "✨ Un momento bellissimo",
+      "Facebook": "Facebook 📘",
+      "Instagram": "Instagram 📷"
     }
   },
   ko: {
@@ -227,7 +229,9 @@ const resources = {
       "loading_memories": "소중한 추억을 로딩 중...",
       "no_photos_yet": "아직 사진이 없습니다!",
       "be_first_to_share": "첫 번째로 추억을 공유해주세요 💕",
-      "beautiful_moment": "✨ 아름다운 순간"
+      "beautiful_moment": "✨ 아름다운 순간",
+      "Facebook": "Facebook 📘",
+      "Instagram": "Instagram 📷"
     }
   },
   en: {
@@ -341,7 +345,9 @@ const resources = {
       "loading_memories": "Loading precious memories...",
       "no_photos_yet": "No photos yet!",
       "be_first_to_share": "Be the first to share a memory 💕",
-      "beautiful_moment": "✨ A beautiful moment"
+      "beautiful_moment": "✨ A beautiful moment",
+      "Facebook": "Facebook 📘",
+      "Instagram": "Instagram 📷"
     }
   }
 };

@@ -55,17 +55,13 @@ class LoginView(APIView):
     permission_classes = [AllowAny]
     
     def post(self, request):
-        from django.contrib.auth import authenticate
-        email = request.data.get('email')
+        username = request.data.get('username')
         password = request.data.get('password')
         
-        User = get_user_model()
-        try:
-            user = User.objects.get(email=email)
-        except User.DoesNotExist:
-            return Response({'error': _('Invalid credentials')}, status=status.HTTP_400_BAD_REQUEST)
+        if not username or not password:
+            return Response({'error': _('Username and password are required')}, status=status.HTTP_400_BAD_REQUEST)
         
-        user = authenticate(username=user.username, password=password)
+        user = authenticate(username=username, password=password)
         if user is None:
             return Response({'error': _('Invalid credentials')}, status=status.HTTP_400_BAD_REQUEST)
         
@@ -132,20 +128,88 @@ class MyUploadsView(APIView):
 
 
 class SocialLoginView(APIView):
-    """Social login view"""
+    """Social login view for Google, Facebook, and Instagram"""
     permission_classes = [AllowAny]
     
     def post(self, request):
         provider = request.data.get('provider')
-        token = request.data.get('token')
+        access_token = request.data.get('access_token')
         
-        if not provider or not token:
-            return Response({'error': _('Provider and token required')}, status=status.HTTP_400_BAD_REQUEST)
+        if not provider or not access_token:
+            return Response({'error': _('Provider and access token required')}, status=status.HTTP_400_BAD_REQUEST)
         
-        # Validate social token and get/create user
-        # Implementation depends on specific social provider
-        # For now, return placeholder
-        return Response({'error': _('Social login not fully implemented')}, status=status.HTTP_501_NOT_IMPLEMENTED)
+        User = get_user_model()
+        user_data = None
+        
+        try:
+            if provider == 'google':
+                # Google OAuth validation
+                response = requests.get(
+                    'https://www.googleapis.com/oauth2/v3/userinfo',
+                    headers={'Authorization': f'Bearer {access_token}'}
+                )
+                if response.status_code != 200:
+                    return Response({'error': _('Invalid Google token')}, status=status.HTTP_400_BAD_REQUEST)
+                user_data = response.json()
+                email = user_data.get('email')
+                first_name = user_data.get('given_name', '')
+                last_name = user_data.get('family_name', '')
+                username = email.split('@')[0]
+                
+            elif provider == 'facebook':
+                # Facebook OAuth validation
+                response = requests.get(
+                    'https://graph.facebook.com/me',
+                    params={'fields': 'id,name,email,first_name,last_name', 'access_token': access_token}
+                )
+                if response.status_code != 200:
+                    return Response({'error': _('Invalid Facebook token')}, status=status.HTTP_400_BAD_REQUEST)
+                user_data = response.json()
+                email = user_data.get('email', f'{user_data.get("id")}@facebook.com')
+                first_name = user_data.get('first_name', '')
+                last_name = user_data.get('last_name', '')
+                username = f'fb_{user_data.get("id")}'
+                
+            elif provider == 'instagram':
+                # Instagram uses Facebook OAuth (same provider)
+                response = requests.get(
+                    'https://graph.facebook.com/me',
+                    params={'fields': 'id,name,email,first_name,last_name', 'access_token': access_token}
+                )
+                if response.status_code != 200:
+                    return Response({'error': _('Invalid Instagram token')}, status=status.HTTP_400_BAD_REQUEST)
+                user_data = response.json()
+                email = user_data.get('email', f'{user_data.get("id")}@instagram.com')
+                first_name = user_data.get('first_name', '')
+                last_name = user_data.get('last_name', '')
+                username = f'ig_{user_data.get("id")}'
+                
+            else:
+                return Response({'error': _('Unsupported provider')}, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Get or create user
+            try:
+                user = User.objects.get(email=email)
+            except User.DoesNotExist:
+                user = User.objects.create_user(
+                    username=username,
+                    email=email,
+                    first_name=first_name,
+                    last_name=last_name,
+                    password=User.objects.make_random_password(32)
+                )
+            
+            # Generate JWT tokens
+            refresh = RefreshToken.for_user(user)
+            
+            return Response({
+                'user': CustomUserSerializer(user).data,
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+            })
+            
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class NextcloudClient:
@@ -255,8 +319,6 @@ class MediaUploadView(APIView):
         if not files:
             return Response({'error': _('No files provided')}, status=status.HTTP_400_BAD_REQUEST)
 
-        import base64
-        
         # Prepare file data for Celery task
         file_data_list = []
         for index, file in enumerate(files):

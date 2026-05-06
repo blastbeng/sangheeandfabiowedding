@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
     'allauth.socialaccount.providers.facebook',
+    'allauth.socialaccount.providers.instagram',
 ]
 
 MIDDLEWARE = [
@@ -186,6 +187,14 @@ SOCIALACCOUNT_PROVIDERS = {
             'key': ''
         },
         'SCOPE': ['email', 'public_profile'],
+    },
+    'instagram': {
+        'APP': {
+            'client_id': os.environ.get('INSTAGRAM_APP_ID', ''),
+            'secret': os.environ.get('INSTAGRAM_APP_SECRET', ''),
+            'key': ''
+        },
+        'SCOPE': ['instagram_basic', 'user_profile'],
     }
 }
 

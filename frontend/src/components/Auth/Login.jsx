@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 const Login = ({ setIsAuthenticated, setIsAdmin }) => {
   const { t } = useTranslation();
   const [formData, setFormData] = useState({
-    email: '',
+    username: '',
     password: ''
   });
   const [error, setError] = useState('');
@@ -79,6 +79,14 @@ const Login = ({ setIsAuthenticated, setIsAdmin }) => {
     setError(t('Google login failed'));
   };
 
+  const handleFacebookLogin = async () => {
+    window.location.href = `${import.meta.env.VITE_API_URL}/api/auth/social/facebook/`;
+  };
+
+  const handleInstagramLogin = async () => {
+    window.location.href = `${import.meta.env.VITE_API_URL}/api/auth/social/instagram/`;
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
       <div className="wedding-card p-10 w-full max-w-md ribbon">
@@ -93,17 +101,17 @@ const Login = ({ setIsAuthenticated, setIsAdmin }) => {
         )}
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label htmlFor="email" className="block text-gray-700 text-sm font-bold mb-2">
-              📧 {t('Email')}
+            <label htmlFor="username" className="block text-gray-700 text-sm font-bold mb-2">
+              👤 {t('Username')}
             </label>
             <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
+              type="text"
+              id="username"
+              name="username"
+              value={formData.username}
               onChange={handleChange}
               className="wedding-input w-full"
-              placeholder="your@lovelyemail.com"
+              placeholder="yourusername"
               required
             />
           </div>
@@ -128,6 +136,37 @@ const Login = ({ setIsAuthenticated, setIsAdmin }) => {
         </form>
 
         <div className="floral-divider">✿ ─────── ✿ ─────── ✿</div>
+
+        <div className="mt-4">
+          <p className="text-gray-600 text-center mb-3">{t('Or login with')}</p>
+          <div className="flex gap-3 justify-center">
+            {/* Google */}
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={handleGoogleError}
+              text="signin_with"
+              theme="filled_blue"
+              size="large"
+              width="200"
+            />
+            {/* Facebook */}
+            <button
+              onClick={handleFacebookLogin}
+              className="wedding-btn bg-blue-600 hover:bg-blue-700 px-4 py-2 text-sm"
+              style={{ background: '#1877F2' }}
+            >
+              📘 Facebook
+            </button>
+            {/* Instagram */}
+            <button
+              onClick={handleInstagramLogin}
+              className="wedding-btn px-4 py-2 text-sm"
+              style={{ background: 'linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)' }}
+            >
+              📷 Instagram
+            </button>
+          </div>
+        </div>
 
         <div className="mt-4 text-center">
           <p className="text-gray-600">
