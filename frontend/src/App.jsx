@@ -51,23 +51,24 @@ function App() {
       <div className="min-h-screen bg-gray-100 flex flex-col">
         <header className="wedding-header text-white p-4">
           <div className="max-w-6xl mx-auto flex justify-between items-center">
-            <h1 className="text-2xl font-bold wedding-title">Wedding Media</h1>
-            <nav className="flex gap-4">
-              <a href="/" className="hover:underline">Gallery</a>
+            <h1 className="text-3xl wedding-title">💕 Our Special Day 💕</h1>
+            <nav className="flex gap-4 items-center">
+              <a href="/" className="hover:text-yellow-200 transition font-medium">🏠 Home</a>
+              <a href="/gallery" className="hover:text-yellow-200 transition font-medium">📸 Gallery</a>
               {isAuthenticated ? (
                 <>
-                  <a href="/upload" className="hover:underline">Upload</a>
-                  <a href="/my-uploads" className="hover:underline">My Uploads</a>
-                  <a href="/profile" className="hover:underline">Profile</a>
+                  <a href="/upload" className="hover:text-yellow-200 transition font-medium">📤 Share Memory</a>
+                  <a href="/my-uploads" className="hover:text-yellow-200 transition font-medium">📁 My Memories</a>
+                  <a href="/profile" className="hover:text-yellow-200 transition font-medium">👤 Profile</a>
                   {isAdmin && (
-                    <a href="/admin/moderation" className="hover:underline">Moderation</a>
+                    <a href="/admin/moderation" className="hover:text-yellow-200 transition font-medium">⭐ Moderate</a>
                   )}
-                  <button onClick={handleLogout} className="hover:underline">Logout</button>
+                  <button onClick={handleLogout} className="wedding-btn text-sm px-4 py-2">💔 Logout</button>
                 </>
               ) : (
                 <>
-                  <a href="/login" className="hover:underline">Login</a>
-                  <a href="/register" className="hover:underline">Register</a>
+                  <a href="/login" className="wedding-btn text-sm px-4 py-2">💝 Login</a>
+                  <a href="/register" className="wedding-btn text-sm px-4 py-2">✨ Join Us</a>
                 </>
               )}
             </nav>
@@ -131,8 +132,10 @@ function App() {
           </div>
         </main>
 
-        <footer className="bg-gray-800 text-white text-center p-4">
-          <p>&copy; 2024 Wedding Media Project</p>
+        <footer className="bg-gradient-to-r from-pink-900 via-purple-900 to-pink-900 text-white text-center p-6">
+          <p className="wedding-title text-2xl mb-2">🌸 Made with Love 🌸</p>
+          <p className="text-sm opacity-80">Thank you for being part of our special journey 💕</p>
+          <p className="text-xs opacity-60 mt-2">&copy; 2024 Wedding Media Project</p>
         </footer>
       </div>
     </Router>

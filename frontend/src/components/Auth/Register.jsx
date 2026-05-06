@@ -99,6 +99,22 @@ const Register = () => {
 
         <div className="floral-divider">✿ ─────── ✿ ─────── ✿</div>
 
+        <div className="mb-4">
+          <p className="text-center text-gray-500 mb-3 text-sm">Or continue with</p>
+          <div className="flex justify-center">
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={handleGoogleError}
+              useOneTap
+              theme="filled_black"
+              size="large"
+              text="continue_with"
+            />
+          </div>
+        </div>
+
+        <div className="floral-divider">✿ ─────── ✿ ─────── ✿</div>
+
         <div className="mt-4 text-center">
           <p className="text-gray-600">
             Already have an account?{' '}

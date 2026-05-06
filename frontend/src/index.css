@@ -134,3 +134,71 @@ h1, h2, h3, h4 {
   background: linear-gradient(135deg, #FFB4B4 0%, #FF9999 100%);
   color: #8B0000;
 }
+
+/* Floating hearts animation */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+.floating-heart {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Sparkle effect */
+@keyframes sparkle {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.2); }
+}
+
+.sparkle {
+  animation: sparkle 2s ease-in-out infinite;
+}
+
+/* Gradient text for special headings */
+.wedding-gradient-text {
+  background: linear-gradient(135deg, var(--wedding-rose) 0%, var(--wedding-gold) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Soft glow effect for cards */
+.wedding-glow {
+  box-shadow: 0 0 30px rgba(212, 175, 55, 0.4);
+}
+
+/* Ribbon decoration */
+.ribbon {
+  position: relative;
+}
+
+.ribbon::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 20px;
+  background: linear-gradient(135deg, var(--wedding-rose) 0%, var(--wedding-gold) 100%);
+  border-radius: 10px;
+}
+
+/* Photo frame effect */
+.photo-frame {
+  border: 4px solid var(--wedding-gold);
+  padding: 8px;
+  background: white;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* Button pulse effect */
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3); }
+  50% { box-shadow: 0 4px 25px rgba(212, 175, 55, 0.6); }
+}
+
+.wedding-btn {
+  animation: pulse 2s ease-in-out infinite;
+}

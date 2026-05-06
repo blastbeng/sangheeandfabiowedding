@@ -87,7 +87,7 @@ const Login = ({ setIsAuthenticated, setIsAdmin }) => {
         {error && <div className="bg-red-50 border-2 border-red-300 text-red-700 px-4 py-3 rounded-xl mb-4 text-center">💔 {error}</div>}
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label htmlFor="email" className="block text-gray-700 text-sm font-bold mb-2">{t('Email')}</label>
+            <label htmlFor="email" className="block text-gray-700 text-sm font-bold mb-2">📧 {t('Email')}</label>
             <input
               type="email"
               id="email"
@@ -95,11 +95,12 @@ const Login = ({ setIsAuthenticated, setIsAdmin }) => {
               value={formData.email}
               onChange={handleChange}
               className="wedding-input w-full"
+              placeholder="your@email.com"
               required
             />
           </div>
           <div className="mb-6">
-            <label htmlFor="password" className="block text-gray-700 text-sm font-bold mb-2">{t('Password')}</label>
+            <label htmlFor="password" className="block text-gray-700 text-sm font-bold mb-2">🔐 {t('Password')}</label>
             <input
               type="password"
               id="password"
@@ -107,12 +108,15 @@ const Login = ({ setIsAuthenticated, setIsAdmin }) => {
               value={formData.password}
               onChange={handleChange}
               className="wedding-input w-full"
+              placeholder="••••••••"
               required
             />
           </div>
-          <button type="submit" className="wedding-btn w-full mb-4">{t('Login')}</button>
+          <button type="submit" className="wedding-btn w-full mb-4">💝 {t('Login')}</button>
         </form>
+
         <div className="floral-divider">✿ ─────── ✿ ─────── ✿</div>
+
         <div className="mt-4 text-center">
           <p className="text-gray-600">
             Don't have an account? <Link to="/register" className="text-pink-600 hover:text-pink-800 font-bold underline">{t('Register')}</Link>

@@ -56,9 +56,10 @@ const MyUploads = () => {
 
         {uploads.length === 0 ? (
           <div className="text-center py-10">
-            <span className="text-6xl">📸</span>
+            <span className="text-6xl floating-heart inline-block">📸</span>
             <p className="mt-4 text-gray-600 text-lg">No uploads yet!</p>
             <p className="text-gray-500 text-sm">Share your first memory with us 🌸</p>
+            <div className="floral-divider">✿ ─────── ✿ ─────── ✿</div>
             <Link to="/upload" className="wedding-btn inline-block mt-4">✨ Upload Now</Link>
           </div>
         ) : (

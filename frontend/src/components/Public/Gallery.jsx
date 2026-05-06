@@ -35,6 +35,7 @@ const Gallery = () => {
       <div className="text-center py-20">
         <span className="text-5xl heart-decoration inline-block">💝</span>
         <p className="mt-4 text-gray-600 text-lg">Loading precious memories...</p>
+        <div className="floral-divider mt-4">✿ ─────── ✿ ─────── ✿</div>
       </div>
     );
   }
@@ -49,9 +50,10 @@ const Gallery = () => {
 
       {media.length === 0 ? (
         <div className="text-center py-20 wedding-card">
-          <span className="text-6xl">🌸</span>
+          <span className="text-6xl floating-heart inline-block">🌸</span>
           <p className="mt-4 text-gray-600 text-lg">No photos yet!</p>
-          <p className="text-gray-500 text-sm">Be the first to share a memory</p>
+          <p className="text-gray-500 text-sm">Be the first to share a memory 💕</p>
+          <div className="floral-divider">✿ ─────── ✿ ─────── ✿</div>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">

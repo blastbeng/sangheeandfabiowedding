@@ -128,105 +128,127 @@ const Profile = () => {
   if (!user) return <div>Loading...</div>;
 
   return (
-    <div className="max-w-2xl mx-auto bg-white p-6 rounded shadow">
-      <h2 className="text-2xl font-bold mb-6">{t('Profile')}</h2>
+    <div className="max-w-2xl mx-auto p-4">
+      <div className="wedding-card p-8">
+        <h2 className="text-3xl wedding-title text-center mb-2">👤 Your Profile</h2>
+        <p className="text-center text-gray-600 mb-6 italic">Manage your account settings 💕</p>
 
-      {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">{error}</div>}
-      {success && <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">{success}</div>}
+        {error && (
+          <div className="bg-red-50 border-2 border-red-300 text-red-700 px-4 py-3 rounded-xl mb-4">
+            💔 {error}
+          </div>
+        )}
+        {success && (
+          <div className="bg-green-50 border-2 border-green-300 text-green-700 px-4 py-3 rounded-xl mb-4">
+            ✅ {success}
+          </div>
+        )}
 
-      <form onSubmit={handleSubmit} className="mb-8">
-        <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2">{t('Username')}</label>
-          <input
-            type="text"
-            name="username"
-            value={formData.username}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-        <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2">{t('First Name')}</label>
-          <input
-            type="text"
-            name="first_name"
-            value={formData.first_name}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-        <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2">{t('Last Name')}</label>
-          <input
-            type="text"
-            name="last_name"
-            value={formData.last_name}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-        <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2">{t('Email')}</label>
-          <input
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-        <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">{t('Update Profile')}</button>
-      </form>
+        <form onSubmit={handleSubmit} className="mb-8">
+          <h3 className="text-xl font-bold mb-4 text-pink-600">📝 Personal Information</h3>
+          <div className="mb-4">
+            <label className="block text-gray-700 text-sm font-bold mb-2">{t('Username')}</label>
+            <input
+              type="text"
+              name="username"
+              value={formData.username}
+              onChange={handleChange}
+              className="wedding-input w-full"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div>
+              <label className="block text-gray-700 text-sm font-bold mb-2">{t('First Name')}</label>
+              <input
+                type="text"
+                name="first_name"
+                value={formData.first_name}
+                onChange={handleChange}
+                className="wedding-input w-full"
+              />
+            </div>
+            <div>
+              <label className="block text-gray-700 text-sm font-bold mb-2">{t('Last Name')}</label>
+              <input
+                type="text"
+                name="last_name"
+                value={formData.last_name}
+                onChange={handleChange}
+                className="wedding-input w-full"
+              />
+            </div>
+          </div>
+          <div className="mb-4">
+            <label className="block text-gray-700 text-sm font-bold mb-2">{t('Email')}</label>
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              className="wedding-input w-full"
+            />
+          </div>
+          <button type="submit" className="wedding-btn">
+            💾 Save Changes
+          </button>
+        </form>
 
-      <h3 className="text-xl font-bold mb-4">{t('Change Password')}</h3>
-      <form onSubmit={handlePasswordSubmit}>
-        <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2">{t('Current Password')}</label>
-          <input
-            type="password"
-            name="current_password"
-            value={passwordData.current_password}
-            onChange={handlePasswordChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-        <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2">{t('New Password')}</label>
-          <input
-            type="password"
-            name="new_password"
-            value={passwordData.new_password}
-            onChange={handlePasswordChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-        <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2">{t('Confirm New Password')}</label>
-          <input
-            type="password"
-            name="new_password_confirm"
-            value={passwordData.new_password_confirm}
-            onChange={handlePasswordChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-        <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded">{t('Change Password')}</button>
-      </form>
+        <div className="floral-divider">✿ ─────── ✿ ─────── ✿</div>
 
-      <div className="mt-8">
-        <h3 className="text-xl font-bold mb-4">{t('Language')}</h3>
-        <select
-          value={i18n.language}
-          onChange={(e) => {
-            i18n.changeLanguage(e.target.value);
-            localStorage.setItem('language', e.target.value);
-          }}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md"
-        >
-          <option value="it">{t('Italiano')}</option>
-          <option value="ko">{t('한국어')}</option>
-          <option value="en">{t('English')}</option>
-        </select>
+        <h3 className="text-xl font-bold mb-4 text-pink-600">🔐 Change Password</h3>
+        <form onSubmit={handlePasswordSubmit} className="mb-8">
+          <div className="mb-4">
+            <label className="block text-gray-700 text-sm font-bold mb-2">{t('Current Password')}</label>
+            <input
+              type="password"
+              name="current_password"
+              value={passwordData.current_password}
+              onChange={handlePasswordChange}
+              className="wedding-input w-full"
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block text-gray-700 text-sm font-bold mb-2">{t('New Password')}</label>
+            <input
+              type="password"
+              name="new_password"
+              value={passwordData.new_password}
+              onChange={handlePasswordChange}
+              className="wedding-input w-full"
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block text-gray-700 text-sm font-bold mb-2">{t('Confirm New Password')}</label>
+            <input
+              type="password"
+              name="new_password_confirm"
+              value={passwordData.new_password_confirm}
+              onChange={handlePasswordChange}
+              className="wedding-input w-full"
+            />
+          </div>
+          <button type="submit" className="wedding-btn">
+            🔑 Update Password
+          </button>
+        </form>
+
+        <div className="floral-divider">✿ ─────── ✿ ─────── ✿</div>
+
+        <div className="mt-8">
+          <h3 className="text-xl font-bold mb-4 text-pink-600">🌍 Language / Lingua</h3>
+          <select
+            value={i18n.language}
+            onChange={(e) => {
+              i18n.changeLanguage(e.target.value);
+              localStorage.setItem('language', e.target.value);
+            }}
+            className="wedding-input w-full"
+          >
+            <option value="it">🇮🇹 {t('Italiano')}</option>
+            <option value="ko">🇰🇷 {t('한국어')}</option>
+            <option value="en">🇬🇧 {t('English')}</option>
+          </select>
+        </div>
       </div>
     </div>
   );
