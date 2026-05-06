@@ -27,7 +27,7 @@ const ProtectedRoute = ({ children, isAdminOnly = false, isAuthenticated, isAdmi
 };
 
 function App() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -59,7 +59,7 @@ function App() {
         <header className="wedding-header text-white p-4">
           <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
             <h1 className="text-2xl md:text-3xl wedding-title text-center md:text-left">
-              💕 Our Forever Begins 💕
+              💕 {t('header_title')} 💕
             </h1>
             <nav className="flex flex-wrap gap-2 md:gap-4 items-center justify-center">
               <LanguageSwitcher />
@@ -170,13 +170,13 @@ function App() {
           </div>
         </main>
 
-        <footer className="bg-gradient-to-r from-pink-900 via-purple-900 to-pink-900 text-white text-center p-6">
-          <p className="wedding-title text-2xl mb-2">🌸 Crafted with Endless Love 🌸</p>
+        <footer className="bg-gradient-to-r from-wedding-navy via-wedding-azure to-wedding-navy text-white text-center p-6">
+          <p className="wedding-title text-2xl mb-2">🌸 {t('footer_crafted')} 🌸</p>
           <p className="text-sm opacity-80">
-            Thank you for being part of our beautiful journey together 💕
+            {t('footer_thank_you')}
           </p>
           <p className="text-xs opacity-60 mt-2">
-            © 2024 Our Wedding Memory Project - Forever & Always
+            © 2026 {t('footer_project')} - {t('footer_forever')}
           </p>
         </footer>
       </div>

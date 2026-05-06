@@ -102,7 +102,12 @@ const resources = {
       "step4_title": "Condividi",
       "step4_desc": "Rivivi i momenti",
       "join_us_title": "Unisciti a Noi",
-      "join_us_message": "Aiutaci a completare il nostro album di matrimonio con i tuoi scatti più belli."
+      "join_us_message": "Aiutaci a completare il nostro album di matrimonio con i tuoi scatti più belli.",
+      "header_title": "Il Nostro Per Sempre Inizia",
+      "footer_crafted": "Realizzato con Amore Infinito",
+      "footer_thank_you": "Grazie per far parte del nostro bellissimo viaggio insieme 💕",
+      "footer_project": "Progetto Memoria del Nostro Matrimonio",
+      "footer_forever": "Per Sempre e Sempre"
     }
   },
   ko: {
@@ -205,7 +210,12 @@ const resources = {
       "step4_title": "공유",
       "step4_desc": "추억 되새기기",
       "join_us_title": "함께하세요",
-      "join_us_message": "여러분의 가장 아름다운 사진으로 저희 결혼 앨범을 완성해주세요."
+      "join_us_message": "여러분의 가장 아름다운 사진으로 저희 결혼 앨범을 완성해주세요.",
+      "header_title": "우리의 영원함이 시작됩니다",
+      "footer_crafted": "끝없는 사랑으로 만들었습니다",
+      "footer_thank_you": "저희의 아름다운 여정에 함께해 주셔서 감사합니다 💕",
+      "footer_project": "우리 결혼 메모리 프로젝트",
+      "footer_forever": "영원히 그리고 항상"
     }
   },
   en: {
@@ -308,7 +318,12 @@ const resources = {
       "step4_title": "Share",
       "step4_desc": "Relive the moments",
       "join_us_title": "Join Us",
-      "join_us_message": "Help us complete our wedding album with your most beautiful shots."
+      "join_us_message": "Help us complete our wedding album with your most beautiful shots.",
+      "header_title": "Our Forever Begins",
+      "footer_crafted": "Crafted with Endless Love",
+      "footer_thank_you": "Thank you for being part of our beautiful journey together 💕",
+      "footer_project": "Our Wedding Memory Project",
+      "footer_forever": "Forever & Always"
     }
   }
 };

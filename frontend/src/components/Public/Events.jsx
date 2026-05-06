@@ -44,7 +44,7 @@ const Events = () => {
       details: [
         { label: { it: 'Luogo', ko: '장소', en: 'Venue' }, value: 'Sala Consiglio, Comune di Costigliore d\'Asti' },
         { label: { it: 'Indirizzo', ko: '주소', en: 'Address' }, value: 'Piazza Roma, Costigliore d\'Asti, AT, Italia' },
-        { label: { it: 'Data', ko: '날짜', en: 'Date' }, value: '2024' },
+        { label: { it: 'Data', ko: '날짜', en: 'Date' }, value: '16/05/2026' },
       ],
       color: 'from-pink-400 to-rose-400',
       psdFile: 'Cerimonia presso in Sala Consglio del Comune di Costigliore d\'Asti.psd'
@@ -94,7 +94,7 @@ const Events = () => {
         </p>
         <p className="text-lg text-gray-700 max-w-3xl mx-auto leading-relaxed mb-8">
           {currentLang === 'it' && "Siamo così entusiasti di condividere questi momenti speciali con voi! Ecco tutti i dettagli su dove e quando celebreremo il nostro amore."}
-          {currentLang === 'ko' && "이 특별한 순간을 여러분과 함께하게 되어 정말 설레습니다! 저희의 사랑을 축하할 장소와 시간에 대한 모든 세부 사항을 알려드립니다."}
+          {currentLang === 'ko' && "이 특별한 순간을 여러분과 함께하게 되어 정말 설렘습니다! 저희의 사랑을 축하할 장소와 시간에 대한 모든 세부 사항을 알려드립니다."}
           {currentLang === 'en' && "We're so excited to share these special moments with you! Here are all the details on where and when we'll celebrate our love."}
         </p>
         <div className="bg-gradient-to-r from-pink-50 to-yellow-50 rounded-xl p-6 mt-6 border-2 border-pink-200">
