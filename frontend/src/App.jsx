@@ -57,29 +57,31 @@ function App() {
     <Router>
       <div className="min-h-screen bg-gray-100 flex flex-col">
         <header className="wedding-header text-white p-4">
-          <div className="max-w-6xl mx-auto flex justify-between items-center">
-            <h1 className="text-3xl wedding-title">💕 Our Forever Begins 💕</h1>
-            <nav className="flex gap-4 items-center">
+          <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <h1 className="text-2xl md:text-3xl wedding-title text-center md:text-left">
+              💕 Our Forever Begins 💕
+            </h1>
+            <nav className="flex flex-wrap gap-2 md:gap-4 items-center justify-center">
               <LanguageSwitcher />
-              <a href="/" className="hover:text-yellow-200 transition font-medium">{t('Home')}</a>
-              <a href="/events" className="hover:text-yellow-200 transition font-medium">📅 Events</a>
-              <a href="/gallery" className="hover:text-yellow-200 transition font-medium">{t('Gallery')}</a>
+              <a href="/" className="hover:text-yellow-200 transition font-medium text-sm md:text-base whitespace-nowrap">{t('Home')}</a>
+              <a href="/events" className="hover:text-yellow-200 transition font-medium text-sm md:text-base whitespace-nowrap">📅 {t('Event')}</a>
+              <a href="/gallery" className="hover:text-yellow-200 transition font-medium text-sm md:text-base whitespace-nowrap">{t('Gallery')}</a>
               {isAuthenticated ? (
                 <>
-                  <a href="/upload" className="hover:text-yellow-200 transition font-medium">{t('Share')}</a>
-                  <a href="/my-uploads" className="hover:text-yellow-200 transition font-medium">{t('My Uploads')}</a>
-                  <a href="/profile" className="hover:text-yellow-200 transition font-medium">{t('Profile')}</a>
+                  <a href="/upload" className="hover:text-yellow-200 transition font-medium text-sm md:text-base whitespace-nowrap">{t('Share')}</a>
+                  <a href="/my-uploads" className="hover:text-yellow-200 transition font-medium text-sm md:text-base whitespace-nowrap">{t('My Uploads')}</a>
+                  <a href="/profile" className="hover:text-yellow-200 transition font-medium text-sm md:text-base whitespace-nowrap">{t('Profile')}</a>
                   {isAdmin && (
-                    <a href="/admin" className="hover:text-yellow-200 transition font-medium">⭐ Admin Panel</a>
+                    <a href="/admin" className="hover:text-yellow-200 transition font-medium text-sm md:text-base whitespace-nowrap">⭐ Admin</a>
                   )}
-                  <button onClick={handleLogout} className="wedding-btn text-sm px-4 py-2">
+                  <button onClick={handleLogout} className="wedding-btn text-xs md:text-sm px-3 md:px-4 py-2">
                     {t('Logout')}
                   </button>
                 </>
               ) : (
                 <>
-                  <a href="/login" className="wedding-btn text-sm px-4 py-2">{t('Sign In')}</a>
-                  <a href="/register" className="wedding-btn text-sm px-4 py-2">{t('Join Us')}</a>
+                  <a href="/login" className="wedding-btn text-xs md:text-sm px-3 md:px-4 py-2">{t('Sign In')}</a>
+                  <a href="/register" className="wedding-btn text-xs md:text-sm px-3 md:px-4 py-2">{t('Join Us')}</a>
                 </>
               )}
             </nav>
