@@ -4,7 +4,7 @@ services:
   db:
     image: postgres:15-alpine
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - ./postgres_data:/var/lib/postgresql/data
     environment:
       - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_USER=${POSTGRES_USER}
@@ -13,7 +13,7 @@ services:
   redis:
     image: redis:7-alpine
     volumes:
-      - redis_data:/data
+      - ./redis_data:/data
     ports:
       - "6379:6379"
     command: redis-server --maxmemory 1gb --maxmemory-policy allkeys-lru
@@ -52,7 +52,3 @@ services:
       - VITE_API_URL=${VITE_API_URL}
     depends_on:
       - web
-
-volumes:
-  postgres_data:
-  redis_data:
