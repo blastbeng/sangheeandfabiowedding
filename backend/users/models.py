@@ -55,7 +55,6 @@ class Media(models.Model):
     # Cloud storage fields
     nextcloud_file_id = models.CharField(max_length=255, null=True, blank=True)
     google_drive_file_id = models.CharField(max_length=255, null=True, blank=True)
-    cache_path = models.CharField(max_length=500, null=True, blank=True)
     view_count = models.IntegerField(default=0)
 
     def __str__(self):

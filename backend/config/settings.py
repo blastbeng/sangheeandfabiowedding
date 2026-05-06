@@ -181,11 +181,20 @@ NEXTCLOUD_USERNAME = os.environ.get('NEXTCLOUD_USERNAME', '')
 NEXTCLOUD_PASSWORD = os.environ.get('NEXTCLOUD_PASSWORD', '')
 NEXTCLOUD_FOLDER = os.environ.get('NEXTCLOUD_FOLDER', '/uploads')
 
+# Google Drive Configuration
 GOOGLE_DRIVE_CLIENT_ID = os.environ.get('GOOGLE_DRIVE_CLIENT_ID', '')
 GOOGLE_DRIVE_CLIENT_SECRET = os.environ.get('GOOGLE_DRIVE_CLIENT_SECRET', '')
 GOOGLE_DRIVE_TOKEN = os.environ.get('GOOGLE_DRIVE_TOKEN', '')
 GOOGLE_DRIVE_FOLDER_ID = os.environ.get('GOOGLE_DRIVE_FOLDER_ID', '')
 
-# Cache Configuration
-CACHE_ROOT = os.environ.get('CACHE_ROOT', '/app/cache')
-CACHE_MAX_SIZE_GB = int(os.environ.get('CACHE_MAX_SIZE_GB', 1))
+# Redis Configuration
+REDIS_HOST = os.environ.get('REDIS_HOST', 'localhost')
+REDIS_PORT = int(os.environ.get('REDIS_PORT', 6379))
+
+# Django Cache Backend (for sessions and other caching)
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/1",
+    }
+}

@@ -12,6 +12,7 @@ from django.conf import settings
 import os
 import hashlib
 import requests
+import redis
 from io import BytesIO
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
@@ -144,54 +145,48 @@ class GoogleDriveClient:
 
 
 class CacheManager:
-    """Local cache manager with size limit"""
-
+    """Redis-based cache manager with 1GB limit"""
+    
     def __init__(self):
-        self.cache_root = settings.CACHE_ROOT
-        self.max_size = settings.CACHE_MAX_SIZE_GB * 1024 * 1024 * 1024
-        os.makedirs(self.cache_root, exist_ok=True)
-
-    def _get_cache_path(self, media_id, extension):
-        return os.path.join(self.cache_root, f"{media_id}{extension}")
-
-    def _get_total_cache_size(self):
-        total = 0
-        for dirpath, dirnames, filenames in os.walk(self.cache_root):
-            for f in filenames:
-                fp = os.path.join(dirpath, f)
-                total += os.path.getsize(fp)
-        return total
-
-    def _evict_oldest(self, needed_size):
-        while self._get_total_cache_size() + needed_size > self.max_size:
-            oldest = None
-            oldest_time = float('inf')
-            for dirpath, dirnames, filenames in os.walk(self.cache_root):
-                for f in filenames:
-                    fp = os.path.join(dirpath, f)
-                    mtime = os.path.getmtime(fp)
-                    if mtime < oldest_time:
-                        oldest_time = mtime
-                        oldest = fp
-            if oldest:
-                os.remove(oldest)
-            else:
-                break
-
+        self.redis_client = redis.Redis(
+            host=os.getenv('REDIS_HOST', 'localhost'),
+            port=int(os.getenv('REDIS_PORT', 6379)),
+            decode_responses=False
+        )
+        self.cache_prefix = 'media_cache:'
+        
+    def _get_cache_key(self, media_id, extension):
+        return f"{self.cache_prefix}{media_id}{extension}"
+    
     def store(self, media_id, content, extension):
-        cache_path = self._get_cache_path(media_id, extension)
-        self._evict_oldest(len(content))
-        with open(cache_path, 'wb') as f:
-            f.write(content)
-        return cache_path
-
+        """Store file in Redis cache"""
+        cache_key = self._get_cache_key(media_id, extension)
+        try:
+            self.redis_client.set(cache_key, content)
+            return True
+        except Exception as e:
+            print(f"Redis cache store error: {e}")
+            return False
+    
     def get(self, media_id, extension):
-        cache_path = self._get_cache_path(media_id, extension)
-        if os.path.exists(cache_path):
-            os.utime(cache_path, None)
-            with open(cache_path, 'rb') as f:
-                return f.read()
-        return None
+        """Retrieve file from Redis cache"""
+        cache_key = self._get_cache_key(media_id, extension)
+        try:
+            content = self.redis_client.get(cache_key)
+            return content if content else None
+        except Exception as e:
+            print(f"Redis cache get error: {e}")
+            return None
+    
+    def delete(self, media_id, extension):
+        """Delete file from Redis cache"""
+        cache_key = self._get_cache_key(media_id, extension)
+        try:
+            self.redis_client.delete(cache_key)
+            return True
+        except Exception as e:
+            print(f"Redis cache delete error: {e}")
+            return False
 
 
 class RegisterView(APIView):
@@ -308,9 +303,6 @@ class MediaUploadView(APIView):
                     continue
 
                 # Both uploads successful - store in cache and create record
-                cache_key = f"{request.user.id}_{hashlib.md5(file_content).hexdigest()[:16]}"
-                cache_path = cache_manager.store(cache_key, file_content, extension)
-
                 media = Media.objects.create(
                     user=request.user,
                     media_type=media_type,
@@ -318,7 +310,6 @@ class MediaUploadView(APIView):
                     status='pending',
                     nextcloud_file_id=nextcloud_id,
                     google_drive_file_id=google_id,
-                    cache_path=cache_path,
                     view_count=0
                 )
                 uploaded_media.append(media)
@@ -359,23 +350,23 @@ class MediaFileView(APIView):
         media.save()
 
         extension = '.mp4' if media.media_type == 'video' else '.jpg'
-        cache_key = f"{media.id}"
+        content_type = 'video/mp4' if media.media_type == 'video' else 'image/jpeg'
 
-        cached_content = cache_manager.get(cache_key, extension)
+        # 1. Try Redis cache FIRST (fastest)
+        cached_content = cache_manager.get(media.id, extension)
         if cached_content:
-            content_type = 'video/mp4' if media.media_type == 'video' else 'image/jpeg'
             return HttpResponse(cached_content, content_type=content_type)
 
+        # 2. Try Google Drive SECOND
         content = google_client.download_file(media.google_drive_file_id)
         if content:
-            cache_manager.store(cache_key, content, extension)
-            content_type = 'video/mp4' if media.media_type == 'video' else 'image/jpeg'
+            cache_manager.store(media.id, content, extension)
             return HttpResponse(content, content_type=content_type)
 
+        # 3. Try Nextcloud THIRD (fallback)
         content = nextcloud_client.download_file(media.nextcloud_file_id)
         if content:
-            cache_manager.store(cache_key, content, extension)
-            content_type = 'video/mp4' if media.media_type == 'video' else 'image/jpeg'
+            cache_manager.store(media.id, content, extension)
             return HttpResponse(content, content_type=content_type)
 
         return Response({'error': 'File not found'}, status=status.HTTP_404_NOT_FOUND)
@@ -392,6 +383,7 @@ class MediaDeleteView(APIView):
 
         nextcloud_client = NextcloudClient()
         google_client = GoogleDriveClient()
+        cache_manager = CacheManager()
 
         # Delete from Nextcloud
         if media.nextcloud_file_id:
@@ -401,9 +393,9 @@ class MediaDeleteView(APIView):
         if media.google_drive_file_id:
             google_client.delete_file(media.google_drive_file_id)
 
-        # Delete from cache
-        if media.cache_path and os.path.exists(media.cache_path):
-            os.remove(media.cache_path)
+        # Delete from Redis cache
+        extension = '.mp4' if media.media_type == 'video' else '.jpg'
+        cache_manager.delete(media.id, extension)
 
         media.delete()
         return Response({'message': 'File deleted successfully'})
