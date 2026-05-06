@@ -7,11 +7,14 @@
 @import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:wght@400;600;700&family=Lato:wght@300;400;700&display=swap');
 
 :root {
+  --wedding-azure: #5B9BD5;
+  --wedding-sky: #87CEEB;
+  --wedding-navy: #2C3E50;
+  --wedding-blush: #F4C2C2;
   --wedding-gold: #D4AF37;
-  --wedding-rose: #E8B4B8;
-  --wedding-blush: #FADADD;
   --wedding-cream: #FFFDD0;
   --wedding-sage: #9CAF88;
+  --wedding-lavender: #E6E6FA;
 }
 
 * {
@@ -19,7 +22,7 @@
 }
 
 body {
-  background: linear-gradient(135deg, #fff5f7 0%, #f0e6f0 50%, #f5f0e6 100%);
+  background: linear-gradient(135deg, #f0f8ff 0%, #e6f3ff 50%, #fff5f7 100%);
   min-height: 100vh;
 }
 
@@ -29,21 +32,21 @@ h1, h2, h3, h4 {
 
 .wedding-title {
   font-family: 'Great Vibes', cursive;
-  color: var(--wedding-gold);
-  text-shadow: 2px 2px 4px rgba(212, 175, 55, 0.3);
+  color: var(--wedding-azure);
+  text-shadow: 2px 2px 4px rgba(91, 155, 213, 0.3);
 }
 
 .wedding-card {
   background: rgba(255, 255, 255, 0.95);
-  border: 2px solid var(--wedding-gold);
+  border: 2px solid var(--wedding-azure);
   border-radius: 20px;
-  box-shadow: 0 10px 40px rgba(212, 175, 55, 0.2);
+  box-shadow: 0 10px 40px rgba(91, 155, 213, 0.2);
   position: relative;
   overflow: hidden;
 }
 
 .wedding-card::before {
-  content: '💕';
+  content: '💙';
   position: absolute;
   top: 10px;
   right: 15px;
@@ -52,7 +55,7 @@ h1, h2, h3, h4 {
 }
 
 .wedding-card::after {
-  content: '🌸';
+  content: '🕊️';
   position: absolute;
   bottom: 10px;
   left: 15px;
@@ -61,7 +64,7 @@ h1, h2, h3, h4 {
 }
 
 .wedding-btn {
-  background: linear-gradient(135deg, var(--wedding-rose) 0%, var(--wedding-gold) 100%);
+  background: linear-gradient(135deg, var(--wedding-azure) 0%, var(--wedding-sky) 100%);
   color: white;
   border: none;
   border-radius: 25px;
@@ -70,16 +73,17 @@ h1, h2, h3, h4 {
   font-weight: 600;
   letter-spacing: 1px;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+  box-shadow: 0 4px 15px rgba(91, 155, 213, 0.3);
 }
 
 .wedding-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(212, 175, 55, 0.5);
+  box-shadow: 0 6px 20px rgba(91, 155, 213, 0.5);
+  background: linear-gradient(135deg, var(--wedding-sky) 0%, var(--wedding-blush) 100%);
 }
 
 .wedding-input {
-  border: 2px solid var(--wedding-rose);
+  border: 2px solid var(--wedding-azure);
   border-radius: 15px;
   padding: 12px 20px;
   background: rgba(255, 255, 255, 0.9);
@@ -93,8 +97,8 @@ h1, h2, h3, h4 {
 }
 
 .wedding-header {
-  background: linear-gradient(135deg, var(--wedding-rose) 0%, var(--wedding-gold) 100%);
-  box-shadow: 0 4px 20px rgba(212, 175, 55, 0.3);
+  background: linear-gradient(135deg, var(--wedding-azure) 0%, var(--wedding-sky) 100%);
+  box-shadow: 0 4px 20px rgba(91, 155, 213, 0.3);
 }
 
 .heart-decoration {
@@ -109,8 +113,23 @@ h1, h2, h3, h4 {
 .floral-divider {
   text-align: center;
   margin: 20px 0;
-  color: var(--wedding-gold);
+  color: var(--wedding-azure);
   font-size: 20px;
+}
+
+/* Wedding bells decoration */
+.bells-divider {
+  text-align: center;
+  margin: 30px 0;
+  font-size: 24px;
+  color: var(--wedding-gold);
+}
+
+/* Ring decoration */
+.rings-decoration {
+  text-align: center;
+  margin: 20px 0;
+  font-size: 32px;
 }
 
 .status-badge {
@@ -159,7 +178,7 @@ h1, h2, h3, h4 {
 
 /* Gradient text for special headings */
 .wedding-gradient-text {
-  background: linear-gradient(135deg, var(--wedding-rose) 0%, var(--wedding-gold) 100%);
+  background: linear-gradient(135deg, var(--wedding-azure) 0%, var(--wedding-blush) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -167,7 +186,7 @@ h1, h2, h3, h4 {
 
 /* Soft glow effect for cards */
 .wedding-glow {
-  box-shadow: 0 0 30px rgba(212, 175, 55, 0.4);
+  box-shadow: 0 0 30px rgba(91, 155, 213, 0.4);
 }
 
 /* Ribbon decoration */
@@ -183,13 +202,13 @@ h1, h2, h3, h4 {
   transform: translateX(-50%);
   width: 100px;
   height: 20px;
-  background: linear-gradient(135deg, var(--wedding-rose) 0%, var(--wedding-gold) 100%);
+  background: linear-gradient(135deg, var(--wedding-azure) 0%, var(--wedding-sky) 100%);
   border-radius: 10px;
 }
 
 /* Photo frame effect */
 .photo-frame {
-  border: 4px solid var(--wedding-gold);
+  border: 4px solid var(--wedding-azure);
   padding: 8px;
   background: white;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
@@ -197,10 +216,80 @@ h1, h2, h3, h4 {
 
 /* Button pulse effect */
 @keyframes pulse {
-  0%, 100% { box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3); }
-  50% { box-shadow: 0 4px 25px rgba(212, 175, 55, 0.6); }
+  0%, 100% { box-shadow: 0 4px 15px rgba(91, 155, 213, 0.3); }
+  50% { box-shadow: 0 4px 25px rgba(91, 155, 213, 0.6); }
 }
 
 .wedding-btn {
   animation: pulse 2s ease-in-out infinite;
+}
+
+/* Dove animation */
+@keyframes fly {
+  0%, 100% { transform: translateX(0) translateY(0); }
+  25% { transform: translateX(10px) translateY(-5px); }
+  75% { transform: translateX(-10px) translateY(5px); }
+}
+
+.flying-dove {
+  animation: fly 4s ease-in-out infinite;
+}
+
+/* Floral corner decorations */
+.corner-flower {
+  position: absolute;
+  font-size: 40px;
+  opacity: 0.3;
+}
+
+.corner-flower.top-left {
+  top: 5px;
+  left: 5px;
+  transform: rotate(-45deg);
+}
+
+.corner-flower.top-right {
+  top: 5px;
+  right: 5px;
+  transform: rotate(45deg);
+}
+
+.corner-flower.bottom-left {
+  bottom: 5px;
+  left: 5px;
+  transform: rotate(45deg);
+}
+
+.corner-flower.bottom-right {
+  bottom: 5px;
+  right: 5px;
+  transform: rotate(-45deg);
+}
+
+/* Elegant border pattern */
+.elegant-border {
+  border: 3px double var(--wedding-gold);
+  border-radius: 15px;
+  position: relative;
+}
+
+.elegant-border::before {
+  content: '❧';
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: white;
+  padding: 0 10px;
+  color: var(--wedding-gold);
+  font-size: 20px;
+}
+
+/* Wave decoration */
+.wave-divider {
+  text-align: center;
+  margin: 30px 0;
+  color: var(--wedding-sky);
+  font-size: 28px;
+  letter-spacing: 5px;
 }
