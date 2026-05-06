@@ -43,7 +43,7 @@ const Home = () => {
         {/* Welcome Message - More Casual */}
         <div className="max-w-4xl mx-auto mb-10">
           <p className="text-xl text-gray-700 leading-relaxed mb-6">
-            💌 Hi there, lovely people!
+            💌 Hey there, lovely people!
           </p>
           <p className="text-lg text-gray-700 leading-relaxed mb-6">
             Welcome to our wedding memory collection – a special place where love stories come alive 
