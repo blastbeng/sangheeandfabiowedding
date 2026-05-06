@@ -20,13 +20,13 @@ const Events = () => {
       },
       subtitle: {
         it: 'Presso la Sala Consiglio del Comune di Costigliore d\'Asti',
-        ko: 'Costigliore d\'Asti 시의회 회의실에서',
+        ko: '코스틸리올레 다스티 시의회 회의실에서',
         en: 'At the Council Hall of Costigliore d\'Asti Municipality'
       },
       icon: '💒',
       description: {
         it: 'Unisciti a noi per scambiare i nostri voti in una cerimonia intima e significativa nel cuore di Costigliore d\'Asti.',
-        ko: 'Costigliore d\'Asti 중심부에서 친밀하고 의미 있는 의식에서 우리의 서약을 교환하는 데 참여하세요.',
+        ko: '코스틸리올레 다스티 중심부에서 진행되는 친밀하고 의미 있는 예식에서 저희의 서약을 함께 나누어 주세요.',
         en: 'Join us as we exchange our vows in an intimate and meaningful ceremony in the heart of Costigliore d\'Asti.'
       },
       locationImage: ceremonyLocationImage,
@@ -48,13 +48,13 @@ const Events = () => {
       },
       subtitle: {
         it: 'Festa di Nostro Matrimonio - Ore 12:00',
-        ko: '우리의 결혼 축하회 - 12:00',
+        ko: '우리 결혼 축하 연회 - 오후 12 시',
         en: 'Our Wedding Celebration - 12:00 PM'
       },
       icon: '🥂',
       description: {
         it: 'Dopo la cerimonia, celebreremo il nostro amore con una festa indimenticabile piena di gioia, danza e buon cibo!',
-        ko: '의식 후, 기쁨, 춤, 그리고 맛있는 음식으로 가득한 잊을 수 없는 파티로 우리의 사랑을 축하합니다!',
+        ko: '예식 후, 기쁨과 춤, 그리고 맛있는 음식이 가득한 잊을 수 없는 파티로 저희의 사랑을 축하합니다!',
         en: 'After the ceremony, we\'ll celebrate our love with an unforgettable party full of joy, dance, and delicious food!'
       },
       details: [
@@ -78,18 +78,18 @@ const Events = () => {
         </h1>
         <p className="text-xl text-gray-600 mb-6 italic">
           {currentLang === 'it' && "Tutti i dettagli del nostro grande giorno"}
-          {currentLang === 'ko' && "우리의 큰 날에 대한 모든 세부 정보"}
+          {currentLang === 'ko' && "저희의 특별한 날에 대한 모든 세부 사항"}
           {currentLang === 'en' && "All the details of our big day"}
         </p>
         <p className="text-lg text-gray-700 max-w-3xl mx-auto leading-relaxed mb-8">
           {currentLang === 'it' && "Siamo così entusiasti di condividere questi momenti speciali con voi! Ecco tutti i dettagli su dove e quando celebreremo il nostro amore."}
-          {currentLang === 'ko' && "이 특별한 순간을 여러분과 공유하게 되어 정말 기쁩니다! 우리의 사랑을 축하할 장소와 시간에 대한 모든 세부 정보가 있습니다."}
+          {currentLang === 'ko' && "이 특별한 순간을 여러분과 함께하게 되어 정말 설레입니다! 저희의 사랑을 축하할 장소와 시간에 대한 모든 세부 사항을 알려드립니다."}
           {currentLang === 'en' && "We're so excited to share these special moments with you! Here are all the details on where and when we'll celebrate our love."}
         </p>
         <div className="bg-gradient-to-r from-pink-50 to-yellow-50 rounded-xl p-6 mt-6 border-2 border-pink-200">
           <p className="text-lg text-gray-700 leading-relaxed italic text-center">
             {currentLang === 'it' && "Siamo felici di condividere il nostro matrimonio con voi! La vera festa inizia quando le risate si accendono e i bicchieri si riempiono di amore e allegria. Averci come nostri ospiti sarà il regalo più grande! Vi aspettiamo per festeggiare insieme!"}
-            {currentLang === 'ko' && "우리의 결혼식을 여러분과 공유하게 되어 기쁩니다! 웃음이 피어나고 잔에 사랑과 기쁨이 가득 찰 때 진정한 축제가 시작됩니다. 여러분이 손님으로 와주시는 것이 가장 큰 선물입니다! 함께 축하하기를 기다립니다!"}
+            {currentLang === 'ko' && "저희의 결혼식을 여러분과 함께하게 되어 정말 기쁩니다! 웃음꽃이 피어나고 잔에 사랑과 기쁨이 가득 찰 때 진정한 축제가 시작됩니다. 여러분이 저희의 손님으로 와주시는 것이 가장 큰 선물입니다! 함께 축하해 주시기를 기다리겠습니다!"}
             {currentLang === 'en' && "We are happy to share our wedding with you! The real party begins when laughter ignites and glasses fill with love and joy. Having you as our guests will be the greatest gift! We look forward to celebrating together!"}
           </p>
         </div>
@@ -159,7 +159,7 @@ const Events = () => {
                   />
                   <p className="text-sm text-gray-500 text-center italic">
                     {currentLang === 'it' && "Informazioni su parcheggio e ubicación della cerimonia"}
-                    {currentLang === 'ko' && "주차 및 의식 장소 정보"}
+                    {currentLang === 'ko' && "주차장 및 예식장 위치 안내"}
                     {currentLang === 'en' && "Parking and Ceremony Location Info"}
                   </p>
                 </div>
@@ -178,7 +178,7 @@ const Events = () => {
                 </p>
                 <p className="text-xs text-gray-400 mt-2">
                   {currentLang === 'it' && "Design originale disponibile su richiesta"}
-                  {currentLang === 'ko' && "원본 디자인은 요청 시 이용 가능"}
+                  {currentLang === 'ko' && "원본 디자인은 요청 시 제공 가능합니다"}
                   {currentLang === 'en' && "Original design available upon request"}
                 </p>
               </div>
@@ -193,7 +193,7 @@ const Events = () => {
         <h2 className="text-4xl wedding-title mb-4">Sang Hee &amp; Fabio</h2>
         <p className="text-lg text-gray-600 italic mb-6">
           {currentLang === 'it' && "Non vediamo l'ora di celebrare con voi!"}
-          {currentLang === 'ko' && "여러분과 함께 축하하기를 기다릴 수 없습니다!"}
+          {currentLang === 'ko' && "여러분과 함께 이 특별한 날을 축하하기를 기다립니다!"}
           {currentLang === 'en' && "We can't wait to celebrate with you!"}
         </p>
         <div className="floral-divider">✿ ─────── ✿ ─────── ✿</div>
