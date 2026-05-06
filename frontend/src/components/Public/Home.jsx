@@ -30,8 +30,7 @@ const Home = () => {
         {/* Welcome Message */}
         <div className="max-w-3xl mx-auto mb-8">
           <p className="text-lg text-gray-700 leading-relaxed mb-4">
-            Welcome to our wedding memory collection, where love stories come to life! 
-            We're absolutely thrilled to celebrate this magical chapter of our lives with you.
+            Hey there, lovebirds! 🥰 We're absolutely thrilled to celebrate this magical chapter of our lives with you.
           </p>
           <p className="text-lg text-gray-700 leading-relaxed mb-4">
             This special space is dedicated to capturing every precious moment, 
@@ -134,7 +133,7 @@ const Home = () => {
       <div className="text-center p-8 mt-8 mb-8">
         <div className="wedding-card mx-auto max-w-2xl p-8 ribbon wedding-glow">
           <span className="text-6xl mb-4 inline-block floating-heart">🌸</span>
-          <p className="text-3xl wedding-title mb-4">Ready to Join the Celebration?</p>
+          <p className="text-3xl wedding-title mb-4">Ready to Be Part of the Magic?</p>
           <p className="text-gray-600 mb-6 text-lg">
             Your memories are the missing pieces to our perfect day. 
             Don't keep them hidden – share the love!
