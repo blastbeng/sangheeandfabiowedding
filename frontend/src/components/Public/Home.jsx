@@ -142,7 +142,7 @@ const Home = () => {
           <div className="wedding-card p-8 text-center wedding-glow">
             <div className="text-5xl mb-4 floating-heart">2️⃣</div>
             <h4 className="font-bold text-pink-600 mb-3 text-xl">Upload</h4>
-            <p className="text-gray-600">Share your photos & videos</p>
+            <p className="text-gray-600">Share your photos and videos</p>
           </div>
           <div className="wedding-card p-8 text-center wedding-glow">
             <div className="text-5xl mb-4 floating-heart">3️⃣</div>
