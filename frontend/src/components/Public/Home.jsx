@@ -33,7 +33,7 @@ const Home = () => {
         {/* Welcome Message */}
         <div className="max-w-3xl mx-auto mb-8">
           <p className="text-lg text-gray-700 leading-relaxed mb-4">
-            Hey there, lovebirds! 🥰 We're absolutely thrilled to celebrate this magical chapter of our lives with you.
+            Hey friends! 🥰 We're absolutely thrilled to celebrate this magical chapter of our lives with you.
           </p>
           <p className="text-lg text-gray-700 leading-relaxed mb-4">
             This special space is dedicated to capturing every precious moment, 
