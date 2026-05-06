@@ -9,6 +9,7 @@ import MyUploads from './components/User/MyUploads';
 import Gallery from './components/Public/Gallery';
 import AdminModeration from './components/Admin/Moderation';
 import Home from './components/Public/Home';
+import Events from './components/Public/Events';
 
 // Protected Route Component
 const ProtectedRoute = ({ children, isAdminOnly = false, isAuthenticated, isAdmin }) => {
@@ -56,6 +57,7 @@ function App() {
             <h1 className="text-3xl wedding-title">💕 Our Forever Begins 💕</h1>
             <nav className="flex gap-4 items-center">
               <a href="/" className="hover:text-yellow-200 transition font-medium">{t('Home')}</a>
+              <a href="/events" className="hover:text-yellow-200 transition font-medium">📅 Events</a>
               <a href="/gallery" className="hover:text-yellow-200 transition font-medium">{t('Gallery')}</a>
               {isAuthenticated ? (
                 <>
@@ -83,6 +85,7 @@ function App() {
           <div className="max-w-6xl mx-auto">
             <Routes>
               <Route path="/" element={<Home />} />
+              <Route path="/events" element={<Events />} />
               <Route path="/gallery" element={<Gallery />} />
               <Route 
                 path="/login" 

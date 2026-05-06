@@ -57,7 +57,17 @@ const resources = {
       "Share": "Condividi 📤",
       "Sign In": "Accedi 💝",
       "Join Us": "Unisciti a Noi ✨",
-      "See You Soon!": "A Presto! 💕"
+      "See You Soon!": "A Presto! 💕",
+      "Events": "Eventi 📅",
+      "Our Wedding Events": "I Nostri Eventi Nuziali 💕",
+      "All the details of our big day": "Tutti i dettagli del nostro grande giorno",
+      "Ceremony": "Cerimonia 💒",
+      "Reception": "Ricevimento 🥂",
+      "Venue": "Luogo",
+      "Date": "Data",
+      "Time": "Orario",
+      "Address": "Indirizzo",
+      "Official Invitation": "Invito Ufficiale 🎨"
     }
   },
   ko: {
@@ -115,7 +125,17 @@ const resources = {
       "Share": "공유 📤",
       "Sign In": "로그인 💝",
       "Join Us": "참여하기 ✨",
-      "See You Soon!": "곧 만나요! 💕"
+      "See You Soon!": "곧 만나요! 💕",
+      "Events": "이벤트 📅",
+      "Our Wedding Events": "우리의 웨딩 이벤트 💕",
+      "All the details of our big day": "우리의 큰 날에 대한 모든 세부 정보",
+      "Ceremony": "식 💒",
+      "Reception": "피로연 🥂",
+      "Venue": "장소",
+      "Date": "날짜",
+      "Time": "시간",
+      "Address": "주소",
+      "Official Invitation": "공식 초대장 🎨"
     }
   },
   en: {
@@ -173,7 +193,17 @@ const resources = {
       "Share": "Share 📤",
       "Sign In": "Sign In 💝",
       "Join Us": "Join Us ✨",
-      "See You Soon!": "See You Soon! 💕"
+      "See You Soon!": "See You Soon! 💕",
+      "Events": "Events 📅",
+      "Our Wedding Events": "Our Wedding Events 💕",
+      "All the details of our big day": "All the details of our big day",
+      "Ceremony": "Ceremony 💒",
+      "Reception": "Reception 🥂",
+      "Venue": "Venue",
+      "Date": "Date",
+      "Time": "Time",
+      "Address": "Address",
+      "Official Invitation": "Official Invitation 🎨"
     }
   }
 };
