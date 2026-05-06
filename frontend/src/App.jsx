@@ -172,7 +172,7 @@ function App() {
             Thank you for being part of our beautiful journey together 💕
           </p>
           <p className="text-xs opacity-60 mt-2">
-            &copy; 2024 Our Wedding Memory Project – Forever & Always
+            &copy; 2024 Our Wedding Memory Project - Forever & Always
           </p>
         </footer>
       </div>
