@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import scheduleImage from '../../static/images/SangHee_and_Fabio_schedule.png';
 
 const Events = () => {
   const { t, i18n } = useTranslation();
@@ -83,6 +84,15 @@ const Events = () => {
           {currentLang === 'en' && "We're so excited to share these special moments with you! Here are all the details on where and when we'll celebrate our love."}
         </p>
         <div className="floral-divider">✿ ─────── ✿ ─────── ✿</div>
+      </div>
+
+      {/* Schedule Image Section */}
+      <div className="max-w-4xl mx-auto mt-8 mb-8 px-4">
+        <img 
+          src={scheduleImage} 
+          alt="SangHee and Fabio Event Schedule" 
+          className="w-full h-auto rounded-xl shadow-lg wedding-glow" 
+        />
       </div>
 
       {/* Events Cards */}
