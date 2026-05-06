@@ -26,13 +26,13 @@ const Home = () => {
           </div>
           {/* Decorative ribbon overlay */}
           <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-pink-400 to-yellow-400 text-white px-8 py-2 rounded-full text-sm font-bold shadow-lg">
-            💍 Forever & Always 💍
+            💍 Forever &amp; Always 💍
           </div>
         </div>
 
         {/* Main Title with Couple Names */}
         <h1 className="text-5xl md:text-8xl wedding-title mb-6 sparkle">
-          💕 Sang Hee & Fabio 💕
+          💕 Sang Hee &amp; Fabio 💕
         </h1>
         
         {/* Romantic Tagline */}
@@ -122,7 +122,7 @@ const Home = () => {
           <p className="text-gray-600 text-xl">— Maya Angelou</p>
           <div className="floral-divider mt-8">✿ ─────── ✿ ─────── ✿</div>
           <p className="text-lg text-pink-600 italic mt-6">
-            🌹 Just like Sang Hee & Fabio found their perfect match 🌹
+            🌹 Just like Sang Hee &amp; Fabio found their perfect match 🌹
           </p>
         </div>
       </div>
@@ -179,10 +179,10 @@ const Home = () => {
       <div className="text-center pb-12">
         <div className="floral-divider">✿ ─────── ✿ ─────── ✿</div>
         <p className="text-gray-500 italic text-lg">
-          💕 Made with endless love by Sang Hee & Fabio 💕
+          💕 Made with endless love by Sang Hee &amp; Fabio 💕
         </p>
         <p className="text-gray-400 text-sm mt-2">
-          Forever & Always | Our Wedding Memory Project © 2024
+          Forever &amp; Always | Our Wedding Memory Project © 2024
         </p>
         <div className="mt-4 text-3xl">
           <span className="inline-block floating-heart mx-2">💕</span>
