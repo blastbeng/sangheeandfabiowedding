@@ -57,15 +57,21 @@ function App() {
     <Router>
       <div className="min-h-screen bg-gray-100 flex flex-col">
         <header className="wedding-header text-white p-4">
-          <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-            <h1 className="text-2xl md:text-3xl wedding-title text-center md:text-left">
-              💕 {t('header_title')} 💕
-            </h1>
-            <nav className="flex flex-wrap gap-2 md:gap-4 items-center justify-center">
-              <LanguageSwitcher />
+          <div className="max-w-6xl mx-auto flex flex-col items-center gap-3">
+            {/* Line 1: Language Switcher */}
+            <LanguageSwitcher />
+            
+            {/* Line 2: Navigation Links */}
+            <nav className="flex flex-wrap gap-4 items-center justify-center">
               <a href="/" className="hover:text-yellow-200 transition font-medium text-sm md:text-base whitespace-nowrap">{t('Home')}</a>
-              <a href="/events" className="hover:text-yellow-200 transition font-medium text-sm md:text-base whitespace-nowrap">📅 {t('Event')}</a>
+              <a href="/events" className="hover:text-yellow-200 transition font-medium text-sm md:text-base whitespace-nowrap">
+                📅 {t('Event')}
+              </a>
               <a href="/gallery" className="hover:text-yellow-200 transition font-medium text-sm md:text-base whitespace-nowrap">{t('Gallery')}</a>
+            </nav>
+            
+            {/* Line 3: Auth Buttons */}
+            <div className="flex flex-wrap gap-3 items-center justify-center">
               {isAuthenticated ? (
                 <>
                   <a href="/upload" className="hover:text-yellow-200 transition font-medium text-sm md:text-base whitespace-nowrap">{t('Share')}</a>
@@ -84,7 +90,7 @@ function App() {
                   <a href="/register" className="wedding-btn text-xs md:text-sm px-3 md:px-4 py-2">{t('Join Us')}</a>
                 </>
               )}
-            </nav>
+            </div>
           </div>
         </header>
 
