@@ -6,7 +6,7 @@ class CustomUser(AbstractUser):
     """
     Custom User model extending Django's AbstractUser
     """
-    email = models.EmailField(unique=True)
+    email = models.EmailField(unique=True, blank=True, null=True)
     first_name = models.CharField(max_length=30, blank=True)
     last_name = models.CharField(max_length=30, blank=True)
     date_of_birth = models.DateField(null=True, blank=True)
@@ -37,64 +37,17 @@ class CustomUser(AbstractUser):
         verbose_name='user permissions',
     )
 
-    USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['username']
+    USERNAME_FIELD = 'username'
+    REQUIRED_FIELDS = ['email']
 
     def __str__(self):
-        return self.email
+        return self.username
 
     def get_full_name(self):
         return f"{self.first_name} {self.last_name}".strip()
 
     def get_short_name(self):
-        return self.first_name or self.email.split('@')[0]
+        return self.first_name or self.email.split('@')[0] if self.email else self.username
 
     class Meta:
         db_table = 'users_customuser'
-
-
-class Media(models.Model):
-    """
-    Model for storing guest and spouse uploads
-    """
-    MEDIA_TYPES = (
-        ('image', 'Image'),
-        ('video', 'Video'),
-    )
-    STATUS_CHOICES = (
-        ('pending', 'Pending'),
-        ('approved', 'Approved'),
-        ('rejected', 'Rejected'),
-    )
-    user = models.ForeignKey(
-        CustomUser,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='uploaded_media'
-    )
-    file = models.FileField(upload_to='wedding_uploads/', null=True, blank=True)
-    media_type = models.CharField(max_length=10, choices=MEDIA_TYPES)
-    caption = models.TextField(blank=True, null=True)
-    uploaded_at = models.DateTimeField(auto_now_add=True)
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
-    reviewed_at = models.DateTimeField(null=True, blank=True)
-    reviewed_by = models.ForeignKey(
-        CustomUser,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='reviewed_media'
-    )
-    rejection_reason = models.TextField(blank=True, null=True)
-    # Cloud storage fields
-    nextcloud_file_id = models.CharField(max_length=255, null=True, blank=True)
-    google_drive_file_id = models.CharField(max_length=255, null=True, blank=True)
-    view_count = models.IntegerField(default=0)
-
-    def __str__(self):
-        return f"{self.media_type} by {self.user.email if self.user else 'Guest'} ({self.status})"
-
-    class Meta:
-        db_table = 'users_media'
-        ordering = ['-uploaded_at']
