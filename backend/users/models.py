@@ -45,7 +45,6 @@ class Media(models.Model):
     )
     user = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True)
     file = models.FileField(upload_to='wedding_uploads/', null=True, blank=True)
-    file = models.FileField(upload_to='wedding_uploads/')
     media_type = models.CharField(max_length=10, choices=MEDIA_TYPES)
     caption = models.TextField(blank=True, null=True)
     uploaded_at = models.DateTimeField(auto_now_add=True)

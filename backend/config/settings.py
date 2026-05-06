@@ -175,6 +175,17 @@ SOCIALACCOUNT_PROVIDERS = {
     }
 }
 
-# Admin Configuration
-ADMIN_USERNAME = os.environ.get('ADMIN_USERNAME', 'admin')
-ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'admin$')
+# Cloud Storage Configuration
+NEXTCLOUD_URL = os.environ.get('NEXTCLOUD_URL', '')
+NEXTCLOUD_USERNAME = os.environ.get('NEXTCLOUD_USERNAME', '')
+NEXTCLOUD_PASSWORD = os.environ.get('NEXTCLOUD_PASSWORD', '')
+NEXTCLOUD_FOLDER = os.environ.get('NEXTCLOUD_FOLDER', '/uploads')
+
+GOOGLE_DRIVE_CLIENT_ID = os.environ.get('GOOGLE_DRIVE_CLIENT_ID', '')
+GOOGLE_DRIVE_CLIENT_SECRET = os.environ.get('GOOGLE_DRIVE_CLIENT_SECRET', '')
+GOOGLE_DRIVE_TOKEN = os.environ.get('GOOGLE_DRIVE_TOKEN', '')
+GOOGLE_DRIVE_FOLDER_ID = os.environ.get('GOOGLE_DRIVE_FOLDER_ID', '')
+
+# Cache Configuration
+CACHE_ROOT = os.environ.get('CACHE_ROOT', '/app/cache')
+CACHE_MAX_SIZE_GB = int(os.environ.get('CACHE_MAX_SIZE_GB', 1))

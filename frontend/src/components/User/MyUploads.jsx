@@ -3,7 +3,26 @@ import { useEffect, useState } from 'react';
 const MyUploads = () => {
   const [uploads, setUploads] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const API_URL = import.meta.env.VITE_API_URL;
+
+  const refreshUploads = () => {
+    setRefreshTrigger(prev => prev + 1);
+  };
+
+  const handleDelete = async (id) => {
+    if (!confirm('Delete this file from all cloud storage?')) return;
+    
+    try {
+      const res = await fetch(`${API_URL}/api/auth/media/${id}/`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
+      });
+      if (res.ok) refreshUploads();
+    } catch (err) {
+      console.error('Delete failed:', err);
+    }
+  };
 
   useEffect(() => {
     fetch(`${API_URL}/api/auth/media/my-uploads/`, {
@@ -18,7 +37,7 @@ const MyUploads = () => {
         console.error(err);
         setLoading(false);
       });
-  }, []);
+  }, [refreshTrigger]);
 
   const getStatusColor = (status) => {
     switch(status) {
@@ -50,6 +69,14 @@ const MyUploads = () => {
             )}
             <p className="text-sm text-gray-600">{item.caption}</p>
             <p className="text-xs text-gray-400">{new Date(item.uploaded_at).toLocaleDateString()}</p>
+            {item.status === 'approved' && (
+              <button
+                onClick={() => handleDelete(item.id)}
+                className="mt-2 text-red-600 text-sm hover:underline"
+              >
+                Delete
+              </button>
+            )}
           </div>
         ))}
       </div>
