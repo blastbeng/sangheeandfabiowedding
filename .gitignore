@@ -4,6 +4,8 @@
 # Docker
 .env
 docker-compose.override.yml
+postgres_data/
+redis_data/
 
 # Backend
 /backend/__pycache__/
