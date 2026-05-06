@@ -130,8 +130,10 @@ const Profile = () => {
   return (
     <div className="max-w-2xl mx-auto p-4">
       <div className="wedding-card p-8">
-        <h2 className="text-3xl wedding-title text-center mb-2">👤 Your Profile</h2>
-        <p className="text-center text-gray-600 mb-6 italic">Manage your account settings 💕</p>
+        <h2 className="text-3xl wedding-title text-center mb-2">👤 {t('Your Special Profile')}</h2>
+        <p className="text-center text-gray-600 mb-6 italic">
+          Tell us about yourself, lovely! 💕
+        </p>
 
         {error && (
           <div className="bg-red-50 border-2 border-red-300 text-red-700 px-4 py-3 rounded-xl mb-4">
@@ -145,7 +147,7 @@ const Profile = () => {
         )}
 
         <form onSubmit={handleSubmit} className="mb-8">
-          <h3 className="text-xl font-bold mb-4 text-pink-600">📝 Personal Information</h3>
+          <h3 className="text-xl font-bold mb-4 text-pink-600">📝 {t('About You')}</h3>
           <div className="mb-4">
             <label className="block text-gray-700 text-sm font-bold mb-2">{t('Username')}</label>
             <input
@@ -189,13 +191,13 @@ const Profile = () => {
             />
           </div>
           <button type="submit" className="wedding-btn">
-            💾 Save Changes
+            💾 {t('Save Your Changes')}
           </button>
         </form>
 
         <div className="floral-divider">✿ ─────── ✿ ─────── ✿</div>
 
-        <h3 className="text-xl font-bold mb-4 text-pink-600">🔐 Change Password</h3>
+        <h3 className="text-xl font-bold mb-4 text-pink-600">🔐 {t('Keep Your Account Safe')}</h3>
         <form onSubmit={handlePasswordSubmit} className="mb-8">
           <div className="mb-4">
             <label className="block text-gray-700 text-sm font-bold mb-2">{t('Current Password')}</label>
@@ -228,14 +230,14 @@ const Profile = () => {
             />
           </div>
           <button type="submit" className="wedding-btn">
-            🔑 Update Password
+            🔑 {t('Update Password')}
           </button>
         </form>
 
         <div className="floral-divider">✿ ─────── ✿ ─────── ✿</div>
 
         <div className="mt-8">
-          <h3 className="text-xl font-bold mb-4 text-pink-600">🌍 Language / Lingua</h3>
+          <h3 className="text-xl font-bold mb-4 text-pink-600">🌍 {t('Your Language')}</h3>
           <select
             value={i18n.language}
             onChange={(e) => {

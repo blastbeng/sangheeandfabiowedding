@@ -81,13 +81,21 @@ const Login = ({ setIsAuthenticated, setIsAdmin }) => {
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-      <div className="wedding-card p-10 w-full max-w-md">
-        <h2 className="text-4xl wedding-title text-center mb-2">Welcome Back!</h2>
-        <p className="text-center text-gray-600 mb-6 italic">Log in to access your account and share your memories 💕</p>
-        {error && <div className="bg-red-50 border-2 border-red-300 text-red-700 px-4 py-3 rounded-xl mb-4 text-center">💔 {error}</div>}
+      <div className="wedding-card p-10 w-full max-w-md ribbon">
+        <h2 className="text-4xl wedding-title text-center mb-2">{t('Welcome Back!')}</h2>
+        <p className="text-center text-gray-600 mb-6 italic">
+          We've missed you! Sign in to continue your love story with us 🌹
+        </p>
+        {error && (
+          <div className="bg-red-50 border-2 border-red-300 text-red-700 px-4 py-3 rounded-xl mb-4 text-center">
+            💔 {error}
+          </div>
+        )}
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label htmlFor="email" className="block text-gray-700 text-sm font-bold mb-2">📧 {t('Email')}</label>
+            <label htmlFor="email" className="block text-gray-700 text-sm font-bold mb-2">
+              📧 {t('Email')}
+            </label>
             <input
               type="email"
               id="email"
@@ -95,12 +103,14 @@ const Login = ({ setIsAuthenticated, setIsAdmin }) => {
               value={formData.email}
               onChange={handleChange}
               className="wedding-input w-full"
-              placeholder="your@email.com"
+              placeholder="your@lovelyemail.com"
               required
             />
           </div>
           <div className="mb-6">
-            <label htmlFor="password" className="block text-gray-700 text-sm font-bold mb-2">🔐 {t('Password')}</label>
+            <label htmlFor="password" className="block text-gray-700 text-sm font-bold mb-2">
+              🔐 {t('Password')}
+            </label>
             <input
               type="password"
               id="password"
@@ -112,14 +122,19 @@ const Login = ({ setIsAuthenticated, setIsAdmin }) => {
               required
             />
           </div>
-          <button type="submit" className="wedding-btn w-full mb-4">💝 {t('Login')}</button>
+          <button type="submit" className="wedding-btn w-full mb-4">
+            💝 {t('Sign In')}
+          </button>
         </form>
 
         <div className="floral-divider">✿ ─────── ✿ ─────── ✿</div>
 
         <div className="mt-4 text-center">
           <p className="text-gray-600">
-            Don't have an account? <Link to="/register" className="text-pink-600 hover:text-pink-800 font-bold underline">{t('Register')}</Link>
+            🌟 {t("Don't have an account?")}{" "}
+            <Link to="/register" className="text-pink-600 hover:text-pink-800 font-bold underline">
+              {t('Join Us')}
+            </Link>
           </p>
         </div>
       </div>

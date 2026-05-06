@@ -70,37 +70,89 @@ const Register = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="wedding-card p-10 w-full max-w-md">
-        <h2 className="text-4xl wedding-title text-center mb-2">Join Our Celebration!</h2>
-        <p className="text-center text-gray-600 mb-6 italic">Create an account to share your precious moments 🌸</p>
+      <div className="wedding-card p-10 w-full max-w-md ribbon">
+        <h2 className="text-4xl wedding-title text-center mb-2">{t('Join Our Celebration!')}</h2>
+        <p className="text-center text-gray-600 mb-6 italic">
+          Create your account and become part of our beautiful love story 🌸
+        </p>
 
-        {error && <div className="bg-red-50 border-2 border-red-300 text-red-700 px-4 py-3 rounded-xl mb-4 text-center">💔 {error}</div>}
-        {success && <div className="bg-green-50 border-2 border-green-300 text-green-700 px-4 py-3 rounded-xl mb-4 text-center">✅ {success}</div>}
+        {error && (
+          <div className="bg-red-50 border-2 border-red-300 text-red-700 px-4 py-3 rounded-xl mb-4 text-center">
+            💔 {error}
+          </div>
+        )}
+        {success && (
+          <div className="bg-green-50 border-2 border-green-300 text-green-700 px-4 py-3 rounded-xl mb-4 text-center">
+            ✅ {success}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2">👤 Username</label>
-            <input type="text" name="username" value={formData.username} onChange={handleChange} className="wedding-input w-full" placeholder="Choose a username" required />
+            <label className="block text-gray-700 text-sm font-bold mb-2">
+              👤 {t('Username')}
+            </label>
+            <input
+              type="text"
+              name="username"
+              value={formData.username}
+              onChange={handleChange}
+              className="wedding-input w-full"
+              placeholder="Something special just for you"
+              required
+            />
           </div>
           <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2">📧 Email</label>
-            <input type="email" name="email" value={formData.email} onChange={handleChange} className="wedding-input w-full" placeholder="your@email.com" required />
+            <label className="block text-gray-700 text-sm font-bold mb-2">
+              📧 {t('Email')}
+            </label>
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              className="wedding-input w-full"
+              placeholder="your@happymail.com"
+              required
+            />
           </div>
           <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2">🔐 Password</label>
-            <input type="password" name="password" value={formData.password} onChange={handleChange} className="wedding-input w-full" placeholder="••••••••" required />
+            <label className="block text-gray-700 text-sm font-bold mb-2">
+              🔐 {t('Password')}
+            </label>
+            <input
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              className="wedding-input w-full"
+              placeholder="Make it strong & secret!"
+              required
+            />
           </div>
           <div className="mb-6">
-            <label className="block text-gray-700 text-sm font-bold mb-2">🔐 Confirm Password</label>
-            <input type="password" name="password_confirm" value={formData.password_confirm} onChange={handleChange} className="wedding-input w-full" placeholder="••••••••" required />
+            <label className="block text-gray-700 text-sm font-bold mb-2">
+              🔐 {t('Confirm New Password')}
+            </label>
+            <input
+              type="password"
+              name="password_confirm"
+              value={formData.password_confirm}
+              onChange={handleChange}
+              className="wedding-input w-full"
+              placeholder="Same as above, please!"
+              required
+            />
           </div>
-          <button type="submit" className="wedding-btn w-full mb-4">✨ Create Account</button>
+          <button type="submit" className="wedding-btn w-full mb-4">
+            ✨ {t('Create Account')}
+          </button>
         </form>
 
         <div className="floral-divider">✿ ─────── ✿ ─────── ✿</div>
 
         <div className="mb-4">
-          <p className="text-center text-gray-500 mb-3 text-sm">Or continue with</p>
+          <p className="text-center text-gray-500 mb-3 text-sm">{t('Or login with')}</p>
           <div className="flex justify-center">
             <GoogleLogin
               onSuccess={handleGoogleSuccess}
@@ -117,8 +169,10 @@ const Register = () => {
 
         <div className="mt-4 text-center">
           <p className="text-gray-600">
-            Already have an account?{' '}
-            <Link to="/login" className="text-pink-600 hover:text-pink-800 font-bold underline">Sign In Here</Link>
+            {t('Already have an account?')}{" "}
+            <Link to="/login" className="text-pink-600 hover:text-pink-800 font-bold underline">
+              {t('Sign In Here')}
+            </Link>
           </p>
         </div>
       </div>
