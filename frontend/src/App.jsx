@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import Login from './components/Auth/Login';
 import Register from './components/Auth/Register';
 import Profile from './components/User/Profile';
@@ -21,6 +22,7 @@ const ProtectedRoute = ({ children, isAdminOnly = false, isAuthenticated, isAdmi
 };
 
 function App() {
+  const { t } = useTranslation();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
