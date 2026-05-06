@@ -13,6 +13,7 @@ import UserManagement from './components/Admin/UserManagement';
 import Settings from './components/Admin/Settings';
 import Home from './components/Public/Home';
 import Events from './components/Public/Events';
+import LanguageSwitcher from './components/Common/LanguageSwitcher';
 
 // Protected Route Component
 const ProtectedRoute = ({ children, isAdminOnly = false, isAuthenticated, isAdmin }) => {
@@ -59,6 +60,7 @@ function App() {
           <div className="max-w-6xl mx-auto flex justify-between items-center">
             <h1 className="text-3xl wedding-title">💕 Our Forever Begins 💕</h1>
             <nav className="flex gap-4 items-center">
+              <LanguageSwitcher />
               <a href="/" className="hover:text-yellow-200 transition font-medium">{t('Home')}</a>
               <a href="/events" className="hover:text-yellow-200 transition font-medium">📅 Events</a>
               <a href="/gallery" className="hover:text-yellow-200 transition font-medium">{t('Gallery')}</a>

@@ -275,10 +275,15 @@ i18n
   .use(initReactI18next)
   .init({
     resources,
-    lng: localStorage.getItem('language') || 'it',
+    lng: localStorage.getItem('preferredLanguage') || 'it',
     fallbackLng: 'it',
     supportedLngs: ['it', 'ko', 'en'],
     interpolation: { escapeValue: false }
   });
+
+export const setLanguage = (lng) => {
+  localStorage.setItem('preferredLanguage', lng);
+  i18n.changeLanguage(lng);
+};
 
 export default i18n;
