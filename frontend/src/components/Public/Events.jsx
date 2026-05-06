@@ -45,9 +45,9 @@ const Events = () => {
         en: 'Wedding Reception'
       },
       subtitle: {
-        it: 'Festa di Nostro Matrimonio',
-        ko: '우리의 결혼 축하회',
-        en: 'Our Wedding Celebration'
+        it: 'Festa di Nostro Matrimonio - Ore 12:00',
+        ko: '우리의 결혼 축하회 - 12:00',
+        en: 'Our Wedding Celebration - 12:00 PM'
       },
       icon: '🥂',
       description: {
@@ -56,8 +56,9 @@ const Events = () => {
         en: 'After the ceremony, we\'ll celebrate our love with an unforgettable party full of joy, dance, and delicious food!'
       },
       details: [
-        { label: { it: 'Luogo', ko: '장소', en: 'Venue' }, value: 'Da annunciare / To be announced' },
-        { label: { it: 'Orario', ko: '시간', en: 'Time' }, value: 'Seguirà la cerimonia / Following the ceremony' },
+        { label: { it: 'Luogo', ko: '장소', en: 'Venue' }, value: 'PODERE LA PIAZZA' },
+        { label: { it: 'Indirizzo', ko: '주소', en: 'Address' }, value: 'Strada Piazza, 4, 14055 Costigliole d\'Asti AT, Italia' },
+        { label: { it: 'Orario', ko: '시간', en: 'Time' }, value: '12:00 - Pranzo / Lunch' },
         { label: { it: 'Dress Code', ko: '드레스 코드', en: 'Dress Code' }, value: 'Elegante / Elegant' },
       ],
       color: 'from-yellow-400 to-amber-400',
@@ -83,6 +84,13 @@ const Events = () => {
           {currentLang === 'ko' && "이 특별한 순간을 여러분과 공유하게 되어 정말 기쁩니다! 우리의 사랑을 축하할 장소와 시간에 대한 모든 세부 정보가 있습니다."}
           {currentLang === 'en' && "We're so excited to share these special moments with you! Here are all the details on where and when we'll celebrate our love."}
         </p>
+        <div className="bg-gradient-to-r from-pink-50 to-yellow-50 rounded-xl p-6 mt-6 border-2 border-pink-200">
+          <p className="text-lg text-gray-700 leading-relaxed italic text-center">
+            {currentLang === 'it' && "Siamo felici di condividere il nostro matrimonio con voi! La vera festa inizia quando le risate si accendono e i bicchieri si riempiono di amore e allegria. Averci come nostri ospiti sarà il regalo più grande! Vi aspettiamo per festeggiare insieme!"}
+            {currentLang === 'ko' && "우리의 결혼식을 여러분과 공유하게 되어 기쁩니다! 웃음이 피어나고 잔에 사랑과 기쁨이 가득 찰 때 진정한 축제가 시작됩니다. 여러분이 손님으로 와주시는 것이 가장 큰 선물입니다! 함께 축하하기를 기다립니다!"}
+            {currentLang === 'en' && "We are happy to share our wedding with you! The real party begins when laughter ignites and glasses fill with love and joy. Having you as our guests will be the greatest gift! We look forward to celebrating together!"}
+          </p>
+        </div>
         <div className="floral-divider">✿ ─────── ✿ ─────── ✿</div>
       </div>
 
