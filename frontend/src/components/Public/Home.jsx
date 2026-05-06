@@ -8,11 +8,14 @@ const Home = () => {
       <div className="wedding-card mx-4 mt-8 p-8 md:p-12 text-center ribbon wedding-glow">
         {/* Couple Photo */}
         <div className="mb-8 flex justify-center">
-          <div className="photo-frame rounded-full overflow-hidden w-64 h-64 md:w-80 md:h-80 shadow-2xl border-4 border-yellow-400">
+          <div className="photo-frame rounded-full overflow-hidden w-64 h-64 md:w-80 md:h-80 shadow-2xl border-4 border-yellow-400 floating-heart">
             <img
               src={coupleImage}
               alt="Sang Hee & Fabio - The Happy Couple"
               className="w-full h-full object-cover"
+              onError={(e) => {
+                e.target.src = 'https://via.placeholder.com/400x400?text=Sang+Hee+%26+Fabio';
+              }}
             />
           </div>
         </div>
