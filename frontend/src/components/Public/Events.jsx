@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import scheduleImage from '../../static/images/SangHee_and_Fabio_schedule.png';
+import ceremonyLocationImage from '../../static/images/ComeRaggiungerci-cerimonia.png';
 
 const Events = () => {
   const { t, i18n } = useTranslation();
@@ -28,6 +29,7 @@ const Events = () => {
         ko: 'Costigliore d\'Asti 중심부에서 친밀하고 의미 있는 의식에서 우리의 서약을 교환하는 데 참여하세요.',
         en: 'Join us as we exchange our vows in an intimate and meaningful ceremony in the heart of Costigliore d\'Asti.'
       },
+      locationImage: ceremonyLocationImage,
       details: [
         { label: { it: 'Luogo', ko: '장소', en: 'Venue' }, value: 'Sala Consiglio, Comune di Costigliore d\'Asti' },
         { label: { it: 'Indirizzo', ko: '주소', en: 'Address' }, value: 'Piazza Roma, Costigliore d\'Asti, AT, Italia' },
@@ -146,6 +148,22 @@ const Events = () => {
                   </div>
                 ))}
               </div>
+
+              {/* Location Image (Conditional) */}
+              {event.locationImage && (
+                <div className="mb-8">
+                  <img 
+                    src={event.locationImage} 
+                    alt="Ceremony Location and Parking Info" 
+                    className="w-full h-auto rounded-xl shadow-lg wedding-glow mb-4" 
+                  />
+                  <p className="text-sm text-gray-500 text-center italic">
+                    {currentLang === 'it' && "Informazioni su parcheggio e ubicación della cerimonia"}
+                    {currentLang === 'ko' && "주차 및 의식 장소 정보"}
+                    {currentLang === 'en' && "Parking and Ceremony Location Info"}
+                  </p>
+                </div>
+              )}
 
               {/* PSD File Reference */}
               <div className="bg-gradient-to-r from-pink-50 to-yellow-50 rounded-xl p-6 text-center border-2 border-dashed border-pink-300">
