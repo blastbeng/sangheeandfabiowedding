@@ -18,6 +18,24 @@ class CustomUser(AbstractUser):
         ('ko', '한국어'),
         ('en', 'English'),
     ])
+    
+    # Override groups and user_permissions to avoid reverse accessor clashes
+    groups = models.ManyToManyField(
+        'auth.Group',
+        related_name='customuser_groups',
+        related_query_name='customuser',
+        blank=True,
+        help_text='The groups this user belongs to.',
+        verbose_name='groups',
+    )
+    user_permissions = models.ManyToManyField(
+        'auth.Permission',
+        related_name='customuser_permissions',
+        related_query_name='customuser',
+        blank=True,
+        help_text='Specific permissions for this user.',
+        verbose_name='user permissions',
+    )
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']
