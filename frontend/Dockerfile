@@ -15,4 +15,4 @@ RUN ls -la /app/dist/
 
 EXPOSE 5173
 
-CMD ["npm", "run", "preview", "--", "--host", "0.0.0.0", "--port", "5173"]
+CMD ["npm", "run", "serve"]
