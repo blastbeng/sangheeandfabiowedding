@@ -9,16 +9,18 @@ class Command(BaseCommand):
         User = get_user_model()
         username = os.environ.get('ADMIN_USERNAME', 'admin')
         password = os.environ.get('ADMIN_PASSWORD', 'admin$')
+        email = os.environ.get('ADMIN_EMAIL', 'admin@example.com')
 
-        # Check if ANY superuser/admin exists
-        if not User.objects.filter(is_superuser=True).exists():
+        if not User.objects.filter(username=username).exists():
             User.objects.create_superuser(
                 username=username,
-                email=f'{username}@admin.com',
+                email=email,
                 password=password,
-                is_staff=True,
-                is_superuser=True
+                is_active=True
             )
-            self.stdout.write(self.style.SUCCESS(f'Successfully created admin user: {username}'))
+            user = User.objects.get(username=username)
+            user.email_verified = True
+            user.save()
+            self.stdout.write(self.style.SUCCESS(f'Admin user "{username}" created'))
         else:
-            self.stdout.write(self.style.SUCCESS('Admin user already exists, skipping creation'))
+            self.stdout.write(self.style.WARNING(f'Admin user "{username}" already exists'))
