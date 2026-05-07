@@ -143,7 +143,12 @@ const resources = {
       "email_verified": "Email Verificata",
       "verification_failed": "Verifica Fallita",
       "go_to_login": "Vai al Login",
-      "back_to_home": "Torna alla Home"
+      "back_to_home": "Torna alla Home",
+      "User ID": "ID Utente",
+      "From": "Da",
+      "To": "A",
+      "Search": "Cerca",
+      "Search captions...": "Cerca nelle didascalie..."
     }
   },
   ko: {
@@ -287,7 +292,12 @@ const resources = {
       "email_verified": "이메일 인증 완료",
       "verification_failed": "인증 실패",
       "go_to_login": "로그인으로 이동",
-      "back_to_home": "홈으로 돌아가기"
+      "back_to_home": "홈으로 돌아가기",
+      "User ID": "사용자 ID",
+      "From": "부터",
+      "To": "까지",
+      "Search": "검색",
+      "Search captions...": "캡션 검색..."
     }
   },
   en: {
@@ -431,7 +441,12 @@ const resources = {
       "email_verified": "Email Verified",
       "verification_failed": "Verification Failed",
       "go_to_login": "Go to Login",
-      "back_to_home": "Back to Home"
+      "back_to_home": "Back to Home",
+      "User ID": "User ID",
+      "From": "From",
+      "To": "To",
+      "Search": "Search",
+      "Search captions...": "Search captions..."
     }
   }
 };

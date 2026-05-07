@@ -6,10 +6,22 @@ const Gallery = () => {
   const { t } = useTranslation();
   const [media, setMedia] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [filters, setFilters] = useState({
+    user_id: '',
+    date_from: '',
+    date_to: '',
+    search: ''
+  });
   const API_URL = import.meta.env.VITE_API_URL;
 
-  useEffect(() => {
-    fetch(`${API_URL}/api/auth/media/`)
+  const fetchMedia = () => {
+    const params = new URLSearchParams();
+    if (filters.user_id) params.append('user_id', filters.user_id);
+    if (filters.date_from) params.append('date_from', filters.date_from);
+    if (filters.date_to) params.append('date_to', filters.date_to);
+    if (filters.search) params.append('search', filters.search);
+
+    fetch(`${API_URL}/api/auth/media/public/?${params}`)
       .then(res => res.json())
       .then(data => {
         setMedia(data);
@@ -17,27 +29,19 @@ const Gallery = () => {
       })
       .catch(err => {
         logger.error('[Gallery] Failed to fetch media:', err);
-        logger.error('[Gallery] API URL:', API_URL);
         setLoading(false);
       });
-  }, []);
-
-  const getStatusBadge = (status) => {
-    const badges = {
-      pending: 'status-pending',
-      approved: 'status-approved',
-      rejected: 'status-rejected'
-    };
-    const icons = { pending: '⏳', approved: '✅', rejected: '❌' };
-    return <span className={`status-badge ${badges[status]}`}>{icons[status]} {t(status)}</span>;
   };
+
+  useEffect(() => {
+    fetchMedia();
+  }, [filters]);
 
   if (loading) {
     return (
       <div className="text-center py-20">
         <span className="text-5xl heart-decoration inline-block">💝</span>
         <p className="mt-4 text-gray-600 text-lg">{t('loading_memories')}</p>
-        <div className="floral-divider mt-4">✿ ─────── ✿ ─────── ✿</div>
       </div>
     );
   }
@@ -47,7 +51,48 @@ const Gallery = () => {
       <div className="text-center mb-8">
         <h2 className="text-4xl wedding-title mb-2">{t('gallery_title')}</h2>
         <p className="text-gray-600 italic">{t('gallery_subtitle')}</p>
-        <div className="floral-divider">✿ ─────── ✿ ─────── ✿</div>
+      </div>
+
+      {/* Filter controls */}
+      <div className="mb-6 flex flex-wrap gap-4 items-end">
+        <div>
+          <label className="block text-sm text-gray-600 mb-1">{t('User ID')}</label>
+          <input
+            type="text"
+            value={filters.user_id}
+            onChange={e => setFilters({ ...filters, user_id: e.target.value })}
+            className="wedding-input"
+            placeholder="Filter by user"
+          />
+        </div>
+        <div>
+          <label className="block text-sm text-gray-600 mb-1">{t('From')}</label>
+          <input
+            type="date"
+            value={filters.date_from}
+            onChange={e => setFilters({ ...filters, date_from: e.target.value })}
+            className="wedding-input"
+          />
+        </div>
+        <div>
+          <label className="block text-sm text-gray-600 mb-1">{t('To')}</label>
+          <input
+            type="date"
+            value={filters.date_to}
+            onChange={e => setFilters({ ...filters, date_to: e.target.value })}
+            className="wedding-input"
+          />
+        </div>
+        <div>
+          <label className="block text-sm text-gray-600 mb-1">{t('Search')}</label>
+          <input
+            type="text"
+            value={filters.search}
+            onChange={e => setFilters({ ...filters, search: e.target.value })}
+            className="wedding-input"
+            placeholder={t('Search captions...')}
+          />
+        </div>
       </div>
 
       {media.length === 0 ? (
@@ -55,7 +100,6 @@ const Gallery = () => {
           <span className="text-6xl floating-heart inline-block">🌸</span>
           <p className="mt-4 text-gray-600 text-lg">{t('no_photos_yet')}</p>
           <p className="text-gray-500 text-sm">{t('be_first_to_share')}</p>
-          <div className="floral-divider">✿ ─────── ✿ ─────── ✿</div>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -63,15 +107,26 @@ const Gallery = () => {
             <div key={item.id} className="gallery-item bg-white shadow-lg">
               <div className="relative">
                 {item.media_type === 'video' ? (
-                  <video src={`${API_URL}${item.file_url}`} className="w-full h-48 object-cover" controls />
+                  <video
+                    src={`${API_URL}${item.file_url}`}
+                    className="w-full h-48 object-cover"
+                    controls
+                  />
                 ) : (
-                  <img src={`${API_URL}${item.file_url}`} alt={item.caption || t('beautiful_moment')} className="w-full h-48 object-cover" />
+                  <img
+                    src={`${API_URL}${item.file_url}`}
+                    alt={item.caption || t('beautiful_moment')}
+                    className="w-full h-48 object-cover"
+                  />
                 )}
-                <div className="absolute top-2 right-2">{getStatusBadge(item.status)}</div>
               </div>
               <div className="p-4">
-                <p className="text-gray-700 text-sm mb-2 line-clamp-2">{item.caption || t('beautiful_moment')}</p>
-                <p className="text-gray-500 text-xs">📅 {new Date(item.uploaded_at).toLocaleDateString()}</p>
+                <p className="text-gray-700 text-sm mb-2 line-clamp-2">
+                  {item.caption || t('beautiful_moment')}
+                </p>
+                <p className="text-gray-500 text-xs">
+                  📅 {new Date(item.uploaded_at).toLocaleDateString()}
+                </p>
               </div>
             </div>
           ))}
