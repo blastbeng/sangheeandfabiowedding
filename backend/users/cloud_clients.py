@@ -111,14 +111,14 @@ class GoogleDriveClient:
 def get_file_from_cloud(media):
     content = None
     content_type = 'video/mp4' if media.media_type == 'video' else 'image/jpeg'
-    if media.nextcloud_file_id:
-        nc = NextcloudClient()
-        content = nc.download_file(media.nextcloud_file_id)
-        if content:
-            return content, content_type
     if media.google_drive_file_id:
         gd = GoogleDriveClient()
         content = gd.download_file(media.google_drive_file_id)
+        if content:
+            return content, content_type
+    if media.nextcloud_file_id:
+        nc = NextcloudClient()
+        content = nc.download_file(media.nextcloud_file_id)
         if content:
             return content, content_type
     return None, None
