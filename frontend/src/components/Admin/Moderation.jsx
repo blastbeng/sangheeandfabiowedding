@@ -10,6 +10,8 @@ const AdminModeration = () => {
   const [rejectionReason, setRejectionReason] = useState('');
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [selectAll, setSelectAll] = useState(false);
   const API_URL = import.meta.env.VITE_API_URL;
 
   const fetchMedia = () => {
@@ -23,10 +25,16 @@ const AdminModeration = () => {
         }
         return res.json();
       })
-      .then(data => { setMedia(data); setLoading(false); })
-      .catch(err => { 
-        logger.error('[Moderation] Fetch error:', err); 
-        setLoading(false); 
+      .then(data => {
+        setMedia(data);
+        setLoading(false);
+        // Reset selection when data changes
+        setSelectedIds([]);
+        setSelectAll(false);
+      })
+      .catch(err => {
+        logger.error('[Moderation] Fetch error:', err);
+        setLoading(false);
       });
   };
 
@@ -40,9 +48,9 @@ const AdminModeration = () => {
         'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
       },
       body: JSON.stringify({ status: 'approved' })
-    }).then(res => { 
+    }).then(res => {
       if (!res.ok) logger.error('[Moderation] Approve failed for ID:', id);
-      if (res.ok) fetchMedia(); 
+      if (res.ok) fetchMedia();
     });
   };
 
@@ -70,6 +78,62 @@ const AdminModeration = () => {
     });
   };
 
+  // Bulk selection handlers
+  const toggleSelectAll = () => {
+    if (selectAll) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(media.map(item => item.id));
+    }
+    setSelectAll(!selectAll);
+  };
+
+  const toggleSelectItem = (id) => {
+    setSelectedIds(prev => {
+      if (prev.includes(id)) {
+        return prev.filter(i => i !== id);
+      } else {
+        return [...prev, id];
+      }
+    });
+  };
+
+  // Update selectAll state when individual selections change
+  useEffect(() => {
+    if (selectedIds.length === media.length && media.length > 0) {
+      setSelectAll(true);
+    } else {
+      setSelectAll(false);
+    }
+  }, [selectedIds, media]);
+
+  const handleBulkAction = (action) => {
+    if (selectedIds.length === 0) return;
+    if (action === 'reject' && !rejectionReason) {
+      alert('Please provide a rejection reason');
+      return;
+    }
+    fetch(`${API_URL}/api/auth/media/moderation/bulk/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+      },
+      body: JSON.stringify({
+        media_ids: selectedIds,
+        action: action,
+        rejection_reason: action === 'reject' ? rejectionReason : ''
+      })
+    }).then(res => {
+      if (res.ok) {
+        fetchMedia();
+        setRejectionReason('');
+      } else {
+        logger.error('[Moderation] Bulk action failed');
+      }
+    });
+  };
+
   const getStatusBadge = (status) => {
     const badges = { pending: 'status-pending', approved: 'status-approved', rejected: 'status-rejected' };
     const icons = { pending: '⏳', approved: '✅', rejected: '❌' };
@@ -92,7 +156,7 @@ const AdminModeration = () => {
         <p className="text-center text-gray-600 mb-6 italic">Review and approve beautiful memories 💕</p>
         <div className="floral-divider">✿ ─────── ✿ ─────── ✿</div>
 
-        <div className="mb-6 flex gap-4 flex-wrap">
+        <div className="mb-6 flex gap-4 flex-wrap items-center">
           <select value={filters.status} onChange={(e) => setFilters({ ...filters, status: e.target.value })} className="wedding-input">
             <option value="pending">⏳ Pending</option>
             <option value="approved">✅ Approved</option>
@@ -103,12 +167,25 @@ const AdminModeration = () => {
             <option value="image">📸 Photos</option>
             <option value="video">🎥 Videos</option>
           </select>
+          {selectedIds.length > 0 && (
+            <div className="flex gap-2 ml-auto">
+              <button onClick={() => handleBulkAction('approve')} className="bg-green-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-600">
+                ✅ Approve Selected ({selectedIds.length})
+              </button>
+              <button onClick={() => handleBulkAction('reject')} className="bg-red-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-red-600">
+                ❌ Reject Selected ({selectedIds.length})
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b-2 border-pink-200">
+                <th className="text-left py-3 text-pink-600">
+                  <input type="checkbox" checked={selectAll} onChange={toggleSelectAll} />
+                </th>
                 <th className="text-left py-3 text-pink-600">🖼️</th>
                 <th className="text-left py-3 text-pink-600">👤 User</th>
                 <th className="text-left py-3 text-pink-600">📝 Caption</th>
@@ -120,6 +197,13 @@ const AdminModeration = () => {
             <tbody>
               {media.map((item) => (
                 <tr key={item.id} className="border-b border-pink-100 hover:bg-pink-50">
+                  <td className="py-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(item.id)}
+                      onChange={() => toggleSelectItem(item.id)}
+                    />
+                  </td>
                   <td className="py-3">
                     <img src={`${API_URL}${item.file_url}`} alt="preview" className="w-16 h-16 object-cover rounded-lg border-2 border-pink-200" />
                   </td>
