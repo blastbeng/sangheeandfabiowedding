@@ -40,10 +40,9 @@ const Upload = () => {
     setSuccess('');
 
     const formData = new FormData();
-    files.forEach((file, index) => {
+    files.forEach((file) => {
       formData.append('files', file);
-      formData.append(`captions[${index}]`, captions[file.name] || '');
-      formData.append(`media_types[${index}]`, file.type.startsWith('video') ? 'video' : 'image');
+      formData.append('captions', captions[file.name] || '');
     });
 
     try {
