@@ -9,6 +9,9 @@ RUN npm install
 
 COPY . .
 
+# Normalize line endings to avoid issues with Windows CRLF
+RUN sed -i 's/\r$//' package.json
+
 RUN npm run build
 
 # Verify dist folder exists
