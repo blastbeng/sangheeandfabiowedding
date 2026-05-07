@@ -55,16 +55,31 @@ class LoginView(APIView):
     permission_classes = [AllowAny]
     
     def post(self, request):
-        username = request.data.get('username')
+        username_or_email = request.data.get('username_or_email')
         password = request.data.get('password')
         
-        if not username or not password:
-            return Response({'error': _('Username and password are required')}, status=status.HTTP_400_BAD_REQUEST)
+        if not username_or_email or not password:
+            return Response({'error': _('Username or email and password are required')}, status=status.HTTP_400_BAD_REQUEST)
         
-        user = authenticate(username=username, password=password)
+        User = get_user_model()
+        
+        # Try to find user by username or email
+        try:
+            user = User.objects.get(username=username_or_email)
+        except User.DoesNotExist:
+            try:
+                user = User.objects.get(email=username_or_email)
+            except User.DoesNotExist:
+                return Response({'error': _('Invalid credentials')}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Authenticate using the found user's username
+        user = authenticate(username=user.username, password=password)
         if user is None:
             return Response({'error': _('Invalid credentials')}, status=status.HTTP_400_BAD_REQUEST)
         
+        if not user.is_active:
+            return Response({'error': _('User account is disabled')}, status=status.HTTP_400_BAD_REQUEST)
+
         refresh = RefreshToken.for_user(user)
         
         return Response({
@@ -585,3 +600,83 @@ class AdminSettingsView(APIView):
                 'settings': serializer.validated_data
             })
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class PasswordResetRequestView(APIView):
+    """Request password reset via email"""
+    permission_classes = [AllowAny]
+    
+    def post(self, request):
+        email = request.data.get('email')
+        
+        if not email:
+            return Response({'error': _('Email is required')}, status=status.HTTP_400_BAD_REQUEST)
+        
+        User = get_user_model()
+        
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            # Don't reveal if email exists or not (security best practice)
+            return Response({'message': _('If the email exists, a reset link has been sent')})
+        
+        # Generate reset token
+        from django.core.signing import TimestampSigner
+        from django.utils.http import urlsafe_base64_encode
+        from django.utils.encoding import force_bytes
+        
+        signer = TimestampSigner()
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        token = signer.sign(user.pk)
+        
+        # In production, send actual email with reset link
+        # For now, return the token (or implement email sending via Celery)
+        reset_url = f"{os.environ.get('FRONTEND_URL', 'http://localhost:5173')}/password-reset-confirm/{uid}/{token}"
+        
+        # TODO: Implement actual email sending via Celery task
+        # from .tasks import send_password_reset_email
+        # send_password_reset_email.delay(user.email, reset_url)
+        
+        return Response({
+            'message': _('If the email exists, a reset link has been sent'),
+            'debug_reset_url': reset_url if DEBUG else None  # Only in development
+        })
+
+
+class PasswordResetConfirmView(APIView):
+    """Confirm password reset with token"""
+    permission_classes = [AllowAny]
+    
+    def post(self, request, uidb64, token):
+        from django.core.signing import TimestampSigner, BadSignature, SignatureExpired
+        from django.utils.http import urlsafe_base64_decode
+        from django.utils.encoding import force_str
+        
+        try:
+            uid = force_str(urlsafe_base64_decode(uidb64))
+            signer = TimestampSigner()
+            user_pk = signer.unsign(token, max_age=3600)  # Token valid for 1 hour
+            
+            if int(uid) != user_pk:
+                raise ValueError('UID mismatch')
+            
+            User = get_user_model()
+            user = User.objects.get(pk=uid)
+            
+        except (SignatureExpired, BadSignature, User.DoesNotExist, ValueError):
+            return Response({'error': _('Invalid or expired token')}, status=status.HTTP_400_BAD_REQUEST)
+        
+        new_password = request.data.get('password')
+        
+        if not new_password:
+            return Response({'error': _('New password is required')}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            validate_password(new_password)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+        user.set_password(new_password)
+        user.save()
+        
+        return Response({'message': _('Password reset successfully')})

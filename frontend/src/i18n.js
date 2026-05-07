@@ -9,6 +9,7 @@ const resources = {
       "Email": "La Tua Email",
       "Password": "Password Segreta",
       "Username": "Nome Utente",
+      "Username or Email": "Nome Utente o Email",
       "First Name": "Nome",
       "Last Name": "Cognome",
       "Profile": "Il Tuo Profilo",
@@ -116,7 +117,16 @@ const resources = {
       "be_first_to_share": "Sii il primo a condividere un ricordo 💕",
       "beautiful_moment": "✨ Un momento bellissimo",
       "Facebook": "Facebook 📘",
-      "Instagram": "Instagram 📷"
+      "Instagram": "Instagram 📷",
+      "Forgot Password?": "Password Dimenticata?",
+      "Reset Password": "Reimposta Password",
+      "Send Reset Link": "Invia Link di Reset",
+      "Enter your email and we will send you a reset link": "Inserisci la tua email e ti invieremo un link per reimpostare la password",
+      "Enter your new password below": "Inserisci la tua nuova password qui sotto",
+      "Back to Login": "Torna al Login",
+      "If the email exists, a reset link has been sent": "Se l'email esiste, è stato inviato un link di reset",
+      "Invalid or expired token": "Token invalido o scaduto",
+      "Password reset successfully": "Password reimpostata con successo"
     }
   },
   ko: {
@@ -126,6 +136,7 @@ const resources = {
       "Email": "이메일",
       "Password": "비밀번호",
       "Username": "사용자명",
+      "Username or Email": "사용자명 또는 이메일",
       "First Name": "이름",
       "Last Name": "성",
       "Profile": "내 프로필",
@@ -233,7 +244,16 @@ const resources = {
       "be_first_to_share": "첫 번째로 추억을 공유해주세요 💕",
       "beautiful_moment": "✨ 아름다운 순간",
       "Facebook": "Facebook 📘",
-      "Instagram": "Instagram 📷"
+      "Instagram": "Instagram 📷",
+      "Forgot Password?": "비밀번호를 잊으셨나요?",
+      "Reset Password": "비밀번호 재설정",
+      "Send Reset Link": "재설정 링크 보내기",
+      "Enter your email and we will send you a reset link": "이메일을 입력하시면 재설정 링크를 보내드립니다",
+      "Enter your new password below": "아래에 새 비밀번호를 입력하세요",
+      "Back to Login": "로그인으로 돌아가기",
+      "If the email exists, a reset link has been sent": "이메일이 존재하면 재설정 링크가 전송되었습니다",
+      "Invalid or expired token": "유효하지 않거나 만료된 토큰",
+      "Password reset successfully": "비밀번호가 성공적으로 재설정되었습니다"
     }
   },
   en: {
@@ -243,6 +263,7 @@ const resources = {
       "Email": "Your Email",
       "Password": "Secret Password",
       "Username": "Username",
+      "Username or Email": "Username or Email",
       "First Name": "First Name",
       "Last Name": "Last Name",
       "Profile": "Your Profile",
@@ -350,7 +371,16 @@ const resources = {
       "be_first_to_share": "Be the first to share a memory 💕",
       "beautiful_moment": "✨ A beautiful moment",
       "Facebook": "Facebook 📘",
-      "Instagram": "Instagram 📷"
+      "Instagram": "Instagram 📷",
+      "Forgot Password?": "Forgot Password?",
+      "Reset Password": "Reset Password",
+      "Send Reset Link": "Send Reset Link",
+      "Enter your email and we will send you a reset link": "Enter your email and we will send you a reset link",
+      "Enter your new password below": "Enter your new password below",
+      "Back to Login": "Back to Login",
+      "If the email exists, a reset link has been sent": "If the email exists, a reset link has been sent",
+      "Invalid or expired token": "Invalid or expired token",
+      "Password reset successfully": "Password reset successfully"
     }
   }
 };

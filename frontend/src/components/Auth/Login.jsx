@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 const Login = ({ setIsAuthenticated, setIsAdmin }) => {
   const { t } = useTranslation();
   const [formData, setFormData] = useState({
-    username: '',
+    username_or_email: '',
     password: ''
   });
   const [error, setError] = useState('');
@@ -29,7 +29,10 @@ const Login = ({ setIsAuthenticated, setIsAdmin }) => {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({
+          username_or_email: formData.username_or_email,
+          password: formData.password
+        })
       });
 
       const data = await response.json();
@@ -101,17 +104,17 @@ const Login = ({ setIsAuthenticated, setIsAdmin }) => {
         )}
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label htmlFor="username" className="block text-gray-700 text-sm font-bold mb-2">
-              👤 {t('Username')}
+            <label htmlFor="username_or_email" className="block text-gray-700 text-sm font-bold mb-2">
+              👤 {t('Username or Email')}
             </label>
             <input
               type="text"
-              id="username"
-              name="username"
-              value={formData.username}
+              id="username_or_email"
+              name="username_or_email"
+              value={formData.username_or_email}
               onChange={handleChange}
               className="wedding-input w-full"
-              placeholder="yourusername"
+              placeholder="username or email"
               required
             />
           </div>
@@ -129,6 +132,11 @@ const Login = ({ setIsAuthenticated, setIsAdmin }) => {
               placeholder="••••••••"
               required
             />
+            <div className="text-right mt-2">
+              <Link to="/password-reset" className="text-sm text-wedding-azure hover:text-wedding-navy underline">
+                {t('Forgot Password?')}
+              </Link>
+            </div>
           </div>
           <button type="submit" className="wedding-btn w-full mb-4">
             💝 {t('Sign In')}

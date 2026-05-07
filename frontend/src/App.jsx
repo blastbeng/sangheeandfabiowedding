@@ -14,6 +14,7 @@ import Settings from './components/Admin/Settings';
 import Home from './components/Public/Home';
 import Events from './components/Public/Events';
 import LanguageSwitcher from './components/Common/LanguageSwitcher';
+import PasswordReset from './components/Auth/PasswordReset';
 
 // Protected Route Component
 const ProtectedRoute = ({ children, isAdminOnly = false, isAuthenticated, isAdmin }) => {
@@ -115,6 +116,14 @@ function App() {
                     ? <Navigate to="/" replace /> 
                     : <Register />
                 } 
+              />
+              <Route 
+                path="/password-reset" 
+                element={<PasswordReset />} 
+              />
+              <Route 
+                path="/password-reset-confirm/:uidb64/:token" 
+                element={<PasswordReset />} 
               />
               <Route 
                 path="/profile" 
