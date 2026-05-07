@@ -9,6 +9,10 @@ from django.utils.translation import gettext as _
 from django.contrib.auth import get_user_model, login, logout, authenticate
 from django.contrib.auth.password_validation import validate_password
 from rest_framework_simplejwt.tokens import RefreshToken
+from django.core.signing import TimestampSigner, BadSignature, SignatureExpired
+from django.core.mail import send_mail
+from django.urls import reverse
+from django.conf import settings as django_settings
 from .models import Media
 from .serializers import CustomUserSerializer, MediaSerializer, MediaModerationSerializer, AdminUserSerializer, WebAppSettingsSerializer
 from django.shortcuts import get_object_or_404
@@ -40,8 +44,58 @@ class RegisterView(APIView):
             user = serializer.save()
             user.set_password(request.data['password'])
             user.save()
-            return Response({'message': _('User registered successfully')}, status=status.HTTP_201_CREATED)
+            
+            # Generate verification token
+            signer = TimestampSigner()
+            token = signer.sign(user.email)
+            verification_url = request.build_absolute_uri(
+                reverse('verify-email') + f'?token={token}'
+            )
+            
+            # Send email
+            send_mail(
+                subject='Verify your email address',
+                message=f'Please click the link to verify your email: {verification_url}',
+                from_email=django_settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[user.email],
+                fail_silently=False,
+            )
+            
+            return Response(
+                {'message': 'User registered successfully. Please check your email to verify your account.'},
+                status=status.HTTP_201_CREATED
+            )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class VerifyEmailView(APIView):
+    permission_classes = [AllowAny]
+    
+    def get(self, request):
+        token = request.query_params.get('token')
+        if not token:
+            return Response({'error': 'Token missing'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        signer = TimestampSigner()
+        try:
+            email = signer.unsign(token, max_age=86400)  # 24 hours
+        except SignatureExpired:
+            return Response({'error': 'Verification link expired'}, status=status.HTTP_400_BAD_REQUEST)
+        except BadSignature:
+            return Response({'error': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+        
+        if user.email_verified:
+            return Response({'message': 'Email already verified'})
+        
+        user.email_verified = True
+        user.is_active = True
+        user.save()
+        return Response({'message': 'Email verified successfully. You can now log in.'})
 
 
 class LoginView(APIView):

@@ -26,6 +26,8 @@ class CustomUserSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data.pop('password_confirm')
         validated_data.setdefault('language', 'it')
+        validated_data['is_active'] = False
+        validated_data['email_verified'] = False
         user = CustomUser.objects.create_user(**validated_data)
         return user
 

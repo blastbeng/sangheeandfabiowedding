@@ -18,6 +18,7 @@ class CustomUser(AbstractUser):
         ('ko', '한국어'),
         ('en', 'English'),
     ])
+    email_verified = models.BooleanField(default=False)
     
     # Override groups and user_permissions to avoid reverse accessor clashes
     groups = models.ManyToManyField(

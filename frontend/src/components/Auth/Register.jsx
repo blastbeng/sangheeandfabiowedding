@@ -27,17 +27,14 @@ const Register = () => {
       return;
     }
     try {
-      const response = await fetch('http://localhost:8000/api/auth/register/', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/register/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
       });
       const data = await response.json();
       if (response.ok) {
-        localStorage.setItem('accessToken', data.access);
-        localStorage.setItem('refreshToken', data.refresh);
-        setSuccess('Account created successfully! 🎉');
-        setTimeout(() => navigate('/gallery'), 2000);
+        setSuccess('Account created successfully! Please check your email to verify your account. 🎉');
       } else {
         setError(Object.values(data)[0] || 'Registration failed');
       }
@@ -50,7 +47,7 @@ const Register = () => {
 
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
-      const res = await fetch('http://localhost:8000/api/auth/social/login/', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/social/login/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ provider: 'google', access_token: credentialResponse.credential })
