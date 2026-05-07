@@ -1,7 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
-from .models import CustomUser
-from .models import Media
+from .models import CustomUser, Media, SiteSettings
 
 
 class CustomUserSerializer(serializers.ModelSerializer):
@@ -11,11 +10,12 @@ class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = ('id', 'username', 'email', 'first_name', 'last_name', 
-                  'date_of_birth', 'password', 'password_confirm', 'language')
+                  'date_of_birth', 'password', 'password_confirm', 'language', 'profile_picture')
         extra_kwargs = {
             'email': {'required': False, 'allow_blank': True},
             'username': {'required': True},
             'language': {'required': False},
+            'profile_picture': {'required': False},
         }
 
     def validate(self, attrs):
@@ -29,6 +29,9 @@ class CustomUserSerializer(serializers.ModelSerializer):
         validated_data['is_active'] = False
         validated_data['email_verified'] = False
         user = CustomUser.objects.create_user(**validated_data)
+        # Set default profile picture if none provided
+        if not user.profile_picture or user.profile_picture.name == 'profile_pics/default.png':
+            self.set_default_profile_picture(user)
         return user
 
     def update(self, instance, validated_data):
@@ -44,49 +47,74 @@ class CustomUserSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
 
+    def set_default_profile_picture(self, user):
+        import requests
+        from django.core.files.base import ContentFile
+        try:
+            response = requests.get('https://i.imgur.com/V4RclNb.png')
+            if response.status_code == 200:
+                user.profile_picture.save('default.png', ContentFile(response.content), save=True)
+        except Exception as e:
+            print(f"Failed to download default profile picture: {e}")
+
 
 class MediaSerializer(serializers.ModelSerializer):
-    """Serializer for displaying media to users"""
+    file_url = serializers.SerializerMethodField()
+
     class Meta:
         model = Media
         fields = ('id', 'user', 'file', 'media_type', 'caption', 
-                  'uploaded_at', 'status', 'view_count')
-        read_only_fields = ('user', 'uploaded_at', 'status', 'view_count')
+                  'uploaded_at', 'status', 'view_count', 'file_url')
+        read_only_fields = ('user', 'uploaded_at', 'status', 'view_count', 'file_url')
 
     def get_file_url(self, obj):
-        if obj.file:
-            return obj.file.url
-        return None
+        return f"/api/auth/media/{obj.id}/file/"
 
 
 class MediaModerationSerializer(serializers.ModelSerializer):
-    """Serializer for admin media moderation"""
     username = serializers.CharField(source='user.username', read_only=True)
     user_email = serializers.EmailField(source='user.email', read_only=True)
-    
+    file_url = serializers.SerializerMethodField()
+
     class Meta:
         model = Media
         fields = ('id', 'user', 'username', 'user_email', 'file', 'media_type', 
                   'caption', 'uploaded_at', 'status', 'reviewed_at', 
-                  'reviewed_by', 'rejection_reason', 'view_count')
-        read_only_fields = ('user', 'uploaded_at', 'reviewed_by')
+                  'reviewed_by', 'rejection_reason', 'view_count', 'file_url')
+        read_only_fields = ('user', 'uploaded_at', 'reviewed_by', 'file_url')
+
+    def get_file_url(self, obj):
+        return f"/api/auth/media/{obj.id}/file/"
 
 
 class AdminUserSerializer(serializers.ModelSerializer):
-    """Serializer for admin user management"""
     class Meta:
         model = CustomUser
         fields = ('id', 'username', 'email', 'first_name', 'last_name', 
                   'is_staff', 'is_superuser', 'is_active', 'created_at', 
-                  'updated_at', 'language')
+                  'updated_at', 'language', 'profile_picture')
         read_only_fields = ('created_at', 'updated_at')
 
 
-class WebAppSettingsSerializer(serializers.Serializer):
-    """Serializer for webapp settings"""
-    site_name = serializers.CharField(max_length=255)
-    maintenance_mode = serializers.BooleanField()
-    allow_registrations = serializers.BooleanField()
-    max_upload_size_mb = serializers.IntegerField()
-    require_approval = serializers.BooleanField()
-    default_language = serializers.CharField(max_length=10)
+class SiteSettingsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SiteSettings
+        fields = '__all__'
+
+
+class BulkModerationSerializer(serializers.Serializer):
+    media_ids = serializers.ListField(
+        child=serializers.IntegerField(), min_length=1
+    )
+    action = serializers.ChoiceField(choices=['approve', 'reject'])
+    rejection_reason = serializers.CharField(required=False, allow_blank=True)
+
+
+class AdminDashboardSerializer(serializers.Serializer):
+    total_users = serializers.IntegerField()
+    total_admins = serializers.IntegerField()
+    total_media = serializers.IntegerField()
+    pending_media = serializers.IntegerField()
+    approved_media = serializers.IntegerField()
+    rejected_media = serializers.IntegerField()
+    recent_uploads = MediaSerializer(many=True, read_only=True)

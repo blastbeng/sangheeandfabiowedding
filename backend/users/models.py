@@ -19,6 +19,12 @@ class CustomUser(AbstractUser):
         ('en', 'English'),
     ])
     email_verified = models.BooleanField(default=False)
+    profile_picture = models.ImageField(
+        upload_to='profile_pics/',
+        null=True,
+        blank=True,
+        default='profile_pics/default.png'
+    )
     
     # Override groups and user_permissions to avoid reverse accessor clashes
     groups = models.ManyToManyField(
@@ -99,3 +105,29 @@ class Media(models.Model):
 
     def __str__(self):
         return f"{self.media_type} - {self.caption or 'Untitled'} - {self.status}"
+
+
+class SiteSettings(models.Model):
+    """Singleton model for webapp settings"""
+    site_name = models.CharField(max_length=255, default='Sang Hee & Fabio')
+    maintenance_mode = models.BooleanField(default=False)
+    allow_registrations = models.BooleanField(default=True)
+    max_upload_size_mb = models.IntegerField(default=50)
+    require_approval = models.BooleanField(default=True)
+    default_language = models.CharField(max_length=10, default='it', choices=[
+        ('it', 'Italiano'),
+        ('ko', '한국어'),
+        ('en', 'English'),
+    ])
+
+    class Meta:
+        db_table = 'users_site_settings'
+
+    def save(self, *args, **kwargs):
+        self.pk = 1
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def load(cls):
+        obj, created = cls.objects.get_or_create(pk=1)
+        return obj

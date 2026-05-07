@@ -1,6 +1,14 @@
 from django.urls import path
 from rest_framework_simplejwt.views import TokenRefreshView
-from .views import RegisterView, LoginView, PasswordResetRequestView, PasswordResetConfirmView, ProfileView, LogoutView, MediaListView, MediaUploadView, SocialLoginView, MyUploadsView, MediaModerationView, MediaModerateSingleView, VerifyEmailView
+from .views import (
+    RegisterView, VerifyEmailView, LoginView, PasswordResetRequestView,
+    PasswordResetConfirmView, ProfileView, LogoutView, SocialLoginView,
+    MediaListView, MediaUploadView, MediaDeleteView, MyUploadsView,
+    MediaModerationView, MediaModerateSingleView, MediaFileView,
+    PublicMediaListView, AdminDashboardView, AdminSettingsView,
+    AdminUserListView, AdminUserDetailView, AdminUserToggleStaffView,
+    MediaBulkModerationView
+)
 
 urlpatterns = [
     path('register/', RegisterView.as_view(), name='register'),
@@ -11,10 +19,19 @@ urlpatterns = [
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('profile/', ProfileView.as_view(), name='profile'),
     path('logout/', LogoutView.as_view(), name='logout'),
+    path('social/login/', SocialLoginView.as_view(), name='social-login'),
     path('media/', MediaListView.as_view(), name='media-list'),
     path('media/upload/', MediaUploadView.as_view(), name='media-upload'),
+    path('media/<int:media_id>/', MediaDeleteView.as_view(), name='media-delete'),
     path('media/my-uploads/', MyUploadsView.as_view(), name='my-uploads'),
     path('media/moderation/', MediaModerationView.as_view(), name='media-moderation'),
     path('media/moderation/<int:media_id>/', MediaModerateSingleView.as_view(), name='media-moderate-single'),
-    path('social/login/', SocialLoginView.as_view(), name='social-login'),
+    path('media/moderation/bulk/', MediaBulkModerationView.as_view(), name='media-moderation-bulk'),
+    path('media/<int:media_id>/file/', MediaFileView.as_view(), name='media-file'),
+    path('media/public/', PublicMediaListView.as_view(), name='media-public'),
+    path('admin/dashboard/', AdminDashboardView.as_view(), name='admin-dashboard'),
+    path('admin/settings/', AdminSettingsView.as_view(), name='admin-settings'),
+    path('admin/users/', AdminUserListView.as_view(), name='admin-user-list'),
+    path('admin/users/<int:user_id>/', AdminUserDetailView.as_view(), name='admin-user-detail'),
+    path('admin/users/<int:user_id>/toggle-staff/', AdminUserToggleStaffView.as_view(), name='admin-user-toggle-staff'),
 ]

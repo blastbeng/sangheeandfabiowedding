@@ -12,107 +12,13 @@ from googleapiclient.http import MediaFileUpload
 from googleapiclient.errors import HttpError
 
 from .models import Media, CustomUser
+from .cloud_clients import NextcloudClient, GoogleDriveClient
 from config.settings import (
     NEXTCLOUD_URL, NEXTCLOUD_USERNAME, NEXTCLOUD_PASSWORD, NEXTCLOUD_FOLDER,
     GOOGLE_DRIVE_CLIENT_ID, GOOGLE_DRIVE_CLIENT_SECRET, GOOGLE_DRIVE_TOKEN, GOOGLE_DRIVE_FOLDER_ID
 )
 
 logger = logging.getLogger(__name__)
-
-
-class NextcloudClient:
-    """WebDAV client for Nextcloud"""
-
-    def __init__(self):
-        self.base_url = NEXTCLOUD_URL
-        self.username = NEXTCLOUD_USERNAME
-        self.password = NEXTCLOUD_PASSWORD
-        self.folder = NEXTCLOUD_FOLDER
-
-    def upload_file(self, file_content, filename):
-        url = f"{self.base_url}/remote.php/dav/files/{self.username}{self.folder}/{filename}"
-        try:
-            response = requests.put(
-                url,
-                data=file_content,
-                auth=(self.username, self.password),
-                headers={'Content-Type': 'application/octet-stream'}
-            )
-            if response.status_code in [201, 204]:
-                propfind_url = f"{self.base_url}/remote.php/dav/files/{self.username}{self.folder}/{filename}"
-                propfind_response = requests.request(
-                    'PROPFIND',
-                    propfind_url,
-                    auth=(self.username, self.password),
-                    headers={'Depth': '0'}
-                )
-                file_id = propfind_response.headers.get('OC-FileId', filename)
-                return file_id
-            logger.error(f"Nextcloud upload failed with status {response.status_code} for {filename}")
-            return None
-        except Exception as e:
-            logger.error(f"Nextcloud upload error: {e}")
-            return None
-
-    def delete_file(self, filename):
-        url = f"{self.base_url}/remote.php/dav/files/{self.username}{self.folder}/{filename}"
-        try:
-            response = requests.delete(url, auth=(self.username, self.password))
-            return response.status_code in [200, 204]
-        except Exception as e:
-            logger.error(f"Nextcloud delete error: {e}")
-            return False
-
-
-class GoogleDriveClient:
-    """Google Drive API client"""
-
-    def __init__(self):
-        try:
-            self.credentials = Credentials(
-                token=GOOGLE_DRIVE_TOKEN,
-                client_id=GOOGLE_DRIVE_CLIENT_ID,
-                client_secret=GOOGLE_DRIVE_CLIENT_SECRET,
-                token_uri='https://oauth2.googleapis.com/token',
-            )
-            self.service = build('drive', 'v3', credentials=self.credentials)
-            self.folder_id = GOOGLE_DRIVE_FOLDER_ID
-        except Exception as e:
-            logger.error(f"Google Drive init error: {e}")
-            self.service = None
-
-    def upload_file(self, file_content, filename, mime_type):
-        if not self.service:
-            return None
-        try:
-            file_metadata = {
-                'name': filename,
-                'parents': [self.folder_id]
-            }
-            media = MediaFileUpload(BytesIO(file_content), mimetype=mime_type, resumable=True)
-            file = self.service.files().create(
-                body=file_metadata,
-                media_body=media,
-                fields='id'
-            ).execute()
-            self.service.permissions().create(
-                fileId=file['id'],
-                body={'type': 'anyone', 'role': 'reader'}
-            ).execute()
-            return file['id']
-        except HttpError as e:
-            logger.error(f"Google Drive upload error: {e}")
-            return None
-
-    def delete_file(self, file_id):
-        if not self.service:
-            return False
-        try:
-            self.service.files().delete(fileId=file_id).execute()
-            return True
-        except HttpError as e:
-            logger.error(f"Google Drive delete error: {e}")
-            return False
 
 
 @shared_task(bind=True, max_retries=3)
@@ -233,8 +139,7 @@ def delete_media_task(media_id, user_id):
             port=int(os.getenv('REDIS_PORT', 6379)),
             decode_responses=False
         )
-        extension = '.mp4' if media.media_type == 'video' else '.jpg'
-        cache_key = f"media_cache:{media.id}{extension}"
+        cache_key = f"media_cache:{media.id}"
         redis_client.delete(cache_key)
     except Exception as e:
         logger.error(f"Redis cache delete error: {e}")
