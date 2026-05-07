@@ -107,8 +107,8 @@ const Upload = () => {
         {success && <div className="bg-green-50 border-2 border-green-300 text-green-700 px-4 py-3 rounded-xl mb-4">✅ {success}</div>}
 
         <div className="mb-6">
-          <label className="block text-gray-700 text-sm font-bold mb-2">📸 Select Photos & Videos</label>
-          <input type="file" multiple accept="image/*,video/*" onChange={handleFileSelect} className="wedding-input w-full py-4" />
+          <label htmlFor="file-upload" className="block text-gray-700 text-sm font-bold mb-2">📸 Select Photos & Videos</label>
+          <input id="file-upload" type="file" multiple accept="image/*,video/*" onChange={handleFileSelect} className="wedding-input w-full py-4" />
           <p className="text-sm text-gray-500 mt-2">✨ Supported: JPG, PNG, MP4, MOV</p>
         </div>
 
