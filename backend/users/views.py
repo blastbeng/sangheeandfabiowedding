@@ -20,6 +20,7 @@ from rest_framework import status
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
+from allauth.socialaccount.models import SocialAccount
 from .models import Media, SiteSettings
 from .serializers import (
     CustomUserSerializer, MediaSerializer, MediaModerationSerializer,
@@ -299,6 +300,80 @@ class SocialLoginRedirectView(APIView):
 
     def get(self, request, provider):
         return redirect(f'/accounts/{provider}/login/')
+
+
+class SocialLoginCallbackView(APIView):
+    """
+    Called by django-allauth after successful OAuth login.
+    Generates JWT tokens and redirects to frontend with tokens.
+    """
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        if not request.user.is_authenticated:
+            return redirect(f"{os.getenv('FRONTEND_URL', 'http://localhost:5173')}/login?error=social_callback_failed")
+
+        user = request.user
+        # Mark email as verified for social logins
+        user.email_verified = True
+        user.is_active = True
+
+        # Ensure username is set properly from social account
+        social_account = SocialAccount.objects.filter(user=user).first()
+        if social_account:
+            extra_data = social_account.extra_data
+            provider = social_account.provider
+
+            # Set username if not already meaningful
+            if not user.username or user.username.startswith('user_'):
+                if provider == 'facebook':
+                    first = extra_data.get('first_name', '')
+                    last = extra_data.get('last_name', '')
+                    base = f"{first}_{last}".strip('_') or extra_data.get('email', '').split('@')[0]
+                elif provider == 'instagram':
+                    base = extra_data.get('username', '') or extra_data.get('full_name', '').replace(' ', '_')
+                else:  # google or fallback
+                    base = extra_data.get('given_name', '') + '_' + extra_data.get('family_name', '')
+                    base = base.strip('_') or extra_data.get('email', '').split('@')[0]
+                # Make unique
+                username = base
+                counter = 1
+                while User.objects.filter(username=username).exists():
+                    username = f"{base}{counter}"
+                    counter += 1
+                user.username = username
+
+            # Download profile picture if not already set
+            if not user.profile_picture or user.profile_picture.name == 'profile_pics/default.png':
+                picture_url = None
+                if provider == 'facebook':
+                    # Facebook Graph API picture
+                    fb_id = extra_data.get('id')
+                    if fb_id:
+                        picture_url = f"https://graph.facebook.com/{fb_id}/picture?type=large"
+                elif provider == 'instagram':
+                    picture_url = extra_data.get('profile_picture')  # Instagram Basic Display API
+                elif provider == 'google':
+                    picture_url = extra_data.get('picture')
+                if picture_url:
+                    try:
+                        resp = requests.get(picture_url)
+                        if resp.status_code == 200:
+                            user.profile_picture.save(f"{user.username}_social.jpg", ContentFile(resp.content), save=False)
+                    except Exception as e:
+                        logger.error(f"Failed to download profile picture for {user.email}: {e}")
+
+        user.save()
+
+        # Generate JWT tokens
+        refresh = RefreshToken.for_user(user)
+        access = str(refresh.access_token)
+        refresh_token = str(refresh)
+
+        # Redirect to frontend social-callback with tokens
+        frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:5173')
+        redirect_url = f"{frontend_url}/social-callback?access={access}&refresh={refresh_token}"
+        return redirect(redirect_url)
 
 
 # ==================== MEDIA VIEWS ====================
