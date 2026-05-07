@@ -100,7 +100,7 @@ const Home = () => {
       <div className="text-center pb-12">
         <div className="floral-divider">✿ ─────── ✿ ─────── ✿</div>
         <p className="text-gray-500 italic text-sm">
-          Sang Hee &amp; Fabio — 2024
+          Sang Hee &amp; Fabio — 2026 - Costigliole D'Asti
         </p>
       </div>
     </div>
