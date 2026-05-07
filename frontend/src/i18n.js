@@ -126,7 +126,23 @@ const resources = {
       "Back to Login": "Torna al Login",
       "If the email exists, a reset link has been sent": "Se l'email esiste, è stato inviato un link di reset",
       "Invalid or expired token": "Token invalido o scaduto",
-      "Password reset successfully": "Password reimpostata con successo"
+      "Password reset successfully": "Password reimpostata con successo",
+      "Profile Picture": "Immagine del Profilo",
+      "optional": "opzionale",
+      "verify_missing_token": "Token di verifica mancante.",
+      "verify_expired": "Il link di verifica è scaduto. Richiedine uno nuovo.",
+      "verify_invalid": "Token di verifica non valido.",
+      "verify_user_not_found": "Utente non trovato.",
+      "verify_unknown_error": "Si è verificato un errore sconosciuto.",
+      "verify_already_verified": "La tua email è già stata verificata.",
+      "verify_success": "La tua email è stata verificata con successo!",
+      "verify_network_error": "Errore di rete. Riprova.",
+      "verify_no_token": "Nessun token di verifica fornito.",
+      "verifying": "Verifica della tua email in corso...",
+      "email_verified": "Email Verificata",
+      "verification_failed": "Verifica Fallita",
+      "go_to_login": "Vai al Login",
+      "back_to_home": "Torna alla Home"
     }
   },
   ko: {
@@ -253,7 +269,23 @@ const resources = {
       "Back to Login": "로그인으로 돌아가기",
       "If the email exists, a reset link has been sent": "이메일이 존재하면 재설정 링크가 전송되었습니다",
       "Invalid or expired token": "유효하지 않거나 만료된 토큰",
-      "Password reset successfully": "비밀번호가 성공적으로 재설정되었습니다"
+      "Password reset successfully": "비밀번호가 성공적으로 재설정되었습니다",
+      "Profile Picture": "프로필 사진",
+      "optional": "선택 사항",
+      "verify_missing_token": "인증 토큰이 없습니다.",
+      "verify_expired": "인증 링크가 만료되었습니다. 새로 요청하세요.",
+      "verify_invalid": "유효하지 않은 인증 토큰입니다.",
+      "verify_user_not_found": "사용자를 찾을 수 없습니다.",
+      "verify_unknown_error": "알 수 없는 오류가 발생했습니다.",
+      "verify_already_verified": "이미 인증된 이메일입니다.",
+      "verify_success": "이메일이 성공적으로 인증되었습니다!",
+      "verify_network_error": "네트워크 오류. 다시 시도하세요.",
+      "verify_no_token": "인증 토큰이 제공되지 않았습니다.",
+      "verifying": "이메일 인증 중...",
+      "email_verified": "이메일 인증 완료",
+      "verification_failed": "인증 실패",
+      "go_to_login": "로그인으로 이동",
+      "back_to_home": "홈으로 돌아가기"
     }
   },
   en: {
@@ -380,7 +412,23 @@ const resources = {
       "Back to Login": "Back to Login",
       "If the email exists, a reset link has been sent": "If the email exists, a reset link has been sent",
       "Invalid or expired token": "Invalid or expired token",
-      "Password reset successfully": "Password reset successfully"
+      "Password reset successfully": "Password reset successfully",
+      "Profile Picture": "Profile Picture",
+      "optional": "optional",
+      "verify_missing_token": "Verification token is missing.",
+      "verify_expired": "Verification link has expired. Please request a new one.",
+      "verify_invalid": "Invalid verification token.",
+      "verify_user_not_found": "User not found.",
+      "verify_unknown_error": "An unknown error occurred.",
+      "verify_already_verified": "Your email is already verified.",
+      "verify_success": "Your email has been verified successfully!",
+      "verify_network_error": "Network error. Please try again.",
+      "verify_no_token": "No verification token provided.",
+      "verifying": "Verifying your email...",
+      "email_verified": "Email Verified",
+      "verification_failed": "Verification Failed",
+      "go_to_login": "Go to Login",
+      "back_to_home": "Back to Home"
     }
   }
 };

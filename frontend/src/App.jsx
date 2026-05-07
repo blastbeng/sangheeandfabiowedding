@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import Login from './components/Auth/Login';
 import Register from './components/Auth/Register';
+import VerifyEmail from './components/Auth/VerifyEmail';
+import SocialCallback from './components/Auth/SocialCallback';
 import Profile from './components/User/Profile';
 import Upload from './components/User/Upload';
 import MyUploads from './components/User/MyUploads';
@@ -106,6 +108,13 @@ function App() {
               <Route path="/" element={<Home />} />
               <Route path="/events" element={<Events />} />
               <Route path="/gallery" element={<Gallery />} />
+              <Route path="/verify-email" element={<VerifyEmail />} />
+              <Route 
+                path="/social-callback" 
+                element={
+                  <SocialCallback setIsAuthenticated={setIsAuthenticated} setIsAdmin={setIsAdmin} />
+                } 
+              />
               <Route 
                 path="/login" 
                 element={

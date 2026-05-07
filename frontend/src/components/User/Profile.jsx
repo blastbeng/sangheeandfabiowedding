@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import logger from '../../utils/logger';
 
 const Profile = () => {
   const { t, i18n } = useTranslation();
@@ -11,6 +12,7 @@ const Profile = () => {
     last_name: '',
     email: ''
   });
+  const [profilePicture, setProfilePicture] = useState(null);
   const [passwordData, setPasswordData] = useState({
     current_password: '',
     new_password: '',
@@ -40,7 +42,7 @@ const Profile = () => {
           setError('Failed to load profile');
         }
       } catch (err) {
-        console.error('[Profile] Error loading profile:', err);
+        logger.error('[Profile] Error loading profile:', err);
         setError('An error occurred while loading profile');
       }
     };
@@ -48,17 +50,17 @@ const Profile = () => {
   }, []);
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handlePasswordChange = (e) => {
-    setPasswordData({
-      ...passwordData,
-      [e.target.name]: e.target.value
-    });
+    setPasswordData({ ...passwordData, [e.target.name]: e.target.value });
+  };
+
+  const handleProfilePictureChange = (e) => {
+    if (e.target.files.length > 0) {
+      setProfilePicture(e.target.files[0]);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -66,25 +68,31 @@ const Profile = () => {
     setError('');
     setSuccess('');
 
+    const data = new FormData();
+    data.append('username', formData.username);
+    data.append('first_name', formData.first_name);
+    data.append('last_name', formData.last_name);
+    data.append('email', formData.email);
+    if (profilePicture) {
+      data.append('profile_picture', profilePicture);
+    }
+
     try {
       const res = await fetch(`${API_URL}/api/auth/profile/`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-        },
-        body: JSON.stringify(formData)
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` },
+        body: data
       });
 
       if (res.ok) {
         setSuccess('Profile updated successfully');
+        setProfilePicture(null);
       } else {
-        const data = await res.json();
-        setError(Object.values(data)[0] || 'Failed to update profile');
+        const result = await res.json();
+        setError(Object.values(result)[0] || 'Failed to update profile');
       }
     } catch (err) {
-      console.error('[Profile] Profile update error:', err);
-      console.error('[Profile] Form data:', formData);
+      logger.error('[Profile] Profile update error:', err);
       setError('An error occurred while updating profile');
     }
   };
@@ -114,17 +122,13 @@ const Profile = () => {
 
       if (res.ok) {
         setSuccess('Password updated successfully');
-        setPasswordData({
-          current_password: '',
-          new_password: '',
-          new_password_confirm: ''
-        });
+        setPasswordData({ current_password: '', new_password: '', new_password_confirm: '' });
       } else {
         const data = await res.json();
         setError(data.detail || 'Failed to update password');
       }
     } catch (err) {
-      console.error('[Profile] Password update error:', err);
+      logger.error('[Profile] Password update error:', err);
       setError('An error occurred while updating password');
     }
   };
@@ -193,6 +197,18 @@ const Profile = () => {
               onChange={handleChange}
               className="wedding-input w-full"
             />
+          </div>
+          <div className="mb-4">
+            <label className="block text-gray-700 text-sm font-bold mb-2">🖼️ {t('Profile Picture')}</label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleProfilePictureChange}
+              className="wedding-input w-full"
+            />
+            {user.profile_picture && (
+              <img src={`${API_URL}${user.profile_picture}`} alt="Current" className="w-20 h-20 object-cover rounded-full mt-2 border-2 border-pink-200" />
+            )}
           </div>
           <button type="submit" className="wedding-btn">
             💾 {t('Save Your Changes')}

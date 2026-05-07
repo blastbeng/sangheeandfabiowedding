@@ -3,7 +3,7 @@ import logging
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
 from django.http import Http404
 from django.utils import timezone
@@ -164,18 +164,20 @@ class PasswordResetConfirmView(APIView):
 
 class ProfileView(APIView):
     permission_classes = [IsAuthenticated]
-    
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
+
     def get(self, request):
         logger.debug(f"Profile retrieved for user: {request.user.username}")
         return Response(CustomUserSerializer(request.user).data)
     
     def put(self, request):
+        # If request is multipart, use request.data directly; serializer handles file
         serializer = CustomUserSerializer(request.user, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             logger.info(f"Profile updated for user: {request.user.username}")
             return Response(serializer.data)
-        logger.error(f"Profile update failed for user {request.user.username}: {serializer.errors}")
+        logger.error(f"Profile update failed: {serializer.errors}")
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
