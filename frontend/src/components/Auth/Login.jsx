@@ -46,7 +46,7 @@ const Login = ({ setIsAuthenticated, setIsAdmin }) => {
         if (setIsAdmin) setIsAdmin(data.user.is_staff);
         navigate('/gallery');
       } else {
-        setError(data.detail || t('Login failed'));
+        setError(data.error || t('Login failed'));
       }
     } catch (err) {
       logger.error('[Login] Login error:', err);
