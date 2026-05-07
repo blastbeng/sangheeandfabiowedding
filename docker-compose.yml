@@ -79,3 +79,4 @@ services:
       - VITE_SUPPORTED_LANGUAGES=it,ko,en
     depends_on:
       - web
+    restart: unless-stopped
