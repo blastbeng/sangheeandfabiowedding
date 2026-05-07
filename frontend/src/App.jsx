@@ -15,6 +15,7 @@ import Home from './components/Public/Home';
 import Events from './components/Public/Events';
 import LanguageSwitcher from './components/Common/LanguageSwitcher';
 import PasswordReset from './components/Auth/PasswordReset';
+import logger from './utils/logger';
 
 // Protected Route Component
 const ProtectedRoute = ({ children, isAdminOnly = false, isAuthenticated, isAdmin }) => {
@@ -28,7 +29,7 @@ const ProtectedRoute = ({ children, isAdminOnly = false, isAuthenticated, isAdmi
 };
 
 const API_URL = import.meta.env.VITE_API_URL;
-console.log('[App] Initializing with API URL:', API_URL);
+logger.info('[App] Initializing with API URL:', API_URL);
 
 function App() {
   const { t, i18n } = useTranslation();
@@ -39,7 +40,7 @@ function App() {
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
     const adminFlag = localStorage.getItem('isAdmin');
-    console.log('[App] Auth state - Token present:', !!token, 'Is Admin:', adminFlag);
+    logger.info('[App] Auth state - Token present:', !!token, 'Is Admin:', adminFlag);
     
     if (token) {
       setIsAuthenticated(true);

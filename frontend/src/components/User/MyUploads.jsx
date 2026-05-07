@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import logger from '../../utils/logger';
 
 const MyUploads = () => {
   const { t } = useTranslation();
@@ -20,7 +21,7 @@ const MyUploads = () => {
       });
       if (res.ok) refreshUploads();
     } catch (err) {
-      console.error('[MyUploads] Delete failed for ID:', id, err);
+      logger.error('[MyUploads] Delete failed for ID:', id, err);
     }
   };
 
@@ -31,7 +32,7 @@ const MyUploads = () => {
       .then(res => res.json())
       .then(data => { setUploads(data); setLoading(false); })
       .catch(err => { 
-        console.error('[MyUploads] Failed to fetch uploads:', err); 
+        logger.error('[MyUploads] Failed to fetch uploads:', err); 
         setLoading(false); 
       });
   }, [refreshTrigger]);

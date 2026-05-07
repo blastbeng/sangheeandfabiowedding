@@ -66,6 +66,7 @@ services:
       - GOOGLE_DRIVE_CLIENT_SECRET=${GOOGLE_DRIVE_CLIENT_SECRET}
       - GOOGLE_DRIVE_TOKEN=${GOOGLE_DRIVE_TOKEN}
       - GOOGLE_DRIVE_FOLDER_ID=${GOOGLE_DRIVE_FOLDER_ID}
+      - LOG_LEVEL=${LOG_LEVEL}
     depends_on:
       - db
       - redis
@@ -101,6 +102,7 @@ services:
       - GOOGLE_DRIVE_CLIENT_SECRET=${GOOGLE_DRIVE_CLIENT_SECRET}
       - GOOGLE_DRIVE_TOKEN=${GOOGLE_DRIVE_TOKEN}
       - GOOGLE_DRIVE_FOLDER_ID=${GOOGLE_DRIVE_FOLDER_ID}
+      - LOG_LEVEL=${LOG_LEVEL}
     depends_on:
       - db
       - redis
@@ -114,6 +116,7 @@ services:
       - VITE_API_URL=${VITE_API_URL}
       - VITE_DEFAULT_LANGUAGE=it
       - VITE_SUPPORTED_LANGUAGES=it,ko,en
+      - VITE_LOG_LEVEL=${VITE_LOG_LEVEL}
     depends_on:
       - web
     networks:

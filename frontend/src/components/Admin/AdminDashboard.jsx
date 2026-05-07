@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import logger from '../../utils/logger';
 
 const AdminDashboard = () => {
   const { t } = useTranslation();
@@ -15,9 +16,9 @@ const AdminDashboard = () => {
       .then(res => res.json())
       .then(data => { setStats(data); setLoading(false); })
       .catch(err => { 
-        console.error('[AdminDashboard] Dashboard fetch error:', err); 
-        console.error('[AdminDashboard] API URL:', API_URL);
-        console.error('[AdminDashboard] Token present:', !!localStorage.getItem('accessToken'));
+        logger.error('[AdminDashboard] Dashboard fetch error:', err); 
+        logger.error('[AdminDashboard] API URL:', API_URL);
+        logger.error('[AdminDashboard] Token present:', !!localStorage.getItem('accessToken'));
         setLoading(false); 
       });
   }, [API_URL]);

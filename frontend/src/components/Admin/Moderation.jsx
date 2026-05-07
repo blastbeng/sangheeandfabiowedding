@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import logger from '../../utils/logger';
 
 const AdminModeration = () => {
   const { t } = useTranslation();
@@ -18,13 +19,13 @@ const AdminModeration = () => {
     })
       .then(res => {
         if (!res.ok) {
-          console.error('[Moderation] Fetch failed with status:', res.status);
+          logger.error('[Moderation] Fetch failed with status:', res.status);
         }
         return res.json();
       })
       .then(data => { setMedia(data); setLoading(false); })
       .catch(err => { 
-        console.error('[Moderation] Fetch error:', err); 
+        logger.error('[Moderation] Fetch error:', err); 
         setLoading(false); 
       });
   };
@@ -40,7 +41,7 @@ const AdminModeration = () => {
       },
       body: JSON.stringify({ status: 'approved' })
     }).then(res => { 
-      if (!res.ok) console.error('[Moderation] Approve failed for ID:', id);
+      if (!res.ok) logger.error('[Moderation] Approve failed for ID:', id);
       if (res.ok) fetchMedia(); 
     });
   };
@@ -59,7 +60,7 @@ const AdminModeration = () => {
       },
       body: JSON.stringify({ status: 'rejected', rejection_reason: rejectionReason })
     }).then(res => {
-      if (!res.ok) console.error('[Moderation] Reject failed for ID:', selectedId);
+      if (!res.ok) logger.error('[Moderation] Reject failed for ID:', selectedId);
       if (res.ok) {
         fetchMedia();
         setRejectionReason('');

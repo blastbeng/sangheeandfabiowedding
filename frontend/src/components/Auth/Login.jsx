@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
 import { useTranslation } from 'react-i18next';
+import logger from '../../utils/logger';
 
 const Login = ({ setIsAuthenticated, setIsAdmin }) => {
   const { t } = useTranslation();
@@ -48,8 +49,8 @@ const Login = ({ setIsAuthenticated, setIsAdmin }) => {
         setError(data.detail || t('Login failed'));
       }
     } catch (err) {
-      console.error('[Login] Login error:', err);
-      console.error('[Login] API URL:', import.meta.env.VITE_API_URL);
+      logger.error('[Login] Login error:', err);
+      logger.error('[Login] API URL:', import.meta.env.VITE_API_URL);
       setError(t('An error occurred during login'));
     }
   };
@@ -76,7 +77,7 @@ const Login = ({ setIsAuthenticated, setIsAdmin }) => {
         setError(data.error || t('Google login failed'));
       }
     } catch (err) {
-      console.error('[Login] Google login error:', err);
+      logger.error('[Login] Google login error:', err);
       setError(t('An error occurred during Google login'));
     }
   };

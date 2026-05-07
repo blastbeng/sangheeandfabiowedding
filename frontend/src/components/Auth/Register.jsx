@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
 import { useTranslation } from 'react-i18next';
+import logger from '../../utils/logger';
 
 const Register = () => {
   const { t } = useTranslation();
@@ -39,8 +40,8 @@ const Register = () => {
         setError(Object.values(data)[0] || 'Registration failed');
       }
     } catch (err) {
-      console.error('[Register] Registration error:', err);
-      console.error('[Register] Form data:', { ...formData, password: '[REDACTED]' });
+      logger.error('[Register] Registration error:', err);
+      logger.error('[Register] Form data:', { ...formData, password: '[REDACTED]' });
       setError('An error occurred during registration');
     }
   };
@@ -61,7 +62,7 @@ const Register = () => {
         setError(data.error || 'Google registration failed');
       }
     } catch (err) {
-      console.error('[Register] Google registration error:', err);
+      logger.error('[Register] Google registration error:', err);
       setError('An error occurred during Google registration');
     }
   };

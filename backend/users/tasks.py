@@ -1,3 +1,5 @@
+import logging
+
 from celery import shared_task
 from django.core.files.base import ContentFile
 import hashlib
@@ -14,6 +16,8 @@ from config.settings import (
     NEXTCLOUD_URL, NEXTCLOUD_USERNAME, NEXTCLOUD_PASSWORD, NEXTCLOUD_FOLDER,
     GOOGLE_DRIVE_CLIENT_ID, GOOGLE_DRIVE_CLIENT_SECRET, GOOGLE_DRIVE_TOKEN, GOOGLE_DRIVE_FOLDER_ID
 )
+
+logger = logging.getLogger(__name__)
 
 
 class NextcloudClient:
@@ -44,9 +48,10 @@ class NextcloudClient:
                 )
                 file_id = propfind_response.headers.get('OC-FileId', filename)
                 return file_id
+            logger.error(f"Nextcloud upload failed with status {response.status_code} for {filename}")
             return None
         except Exception as e:
-            print(f"Nextcloud upload error: {e}")
+            logger.error(f"Nextcloud upload error: {e}")
             return None
 
     def delete_file(self, filename):
@@ -55,7 +60,7 @@ class NextcloudClient:
             response = requests.delete(url, auth=(self.username, self.password))
             return response.status_code in [200, 204]
         except Exception as e:
-            print(f"Nextcloud delete error: {e}")
+            logger.error(f"Nextcloud delete error: {e}")
             return False
 
 
@@ -73,7 +78,7 @@ class GoogleDriveClient:
             self.service = build('drive', 'v3', credentials=self.credentials)
             self.folder_id = GOOGLE_DRIVE_FOLDER_ID
         except Exception as e:
-            print(f"Google Drive init error: {e}")
+            logger.error(f"Google Drive init error: {e}")
             self.service = None
 
     def upload_file(self, file_content, filename, mime_type):
@@ -96,7 +101,7 @@ class GoogleDriveClient:
             ).execute()
             return file['id']
         except HttpError as e:
-            print(f"Google Drive upload error: {e}")
+            logger.error(f"Google Drive upload error: {e}")
             return None
 
     def delete_file(self, file_id):
@@ -106,7 +111,7 @@ class GoogleDriveClient:
             self.service.files().delete(fileId=file_id).execute()
             return True
         except HttpError as e:
-            print(f"Google Drive delete error: {e}")
+            logger.error(f"Google Drive delete error: {e}")
             return False
 
 
@@ -124,6 +129,7 @@ def upload_media_task(self, user_id, file_data_list):
     try:
         user = CustomUser.objects.get(id=user_id)
     except CustomUser.DoesNotExist:
+        logger.error(f"Upload task failed: User {user_id} not found")
         return {'error': 'User not found'}
 
     nextcloud_client = NextcloudClient()
@@ -140,6 +146,8 @@ def upload_media_task(self, user_id, file_data_list):
             caption = file_data.get('caption', '')
             media_type = file_data.get('media_type', 'image')
 
+            logger.info(f"Uploading file {filename} for user {user_id}")
+
             # Generate unique filename
             unique_filename = f"{user_id}_{hashlib.md5(filename.encode()).hexdigest()[:8]}_{filename}"
             extension = os.path.splitext(filename)[1]
@@ -148,6 +156,7 @@ def upload_media_task(self, user_id, file_data_list):
             nextcloud_id = nextcloud_client.upload_file(file_content, unique_filename)
             if not nextcloud_id:
                 errors.append(f"Nextcloud upload failed for {filename}")
+                logger.error(f"Nextcloud upload failed for {filename}")
                 continue
 
             # Upload to Google Drive SECOND
@@ -157,6 +166,7 @@ def upload_media_task(self, user_id, file_data_list):
                 # ROLLBACK: Delete from Nextcloud since Google Drive failed
                 nextcloud_client.delete_file(unique_filename)
                 errors.append(f"Google Drive upload failed for {filename}, Nextcloud file deleted")
+                logger.error(f"Google Drive upload failed for {filename}, Nextcloud file rolled back")
                 continue
 
             # Both uploads successful - create Media record
@@ -174,9 +184,11 @@ def upload_media_task(self, user_id, file_data_list):
                 'filename': filename,
                 'status': media.status
             })
+            logger.info(f"File {filename} uploaded successfully")
 
         except Exception as e:
             errors.append(f"Error uploading {file_data.get('filename', 'unknown')}: {str(e)}")
+            logger.error(f"Upload failed for {file_data.get('filename', 'unknown')}: {e}")
             # Retry logic
             if self.request.retries < self.max_retries:
                 raise self.retry(exc=e, countdown=60)
@@ -195,9 +207,12 @@ def delete_media_task(media_id, user_id):
     """
     import redis
     
+    logger.info(f"Deleting media {media_id}")
+
     try:
         media = Media.objects.get(id=media_id, user_id=user_id)
     except Media.DoesNotExist:
+        logger.error(f"Delete task failed: Media {media_id} not found")
         return {'error': 'Media not found'}
 
     nextcloud_client = NextcloudClient()
@@ -222,7 +237,8 @@ def delete_media_task(media_id, user_id):
         cache_key = f"media_cache:{media.id}{extension}"
         redis_client.delete(cache_key)
     except Exception as e:
-        print(f"Redis cache delete error: {e}")
+        logger.error(f"Redis cache delete error: {e}")
 
     media.delete()
+    logger.info(f"Media {media_id} deleted successfully")
     return {'message': 'File deleted successfully'}

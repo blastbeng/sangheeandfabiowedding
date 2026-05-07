@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import logger from '../../utils/logger';
 
 const Settings = () => {
   const { t } = useTranslation();
@@ -16,7 +17,7 @@ const Settings = () => {
     })
       .then(res => res.json())
       .then(data => setSettings(data))
-      .catch(err => console.error('[Settings] Settings fetch error:', err));
+      .catch(err => logger.error('[Settings] Settings fetch error:', err));
   }, [API_URL]);
 
   const handleSubmit = async (e) => {
@@ -32,8 +33,8 @@ const Settings = () => {
       });
       if (res.ok) setSuccess('Settings saved successfully! ✅');
     } catch (err) {
-      console.error('[Settings] Settings save error:', err);
-      console.error('[Settings] Settings data:', settings);
+      logger.error('[Settings] Settings save error:', err);
+      logger.error('[Settings] Settings data:', settings);
     }
   };
 
