@@ -121,6 +121,18 @@ const Gallery = () => {
                 )}
               </div>
               <div className="p-4">
+                {/* Uploader info */}
+                {item.uploader_username && (
+                  <div className="flex items-center gap-2 mb-2">
+                    <img
+                      src={item.uploader_profile_picture || 'https://i.imgur.com/V4RclNb.png'}
+                      alt={item.uploader_username}
+                      className="w-8 h-8 rounded-full object-cover border border-pink-200"
+                      onError={(e) => { e.target.src = 'https://i.imgur.com/V4RclNb.png'; }}
+                    />
+                    <span className="text-sm text-gray-600 font-medium">{item.uploader_username}</span>
+                  </div>
+                )}
                 <p className="text-gray-700 text-sm mb-2 line-clamp-2">
                   {item.caption || t('beautiful_moment')}
                 </p>

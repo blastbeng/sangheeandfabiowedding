@@ -87,6 +87,32 @@ class MediaSerializer(serializers.ModelSerializer):
         return f"/api/auth/media/{obj.id}/file/"
 
 
+class PublicMediaSerializer(serializers.ModelSerializer):
+    file_url = serializers.SerializerMethodField()
+    uploader_username = serializers.CharField(source='user.username', read_only=True)
+    uploader_profile_picture = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Media
+        fields = (
+            'id', 'user', 'file', 'media_type', 'caption',
+            'uploaded_at', 'status', 'view_count', 'file_url',
+            'uploader_username', 'uploader_profile_picture'
+        )
+        read_only_fields = fields
+
+    def get_file_url(self, obj):
+        return f"/api/auth/media/{obj.id}/file/"
+
+    def get_uploader_profile_picture(self, obj):
+        if obj.user and obj.user.profile_picture:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.user.profile_picture.url)
+            return obj.user.profile_picture.url
+        return None
+
+
 class MediaModerationSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source='user.username', read_only=True)
     user_email = serializers.EmailField(source='user.email', read_only=True)

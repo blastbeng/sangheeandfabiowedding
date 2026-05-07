@@ -24,7 +24,8 @@ from allauth.socialaccount.models import SocialAccount
 from .models import Media, SiteSettings
 from .serializers import (
     CustomUserSerializer, MediaSerializer, MediaModerationSerializer,
-    AdminUserSerializer, SiteSettingsSerializer, BulkModerationSerializer
+    AdminUserSerializer, SiteSettingsSerializer, BulkModerationSerializer,
+    PublicMediaSerializer
 )
 from .cloud_clients import get_file_from_cloud
 from .tasks import upload_media_task, delete_media_task
@@ -363,6 +364,15 @@ class SocialLoginCallbackView(APIView):
                     except Exception as e:
                         logger.error(f"Failed to download profile picture for {user.email}: {e}")
 
+            # Fallback to default profile picture if none was set
+            if not user.profile_picture or user.profile_picture.name == 'profile_pics/default.png':
+                try:
+                    resp = requests.get('https://i.imgur.com/V4RclNb.png')
+                    if resp.status_code == 200:
+                        user.profile_picture.save('default.png', ContentFile(resp.content), save=False)
+                except Exception as e:
+                    logger.error(f"Failed to set default profile picture for {user.email}: {e}")
+
         user.save()
 
         # Generate JWT tokens
@@ -505,7 +515,8 @@ class PublicMediaListView(APIView):
             queryset = queryset.filter(uploaded_at__lte=date_to)
         if search:
             queryset = queryset.filter(caption__icontains=search)
-        return Response(MediaSerializer(queryset.order_by('-uploaded_at'), many=True).data)
+        serializer = PublicMediaSerializer(queryset.order_by('-uploaded_at'), many=True, context={'request': request})
+        return Response(serializer.data)
 
 
 # ==================== ADMIN VIEWS ====================
