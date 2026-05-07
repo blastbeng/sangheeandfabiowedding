@@ -4,32 +4,48 @@ from .models import CustomUser, Media, SiteSettings
 
 
 class CustomUserSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, validators=[validate_password])
-    password_confirm = serializers.CharField(write_only=True)
+    password = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    password_confirm = serializers.CharField(write_only=True, required=False, allow_blank=True)
 
     class Meta:
         model = CustomUser
-        fields = ('id', 'username', 'email', 'first_name', 'last_name', 
+        fields = ('id', 'username', 'email', 'first_name', 'last_name',
                   'date_of_birth', 'password', 'password_confirm', 'language', 'profile_picture')
         extra_kwargs = {
             'email': {'required': False, 'allow_blank': True},
-            'username': {'required': True},
+            'username': {'required': False},
             'language': {'required': False},
             'profile_picture': {'required': False},
         }
 
     def validate(self, attrs):
-        if attrs['password'] != attrs['password_confirm']:
-            raise serializers.ValidationError("Passwords don't match")
+        password = attrs.get('password')
+        password_confirm = attrs.get('password_confirm')
+
+        if password:
+            if password != password_confirm:
+                raise serializers.ValidationError({"password_confirm": "Passwords don't match"})
+            try:
+                validate_password(password)
+            except Exception as e:
+                raise serializers.ValidationError({"password": list(e.messages)})
+
         return attrs
 
     def create(self, validated_data):
-        validated_data.pop('password_confirm')
+        validated_data.pop('password_confirm', None)
+        password = validated_data.pop('password', None)
+
+        if not password:
+            raise serializers.ValidationError({"password": "Password is required"})
+
         validated_data.setdefault('language', 'it')
         validated_data['is_active'] = False
         validated_data['email_verified'] = False
         user = CustomUser.objects.create_user(**validated_data)
-        # Set default profile picture if none provided
+        user.set_password(password)
+        user.save()
+
         if not user.profile_picture or user.profile_picture.name == 'profile_pics/default.png':
             self.set_default_profile_picture(user)
         return user
@@ -63,7 +79,7 @@ class MediaSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Media
-        fields = ('id', 'user', 'file', 'media_type', 'caption', 
+        fields = ('id', 'user', 'file', 'media_type', 'caption',
                   'uploaded_at', 'status', 'view_count', 'file_url')
         read_only_fields = ('user', 'uploaded_at', 'status', 'view_count', 'file_url')
 
@@ -78,8 +94,8 @@ class MediaModerationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Media
-        fields = ('id', 'user', 'username', 'user_email', 'file', 'media_type', 
-                  'caption', 'uploaded_at', 'status', 'reviewed_at', 
+        fields = ('id', 'user', 'username', 'user_email', 'file', 'media_type',
+                  'caption', 'uploaded_at', 'status', 'reviewed_at',
                   'reviewed_by', 'rejection_reason', 'view_count', 'file_url')
         read_only_fields = ('user', 'uploaded_at', 'reviewed_by', 'file_url')
 
@@ -90,8 +106,8 @@ class MediaModerationSerializer(serializers.ModelSerializer):
 class AdminUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ('id', 'username', 'email', 'first_name', 'last_name', 
-                  'is_staff', 'is_superuser', 'is_active', 'created_at', 
+        fields = ('id', 'username', 'email', 'first_name', 'last_name',
+                  'is_staff', 'is_superuser', 'is_active', 'created_at',
                   'updated_at', 'language', 'profile_picture')
         read_only_fields = ('created_at', 'updated_at')
 

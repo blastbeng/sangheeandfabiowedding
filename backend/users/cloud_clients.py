@@ -2,7 +2,7 @@ import requests
 from io import BytesIO
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
-from googleapiclient.http import MediaIoBaseDownload, MediaFileUpload
+from googleapiclient.http import MediaIoBaseDownload, MediaIoBaseUpload
 from googleapiclient.errors import HttpError
 from config.settings import (
     NEXTCLOUD_URL, NEXTCLOUD_USERNAME, NEXTCLOUD_PASSWORD, NEXTCLOUD_FOLDER,
@@ -74,7 +74,7 @@ class GoogleDriveClient:
             return None
         try:
             file_metadata = {'name': filename, 'parents': [self.folder_id]}
-            media = MediaFileUpload(BytesIO(file_content), mimetype=mime_type, resumable=True)
+            media = MediaIoBaseUpload(BytesIO(file_content), mimetype=mime_type, resumable=True)
             file = self.service.files().create(body=file_metadata, media_body=media, fields='id').execute()
             self.service.permissions().create(fileId=file['id'], body={'type': 'anyone', 'role': 'reader'}).execute()
             return file['id']

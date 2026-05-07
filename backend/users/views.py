@@ -198,6 +198,25 @@ class ProfileView(APIView):
         return Response(CustomUserSerializer(request.user).data)
 
     def put(self, request):
+        # Check if this is a password change request
+        current_password = request.data.get('current_password')
+        new_password = request.data.get('password')
+
+        if current_password and new_password:
+            # Verify current password
+            if not request.user.check_password(current_password):
+                return Response({'detail': 'Current password is incorrect'}, status=status.HTTP_400_BAD_REQUEST)
+            # Validate new password
+            try:
+                validate_password(new_password, user=request.user)
+            except Exception as e:
+                return Response({'detail': list(e.messages)}, status=status.HTTP_400_BAD_REQUEST)
+            request.user.set_password(new_password)
+            request.user.save()
+            logger.info(f"Password updated for user: {request.user.username}")
+            return Response({'message': 'Password updated successfully'})
+
+        # Regular profile update
         serializer = CustomUserSerializer(request.user, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -269,6 +288,14 @@ class SocialLoginView(APIView):
                 user.profile_picture.save(f"{user.username}_profile.jpg", ContentFile(response.content), save=True)
         except Exception as e:
             logger.error(f"Failed to download profile picture: {e}")
+
+
+class SocialLoginRedirectView(APIView):
+    """Redirect to OAuth provider for Facebook/Instagram login via django-allauth"""
+    permission_classes = [AllowAny]
+
+    def get(self, request, provider):
+        return redirect(f'/accounts/{provider}/login/')
 
 
 # ==================== MEDIA VIEWS ====================
@@ -363,8 +390,11 @@ class MediaFileView(APIView):
         if media.status != 'approved' and not request.user.is_staff:
             raise Http404("Media not available")
 
-        redis_client = redis.Redis(host=os.getenv('REDIS_HOST', 'localhost'),
-                                   port=int(os.getenv('REDIS_PORT', 6379)), decode_responses=False)
+        redis_client = redis.Redis(
+            host=django_settings.REDIS_HOST,
+            port=django_settings.REDIS_PORT,
+            decode_responses=False
+        )
         cache_key = f"media_cache:{media.id}"
         cached = redis_client.get(cache_key)
         if cached:
