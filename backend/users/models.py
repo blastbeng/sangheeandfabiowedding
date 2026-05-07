@@ -51,3 +51,50 @@ class CustomUser(AbstractUser):
 
     class Meta:
         db_table = 'users_customuser'
+
+
+class Media(models.Model):
+    """
+    Model for storing guest and spouse uploads
+    """
+    MEDIA_TYPES = (
+        ('image', 'Image'),
+        ('video', 'Video'),
+    )
+    STATUS_CHOICES = (
+        ('pending', 'Pending'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    )
+    user = models.ForeignKey(
+        CustomUser, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        related_name='uploaded_media'
+    )
+    file = models.FileField(upload_to='wedding_uploads/', null=True, blank=True)
+    media_type = models.CharField(max_length=10, choices=MEDIA_TYPES)
+    caption = models.TextField(blank=True, null=True)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    reviewed_by = models.ForeignKey(
+        CustomUser, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name='reviewed_media'
+    )
+    rejection_reason = models.TextField(blank=True, null=True)
+    # Cloud storage fields
+    nextcloud_file_id = models.CharField(max_length=255, null=True, blank=True)
+    google_drive_file_id = models.CharField(max_length=255, null=True, blank=True)
+    view_count = models.IntegerField(default=0)
+
+    class Meta:
+        db_table = 'users_media'
+        ordering = ['-uploaded_at']
+
+    def __str__(self):
+        return f"{self.media_type} - {self.caption or 'Untitled'} - {self.status}"
