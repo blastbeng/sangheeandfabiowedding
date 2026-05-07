@@ -48,6 +48,8 @@ const Login = ({ setIsAuthenticated, setIsAdmin }) => {
         setError(data.detail || t('Login failed'));
       }
     } catch (err) {
+      console.error('[Login] Login error:', err);
+      console.error('[Login] API URL:', import.meta.env.VITE_API_URL);
       setError(t('An error occurred during login'));
     }
   };
@@ -74,6 +76,7 @@ const Login = ({ setIsAuthenticated, setIsAdmin }) => {
         setError(data.error || t('Google login failed'));
       }
     } catch (err) {
+      console.error('[Login] Google login error:', err);
       setError(t('An error occurred during Google login'));
     }
   };

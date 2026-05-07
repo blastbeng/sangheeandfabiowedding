@@ -27,6 +27,9 @@ const ProtectedRoute = ({ children, isAdminOnly = false, isAuthenticated, isAdmi
   return children;
 };
 
+const API_URL = import.meta.env.VITE_API_URL;
+console.log('[App] Initializing with API URL:', API_URL);
+
 function App() {
   const { t, i18n } = useTranslation();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -36,6 +39,7 @@ function App() {
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
     const adminFlag = localStorage.getItem('isAdmin');
+    console.log('[App] Auth state - Token present:', !!token, 'Is Admin:', adminFlag);
     
     if (token) {
       setIsAuthenticated(true);

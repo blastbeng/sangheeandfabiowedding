@@ -14,7 +14,12 @@ const AdminDashboard = () => {
     })
       .then(res => res.json())
       .then(data => { setStats(data); setLoading(false); })
-      .catch(err => { console.error('Dashboard fetch error:', err); setLoading(false); });
+      .catch(err => { 
+        console.error('[AdminDashboard] Dashboard fetch error:', err); 
+        console.error('[AdminDashboard] API URL:', API_URL);
+        console.error('[AdminDashboard] Token present:', !!localStorage.getItem('accessToken'));
+        setLoading(false); 
+      });
   }, [API_URL]);
 
   if (loading) {

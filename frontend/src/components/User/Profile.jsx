@@ -40,6 +40,7 @@ const Profile = () => {
           setError('Failed to load profile');
         }
       } catch (err) {
+        console.error('[Profile] Error loading profile:', err);
         setError('An error occurred while loading profile');
       }
     };
@@ -82,6 +83,8 @@ const Profile = () => {
         setError(Object.values(data)[0] || 'Failed to update profile');
       }
     } catch (err) {
+      console.error('[Profile] Profile update error:', err);
+      console.error('[Profile] Form data:', formData);
       setError('An error occurred while updating profile');
     }
   };
@@ -121,6 +124,7 @@ const Profile = () => {
         setError(data.detail || 'Failed to update password');
       }
     } catch (err) {
+      console.error('[Profile] Password update error:', err);
       setError('An error occurred while updating password');
     }
   };

@@ -15,7 +15,8 @@ const Gallery = () => {
         setLoading(false);
       })
       .catch(err => {
-        console.error(err);
+        console.error('[Gallery] Failed to fetch media:', err);
+        console.error('[Gallery] API URL:', API_URL);
         setLoading(false);
       });
   }, []);

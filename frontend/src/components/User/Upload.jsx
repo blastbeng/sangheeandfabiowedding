@@ -60,6 +60,8 @@ const Upload = () => {
         setError(data.error || 'Upload failed');
       }
     } catch (err) {
+      console.error('[Upload] Upload error:', err);
+      console.error('[Upload] Files attempted:', files.map(f => f.name));
       setError('An error occurred during upload');
     } finally {
       setUploading(false);

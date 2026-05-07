@@ -20,7 +20,7 @@ const MyUploads = () => {
       });
       if (res.ok) refreshUploads();
     } catch (err) {
-      console.error('Delete failed:', err);
+      console.error('[MyUploads] Delete failed for ID:', id, err);
     }
   };
 
@@ -30,7 +30,10 @@ const MyUploads = () => {
     })
       .then(res => res.json())
       .then(data => { setUploads(data); setLoading(false); })
-      .catch(err => { console.error(err); setLoading(false); });
+      .catch(err => { 
+        console.error('[MyUploads] Failed to fetch uploads:', err); 
+        setLoading(false); 
+      });
   }, [refreshTrigger]);
 
   const getStatusBadge = (status) => {

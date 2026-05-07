@@ -42,6 +42,8 @@ const Register = () => {
         setError(Object.values(data)[0] || 'Registration failed');
       }
     } catch (err) {
+      console.error('[Register] Registration error:', err);
+      console.error('[Register] Form data:', { ...formData, password: '[REDACTED]' });
       setError('An error occurred during registration');
     }
   };
@@ -62,6 +64,7 @@ const Register = () => {
         setError(data.error || 'Google registration failed');
       }
     } catch (err) {
+      console.error('[Register] Google registration error:', err);
       setError('An error occurred during Google registration');
     }
   };

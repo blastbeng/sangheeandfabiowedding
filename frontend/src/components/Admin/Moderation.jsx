@@ -16,8 +16,17 @@ const AdminModeration = () => {
     fetch(`${API_URL}/api/auth/media/moderation/?${params}`, {
       headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
     })
-      .then(res => res.json())
-      .then(data => { setMedia(data); setLoading(false); });
+      .then(res => {
+        if (!res.ok) {
+          console.error('[Moderation] Fetch failed with status:', res.status);
+        }
+        return res.json();
+      })
+      .then(data => { setMedia(data); setLoading(false); })
+      .catch(err => { 
+        console.error('[Moderation] Fetch error:', err); 
+        setLoading(false); 
+      });
   };
 
   useEffect(() => { fetchMedia(); }, [filters]);
@@ -30,7 +39,10 @@ const AdminModeration = () => {
         'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
       },
       body: JSON.stringify({ status: 'approved' })
-    }).then(res => { if (res.ok) fetchMedia(); });
+    }).then(res => { 
+      if (!res.ok) console.error('[Moderation] Approve failed for ID:', id);
+      if (res.ok) fetchMedia(); 
+    });
   };
 
   const handleReject = (id) => {
@@ -47,6 +59,7 @@ const AdminModeration = () => {
       },
       body: JSON.stringify({ status: 'rejected', rejection_reason: rejectionReason })
     }).then(res => {
+      if (!res.ok) console.error('[Moderation] Reject failed for ID:', selectedId);
       if (res.ok) {
         fetchMedia();
         setRejectionReason('');

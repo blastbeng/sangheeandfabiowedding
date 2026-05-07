@@ -54,6 +54,8 @@ const PasswordReset = () => {
         }
       }
     } catch (err) {
+      console.error('[PasswordReset] Error:', err);
+      console.error('[PasswordReset] Is reset confirm:', isResetConfirm);
       setError(t('An error occurred'));
     }
   };

@@ -19,7 +19,10 @@ const UserManagement = () => {
     })
       .then(res => res.json())
       .then(data => { setUsers(data); setLoading(false); })
-      .catch(err => { console.error('Users fetch error:', err); setLoading(false); });
+      .catch(err => { 
+        console.error('[UserManagement] Users fetch error:', err); 
+        setLoading(false); 
+      });
   };
 
   useEffect(() => { fetchUsers(); }, [API_URL]);
@@ -47,7 +50,8 @@ const UserManagement = () => {
         setFormData({ username: '', email: '', first_name: '', last_name: '', is_staff: false, is_active: true, password: '' });
       }
     } catch (err) {
-      console.error('User save error:', err);
+      console.error('[UserManagement] User save error:', err);
+      console.error('[UserManagement] Form data:', formData);
     }
   };
 
@@ -60,7 +64,7 @@ const UserManagement = () => {
       });
       if (res.ok) fetchUsers();
     } catch (err) {
-      console.error('Delete error:', err);
+      console.error('[UserManagement] Delete error for user:', userId, err);
     }
   };
 
@@ -76,7 +80,7 @@ const UserManagement = () => {
       });
       if (res.ok) fetchUsers();
     } catch (err) {
-      console.error('Toggle staff error:', err);
+      console.error('[UserManagement] Toggle staff error for user:', userId, err);
     }
   };
 
