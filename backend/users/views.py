@@ -263,12 +263,14 @@ class SocialLoginView(APIView):
             'user': CustomUserSerializer(user).data
         })
 
-    def get_google_user_info(self, access_token):
-        response = requests.get('https://www.googleapis.com/oauth2/v3/userinfo',
-                                headers={'Authorization': f'Bearer {access_token}'})
+    def get_google_user_info(self, id_token):
+        # Verify the ID token using Google's tokeninfo endpoint
+        response = requests.get(f'https://oauth2.googleapis.com/tokeninfo?id_token={id_token}')
         if response.status_code != 200:
-            raise Exception('Failed to fetch user info')
-        return response.json()
+            raise Exception('Failed to verify ID token')
+        data = response.json()
+        # tokeninfo returns fields like email, given_name, family_name, picture
+        return data
 
     def generate_username(self, user_info):
         base = user_info.get('given_name', '') + '_' + user_info.get('family_name', '')
