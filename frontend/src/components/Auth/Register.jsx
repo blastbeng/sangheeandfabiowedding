@@ -12,6 +12,7 @@ const Register = () => {
     password: '',
     password_confirm: ''
   });
+  const [profilePicture, setProfilePicture] = useState(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const navigate = useNavigate();
@@ -27,21 +28,27 @@ const Register = () => {
       setError("Passwords don't match");
       return;
     }
+    const data = new FormData();
+    data.append('username', formData.username);
+    data.append('email', formData.email);
+    data.append('password', formData.password);
+    data.append('password_confirm', formData.password_confirm);
+    if (profilePicture) {
+      data.append('profile_picture', profilePicture);
+    }
     try {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/register/`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: data,
       });
-      const data = await response.json();
+      const result = await response.json();
       if (response.ok) {
         setSuccess('Account created successfully! Please check your email to verify your account. 🎉');
       } else {
-        setError(Object.values(data)[0] || 'Registration failed');
+        setError(Object.values(result)[0] || 'Registration failed');
       }
     } catch (err) {
       logger.error('[Register] Registration error:', err);
-      logger.error('[Register] Form data:', { ...formData, password: '[REDACTED]' });
       setError('An error occurred during registration');
     }
   };
@@ -139,7 +146,7 @@ const Register = () => {
               required
             />
           </div>
-          <div className="mb-6">
+          <div className="mb-4">
             <label className="block text-gray-700 text-sm font-bold mb-2">
               🔐 {t('Confirm New Password')}
             </label>
@@ -151,6 +158,17 @@ const Register = () => {
               className="wedding-input w-full"
               placeholder="Same as above, please!"
               required
+            />
+          </div>
+          <div className="mb-6">
+            <label className="block text-gray-700 text-sm font-bold mb-2">
+              🖼️ {t('Profile Picture')} ({t('optional')})
+            </label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => setProfilePicture(e.target.files[0])}
+              className="wedding-input w-full"
             />
           </div>
           <button type="submit" className="wedding-btn w-full mb-4">
