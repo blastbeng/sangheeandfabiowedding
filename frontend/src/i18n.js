@@ -148,7 +148,25 @@ const resources = {
       "From": "Da",
       "To": "A",
       "Search": "Cerca",
-      "Search captions...": "Cerca nelle didascalie..."
+      "Search captions...": "Cerca nelle didascalie...",
+      "upload_subtitle": "Carica le tue belle foto e video del nostro giorno speciale 🌹",
+      "select_photos_videos": "Seleziona Foto e Video",
+      "supported_formats": "Formati supportati: JPG, PNG, MP4, MOV",
+      "files_selected": "File Selezionati",
+      "remove": "Rimuovi",
+      "add_captions_optional": "Aggiungi Didascalie (Opzionale)",
+      "add_sweet_memory": "Aggiungi un dolce ricordo...",
+      "processing": "Elaborazione in corso...",
+      "upload_memories": "Carica Ricordi",
+      "upload_queued_processing": "Caricamento in coda. Elaborazione in corso...",
+      "upload_completed_with_errors": "Caricamento completato con errori:",
+      "upload_successful": "Caricamento riuscito!",
+      "files_processed": "file elaborati.",
+      "upload_failed_error": "Caricamento fallito:",
+      "Unknown error": "Errore sconosciuto",
+      "failed_check_status": "Impossibile verificare lo stato del caricamento",
+      "error_during_upload": "Si è verificato un errore durante il caricamento",
+      "upload_failed": "Caricamento fallito"
     }
   },
   ko: {
@@ -297,7 +315,25 @@ const resources = {
       "From": "부터",
       "To": "까지",
       "Search": "검색",
-      "Search captions...": "캡션 검색..."
+      "Search captions...": "캡션 검색...",
+      "upload_subtitle": "우리의 특별한 날의 아름다운 사진과 동영상을 업로드하세요 🌹",
+      "select_photos_videos": "사진 및 동영상 선택",
+      "supported_formats": "지원 형식: JPG, PNG, MP4, MOV",
+      "files_selected": "선택된 파일",
+      "remove": "삭제",
+      "add_captions_optional": "캡션 추가 (선택사항)",
+      "add_sweet_memory": "달콤한 추억을 추가하세요...",
+      "processing": "처리 중...",
+      "upload_memories": "추억 업로드",
+      "upload_queued_processing": "업로드 대기 중. 처리 중...",
+      "upload_completed_with_errors": "오류와 함께 업로드 완료:",
+      "upload_successful": "업로드 성공!",
+      "files_processed": "개 파일 처리됨.",
+      "upload_failed_error": "업로드 실패:",
+      "Unknown error": "알 수 없는 오류",
+      "failed_check_status": "업로드 상태를 확인할 수 없습니다",
+      "error_during_upload": "업로드 중 오류가 발생했습니다",
+      "upload_failed": "업로드 실패"
     }
   },
   en: {
@@ -446,7 +482,25 @@ const resources = {
       "From": "From",
       "To": "To",
       "Search": "Search",
-      "Search captions...": "Search captions..."
+      "Search captions...": "Search captions...",
+      "upload_subtitle": "Upload your beautiful photos and videos from our special day 🌹",
+      "select_photos_videos": "Select Photos & Videos",
+      "supported_formats": "Supported: JPG, PNG, MP4, MOV",
+      "files_selected": "Files Selected",
+      "remove": "Remove",
+      "add_captions_optional": "Add Captions (Optional)",
+      "add_sweet_memory": "Add a sweet memory...",
+      "processing": "Processing...",
+      "upload_memories": "Upload Memories",
+      "upload_queued_processing": "Upload queued. Processing...",
+      "upload_completed_with_errors": "Upload completed with errors:",
+      "upload_successful": "Upload successful!",
+      "files_processed": "file(s) processed.",
+      "upload_failed_error": "Upload failed:",
+      "Unknown error": "Unknown error",
+      "failed_check_status": "Failed to check upload status",
+      "error_during_upload": "An error occurred during upload",
+      "upload_failed": "Upload failed"
     }
   }
 };
