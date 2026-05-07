@@ -52,17 +52,47 @@ const Upload = () => {
         body: formData
       });
       const data = await res.json();
-      if (res.ok) {
-        setSuccess(`${files.length} file(s) queued for processing`);
-        setTimeout(() => navigate('/my-uploads'), 2000);
-      } else {
+      if (!res.ok) {
         setError(data.error || 'Upload failed');
+        setUploading(false);
+        return;
       }
+
+      const taskId = data.task_id;
+      setSuccess('Upload queued. Processing...');
+
+      // Poll task status
+      const pollInterval = setInterval(async () => {
+        try {
+          const statusRes = await fetch(`${API_URL}/api/auth/media/upload/status/${taskId}/`, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
+          });
+          const statusData = await statusRes.json();
+          if (statusData.status === 'SUCCESS') {
+            clearInterval(pollInterval);
+            const result = statusData.result;
+            if (result.errors && result.errors.length > 0) {
+              setError(`Upload completed with errors: ${result.errors.join(', ')}`);
+            } else {
+              setSuccess(`Upload successful! ${result.uploaded?.length || 0} file(s) processed.`);
+              setTimeout(() => navigate('/my-uploads'), 2000);
+            }
+            setUploading(false);
+          } else if (statusData.status === 'FAILURE') {
+            clearInterval(pollInterval);
+            setError(`Upload failed: ${statusData.error || 'Unknown error'}`);
+            setUploading(false);
+          }
+          // If PENDING or STARTED, keep polling
+        } catch (err) {
+          clearInterval(pollInterval);
+          setError('Failed to check upload status');
+          setUploading(false);
+        }
+      }, 2000);
     } catch (err) {
       console.error('[Upload] Upload error:', err);
-      console.error('[Upload] Files attempted:', files.map(f => f.name));
       setError('An error occurred during upload');
-    } finally {
       setUploading(false);
     }
   };
@@ -106,7 +136,7 @@ const Upload = () => {
         )}
 
         <button onClick={handleUpload} disabled={files.length === 0 || uploading} className="wedding-btn w-full disabled:opacity-50 disabled:cursor-not-allowed">
-          {uploading ? '⏳ Uploading...' : '💝 Upload Memories'}
+          {uploading ? '⏳ Processing...' : '💝 Upload Memories'}
         </button>
       </div>
     </div>

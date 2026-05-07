@@ -21,6 +21,7 @@ from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
 from allauth.socialaccount.models import SocialAccount
+from celery.result import AsyncResult
 from .models import Media, SiteSettings
 from .serializers import (
     CustomUserSerializer, MediaSerializer, MediaModerationSerializer,
@@ -517,6 +518,22 @@ class PublicMediaListView(APIView):
             queryset = queryset.filter(caption__icontains=search)
         serializer = PublicMediaSerializer(queryset.order_by('-uploaded_at'), many=True, context={'request': request})
         return Response(serializer.data)
+
+
+class TaskStatusView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, task_id):
+        task = AsyncResult(task_id)
+        response_data = {
+            'task_id': task_id,
+            'status': task.status,
+        }
+        if task.status == 'SUCCESS':
+            response_data['result'] = task.result
+        elif task.status == 'FAILURE':
+            response_data['error'] = str(task.result)
+        return Response(response_data)
 
 
 # ==================== ADMIN VIEWS ====================

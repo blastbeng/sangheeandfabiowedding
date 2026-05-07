@@ -8,7 +8,7 @@ from .views import (
     MediaModerationView, MediaModerateSingleView, MediaFileView,
     PublicMediaListView, AdminDashboardView, AdminSettingsView,
     AdminUserListView, AdminUserDetailView, AdminUserToggleStaffView,
-    MediaBulkModerationView
+    MediaBulkModerationView, TaskStatusView
 )
 
 urlpatterns = [
@@ -26,6 +26,7 @@ urlpatterns = [
     path('social/callback/', SocialLoginCallbackView.as_view(), name='social-login-callback'),
     path('media/', MediaListView.as_view(), name='media-list'),
     path('media/upload/', MediaUploadView.as_view(), name='media-upload'),
+    path('media/upload/status/<str:task_id>/', TaskStatusView.as_view(), name='upload-task-status'),
     path('media/<int:media_id>/', MediaDeleteView.as_view(), name='media-delete'),
     path('media/my-uploads/', MyUploadsView.as_view(), name='my-uploads'),
     path('media/moderation/', MediaModerationView.as_view(), name='media-moderation'),
