@@ -11,7 +11,7 @@ const Home = () => {
       <div className="wedding-card mx-4 mt-8 p-8 md:p-16 text-center ribbon wedding-glow">
         {/* Couple Photo */}
         <div className="mb-10 flex justify-center">
-          <div className="photo-frame rounded-full overflow-hidden w-64 h-64 md:w-80 md:h-80 shadow-xl border-6 border-yellow-400">
+          <div className="photo-frame rounded-3xl overflow-hidden w-64 h-64 md:w-80 md:h-80 shadow-xl border-4 border-wedding-azure">
             <img
               src={coupleImage}
               alt="Sang Hee & Fabio"
