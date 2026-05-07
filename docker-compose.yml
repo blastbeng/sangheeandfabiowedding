@@ -20,10 +20,13 @@ services:
 
   web:
     build: ./backend
-    command: >
-      sh -c "python manage.py migrate &&
-             python manage.py create_default_admin &&
-             python manage.py runserver 0.0.0.0:8032"
+    command:
+      - sh
+      - -c
+      - |
+        python manage.py migrate &&
+        python manage.py create_default_admin &&
+        exec gunicorn config.wsgi:application --bind 0.0.0.0:8032
     ports:
       - "8032:8032"
     environment:
@@ -67,10 +70,7 @@ services:
 
   frontend:
     build: ./frontend
-    command: npm run dev -- --host 0.0.0.0
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
+    command: npm run preview -- --host 0.0.0.0 --port 5173
     ports:
       - "5173:5173"
     environment:
