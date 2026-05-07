@@ -185,7 +185,7 @@ class PasswordResetConfirmView(APIView):
                 return Response({'error': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)
         except (SignatureExpired, BadSignature):
             return Response({'error': 'Invalid or expired token'}, status=status.HTTP_400_BAD_REQUEST)
-        new_password = request.data.get('new_password')
+        new_password = request.data.get('password')
         if not new_password:
             return Response({'error': 'New password is required'}, status=status.HTTP_400_BAD_REQUEST)
         user.set_password(new_password)
