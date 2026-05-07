@@ -67,6 +67,14 @@ const Register = () => {
   };
 
   const handleGoogleError = () => setError('Google registration failed');
+  
+  const handleFacebookLogin = async () => {
+    window.location.href = `${import.meta.env.VITE_API_URL}/api/auth/social/facebook/`;
+  };
+
+  const handleInstagramLogin = async () => {
+    window.location.href = `${import.meta.env.VITE_API_URL}/api/auth/social/instagram/`;
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
@@ -149,23 +157,41 @@ const Register = () => {
           </button>
         </form>
 
-        <div className="floral-divider">✿ ─────── ✿ ─────── ✿</div>
-
-        <div className="mb-4">
-          <p className="text-center text-gray-500 mb-3 text-sm">{t('Or login with')}</p>
-          <div className="flex justify-center">
-            <GoogleLogin
-              onSuccess={handleGoogleSuccess}
-              onError={handleGoogleError}
-              useOneTap
-              theme="filled_black"
-              size="large"
-              text="continue_with"
-            />
+        <div className="mt-6">
+          <div className="floral-divider">✿ ─────── ✿ ─────── ✿</div>
+          <p className="text-gray-600 text-center mb-4 text-sm">{t('Or register with')}</p>
+          <div className="flex flex-col gap-3 w-full">
+            {/* Google */}
+            <div className="flex justify-center w-full">
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={handleGoogleError}
+                text="signup_with"
+                theme="filled_blue"
+                size="large"
+                width="100%"
+              />
+            </div>
+            {/* Facebook */}
+            <button
+              onClick={handleFacebookLogin}
+              className="w-full py-3 px-4 rounded-xl font-semibold text-white transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+              style={{ background: '#1877F2' }}
+            >
+              <span className="text-lg">📘</span>
+              <span>Facebook</span>
+            </button>
+            {/* Instagram */}
+            <button
+              onClick={handleInstagramLogin}
+              className="w-full py-3 px-4 rounded-xl font-semibold text-white transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+              style={{ background: 'linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)' }}
+            >
+              <span className="text-lg">📷</span>
+              <span>Instagram</span>
+            </button>
           </div>
         </div>
-
-        <div className="floral-divider">✿ ─────── ✿ ─────── ✿</div>
 
         <div className="mt-4 text-center">
           <p className="text-gray-600">

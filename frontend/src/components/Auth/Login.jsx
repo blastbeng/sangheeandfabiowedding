@@ -135,35 +135,38 @@ const Login = ({ setIsAuthenticated, setIsAdmin }) => {
           </button>
         </form>
 
-        <div className="floral-divider">✿ ─────── ✿ ─────── ✿</div>
-
-        <div className="mt-4">
-          <p className="text-gray-600 text-center mb-3">{t('Or login with')}</p>
-          <div className="flex gap-3 justify-center">
+        <div className="mt-6">
+          <div className="floral-divider">✿ ─────── ✿ ─────── ✿</div>
+          <p className="text-gray-600 text-center mb-4 text-sm">{t('Or login with')}</p>
+          <div className="flex flex-col gap-3 w-full">
             {/* Google */}
-            <GoogleLogin
-              onSuccess={handleGoogleSuccess}
-              onError={handleGoogleError}
-              text="signin_with"
-              theme="filled_blue"
-              size="large"
-              width="200"
-            />
+            <div className="flex justify-center w-full">
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={handleGoogleError}
+                text="signin_with"
+                theme="filled_blue"
+                size="large"
+                width="100%"
+              />
+            </div>
             {/* Facebook */}
             <button
               onClick={handleFacebookLogin}
-              className="wedding-btn bg-blue-600 hover:bg-blue-700 px-4 py-2 text-sm"
+              className="w-full py-3 px-4 rounded-xl font-semibold text-white transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
               style={{ background: '#1877F2' }}
             >
-              📘 Facebook
+              <span className="text-lg">📘</span>
+              <span>Facebook</span>
             </button>
             {/* Instagram */}
             <button
               onClick={handleInstagramLogin}
-              className="wedding-btn px-4 py-2 text-sm"
+              className="w-full py-3 px-4 rounded-xl font-semibold text-white transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
               style={{ background: 'linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)' }}
             >
-              📷 Instagram
+              <span className="text-lg">📷</span>
+              <span>Instagram</span>
             </button>
           </div>
         </div>
