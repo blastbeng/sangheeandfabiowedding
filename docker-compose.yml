@@ -9,6 +9,8 @@ services:
       - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    networks:
+      - app-network
 
   redis:
     image: redis:7-alpine
@@ -17,6 +19,8 @@ services:
     ports:
       - "6379:6379"
     command: redis-server --maxmemory 1gb --maxmemory-policy allkeys-lru
+    networks:
+      - app-network
 
   web:
     build: ./backend
