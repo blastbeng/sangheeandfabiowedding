@@ -131,3 +131,15 @@ class SiteSettings(models.Model):
     def load(cls):
         obj, created = cls.objects.get_or_create(pk=1)
         return obj
+
+
+class FaceTag(models.Model):
+    media = models.ForeignKey(Media, on_delete=models.CASCADE, related_name='face_tags')
+    name = models.CharField(max_length=100, default='Unknown')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('media', 'name')
+
+    def __str__(self):
+        return f"{self.name} in {self.media}"

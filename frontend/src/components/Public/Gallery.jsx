@@ -12,6 +12,7 @@ const Gallery = () => {
     date_to: '',
     search: ''
   });
+  const [facetag, setFacetag] = useState('');
   const API_URL = import.meta.env.VITE_API_URL;
 
   const fetchMedia = () => {
@@ -20,6 +21,7 @@ const Gallery = () => {
     if (filters.date_from) params.append('date_from', filters.date_from);
     if (filters.date_to) params.append('date_to', filters.date_to);
     if (filters.search) params.append('search', filters.search);
+    if (facetag) params.append('facetag', facetag);
 
     fetch(`${API_URL}/api/auth/media/public/?${params}`)
       .then(res => res.json())
@@ -35,7 +37,7 @@ const Gallery = () => {
 
   useEffect(() => {
     fetchMedia();
-  }, [filters]);
+  }, [filters, facetag]);
 
   if (loading) {
     return (
@@ -91,6 +93,16 @@ const Gallery = () => {
             onChange={e => setFilters({ ...filters, search: e.target.value })}
             className="wedding-input"
             placeholder={t('Search captions...')}
+          />
+        </div>
+        <div>
+          <label className="block text-sm text-gray-600 mb-1">{t('Face Tag')}</label>
+          <input
+            type="text"
+            value={facetag}
+            onChange={e => setFacetag(e.target.value)}
+            className="wedding-input"
+            placeholder={t('Filter by person...')}
           />
         </div>
       </div>

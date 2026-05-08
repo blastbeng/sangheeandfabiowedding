@@ -22,14 +22,14 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
 from allauth.socialaccount.models import SocialAccount
 from celery.result import AsyncResult
-from .models import Media, SiteSettings
+from .models import Media, SiteSettings, FaceTag
 from .serializers import (
     CustomUserSerializer, MediaSerializer, MediaModerationSerializer,
     AdminUserSerializer, SiteSettingsSerializer, BulkModerationSerializer,
-    PublicMediaSerializer
+    PublicMediaSerializer, FaceTagSerializer
 )
 from .cloud_clients import get_file_from_cloud
-from .tasks import upload_media_task, delete_media_task
+from .tasks import upload_media_task, delete_media_task, detect_faces_task
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
@@ -472,6 +472,8 @@ class MediaModerateSingleView(APIView):
         serializer = MediaModerationSerializer(media, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save(reviewed_by=request.user, reviewed_at=timezone.now())
+            if media.status == 'approved':
+                detect_faces_task.delay(media.id)
             logger.info(f"Media {media_id} moderated by {request.user.username}")
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -525,6 +527,10 @@ class PublicMediaListView(APIView):
             queryset = queryset.filter(uploaded_at__lte=date_to)
         if search:
             queryset = queryset.filter(caption__icontains=search)
+        facetag = request.query_params.get('facetag')
+        if facetag:
+            media_ids = FaceTag.objects.filter(name__iexact=facetag).values_list('media_id', flat=True)
+            queryset = queryset.filter(id__in=media_ids)
         serializer = PublicMediaSerializer(queryset.order_by('-uploaded_at'), many=True, context={'request': request})
         return Response(serializer.data)
 
@@ -670,3 +676,28 @@ class MediaBulkModerationView(APIView):
                 media.save()
                 updated_count += 1
         return Response({'message': f'{updated_count} media items {action}d successfully.', 'updated_count': updated_count})
+
+
+class FaceTagListView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def get(self, request):
+        tags = FaceTag.objects.all()
+        serializer = FaceTagSerializer(tags, many=True)
+        return Response(serializer.data)
+
+
+class FaceTagDetailView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def patch(self, request, tag_id):
+        try:
+            tag = FaceTag.objects.get(id=tag_id)
+        except FaceTag.DoesNotExist:
+            return Response({'error': 'Tag not found'}, status=status.HTTP_404_NOT_FOUND)
+        name = request.data.get('name')
+        if not name:
+            return Response({'error': 'Name is required'}, status=status.HTTP_400_BAD_REQUEST)
+        tag.name = name
+        tag.save()
+        return Response(FaceTagSerializer(tag).data)

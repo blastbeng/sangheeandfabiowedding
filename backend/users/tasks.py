@@ -5,14 +5,16 @@ from django.core.files.base import ContentFile
 import hashlib
 import os
 import requests
+import cv2
+import tempfile
 from io import BytesIO
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 from googleapiclient.errors import HttpError
 
-from .models import Media, CustomUser
-from .cloud_clients import NextcloudClient, GoogleDriveClient
+from .models import Media, CustomUser, FaceTag
+from .cloud_clients import NextcloudClient, GoogleDriveClient, get_file_from_cloud
 from config.settings import (
     NEXTCLOUD_URL, NEXTCLOUD_USERNAME, NEXTCLOUD_PASSWORD, NEXTCLOUD_FOLDER,
     GOOGLE_DRIVE_CLIENT_ID, GOOGLE_DRIVE_CLIENT_SECRET, GOOGLE_DRIVE_TOKEN, GOOGLE_DRIVE_FOLDER_ID
@@ -147,3 +149,59 @@ def delete_media_task(media_id, user_id):
     media.delete()
     logger.info(f"Media {media_id} deleted successfully")
     return {'message': 'File deleted successfully'}
+
+
+@shared_task(bind=True, max_retries=3)
+def detect_faces_task(self, media_id):
+    try:
+        media = Media.objects.get(id=media_id)
+    except Media.DoesNotExist:
+        return
+
+    if media.status != 'approved':
+        return
+
+    face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+
+    # Download file content from cloud
+    content, _ = get_file_from_cloud(media)
+    if content is None:
+        return
+
+    suffix = os.path.splitext(media.file.name)[1] if media.file and media.file.name else '.jpg'
+    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+        tmp.write(content)
+        tmp_path = tmp.name
+
+    detected_names = set()
+
+    try:
+        if media.media_type == 'image':
+            img = cv2.imread(tmp_path)
+            if img is None:
+                return
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
+            if len(faces) > 0:
+                detected_names.add('Unknown')
+        elif media.media_type == 'video':
+            cap = cv2.VideoCapture(tmp_path)
+            fps = cap.get(cv2.CAP_PROP_FPS)
+            frame_interval = int(fps) if fps and fps > 0 else 25
+            frame_count = 0
+            while True:
+                ret, frame = cap.read()
+                if not ret:
+                    break
+                if frame_count % frame_interval == 0:
+                    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
+                    if len(faces) > 0:
+                        detected_names.add('Unknown')
+                frame_count += 1
+            cap.release()
+    finally:
+        os.unlink(tmp_path)
+
+    for name in detected_names:
+        FaceTag.objects.get_or_create(media=media, name=name)

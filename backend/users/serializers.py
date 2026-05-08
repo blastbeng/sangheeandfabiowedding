@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
-from .models import CustomUser, Media, SiteSettings
+from .models import CustomUser, Media, SiteSettings, FaceTag
 
 
 class CustomUserSerializer(serializers.ModelSerializer):
@@ -163,3 +163,10 @@ class AdminDashboardSerializer(serializers.Serializer):
     approved_media = serializers.IntegerField()
     rejected_media = serializers.IntegerField()
     recent_uploads = MediaSerializer(many=True, read_only=True)
+
+
+class FaceTagSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FaceTag
+        fields = ('id', 'media', 'name', 'created_at')
+        read_only_fields = ('id', 'media', 'created_at')
