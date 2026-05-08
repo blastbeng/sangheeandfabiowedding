@@ -94,7 +94,7 @@ const resources = {
       "Max Upload Size (MB)": "Dimensione Max Upload (MB)",
       "Require Media Approval": "Richiedi Approvazione Media",
       "Default Language": "Lingua Predefinita",
-      "welcome_message_1": "Benvenuti al nostro sito di matrimonio. Qui potrete condividere i vostri ricordi e rivivere insieme i momenti speciali del nostro grande giorno.",
+      "welcome_message_1": "Benvenuti sul nostro sito di matrimonio. Qui potrete condividere i vostri ricordi e rivivere insieme i momenti speciali del nostro grande giorno.",
       "welcome_message_2": "Caricate le vostre foto e video nella galleria condivisa per aiutarci a creare un album completo di questa giornata indimenticabile.",
       "how_it_works": "Come Funziona",
       "step1_title": "Registrati",
