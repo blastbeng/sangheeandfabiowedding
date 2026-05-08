@@ -154,6 +154,63 @@ Instagram login uses the **Instagram Basic Display API**, which is managed throu
 
 > **Note:** For local testing, you may need to add `localhost` as a valid domain in the Facebook app settings (under **Settings** > **Basic** > **App Domains**) and ensure your redirect URIs use `http://localhost`. For production, replace `localhost` with your actual domain and use `https`.
 
+## Setting Up Cloud Storage
+
+Media files are stored simultaneously on Nextcloud (via WebDAV) and Google Drive. You need to configure both services with the appropriate credentials.
+
+### Google Drive API
+
+1. Go to the [Google Cloud Console](https://console.cloud.google.com/).
+2. Create a new project or select an existing one (you can reuse the same project used for social login).
+3. Enable the **Google Drive API**:
+   - Navigate to **APIs & Services** > **Library**.
+   - Search for "Google Drive API" and enable it.
+4. Create credentials for a **Desktop application** (or **Web application** if you prefer, but the current implementation uses a token-based approach):
+   - Go to **APIs & Services** > **Credentials**.
+   - Click **Create Credentials** > **OAuth client ID**.
+   - Choose **Desktop app** as the application type.
+   - Give it a name (e.g., "Wedding Drive Uploader").
+   - Click **Create**. You will receive a **Client ID** and **Client Secret**.
+5. Obtain a refresh token:
+   - The application expects a pre-generated token. You can generate one using the OAuth 2.0 Playground or a quick script.
+   - **Using OAuth 2.0 Playground:**
+     - Go to [OAuth 2.0 Playground](https://developers.google.com/oauthplayground/).
+     - Click the gear icon (⚙️) and check **Use your own OAuth credentials**. Enter your Client ID and Client Secret.
+     - In Step 1, select the scope `https://www.googleapis.com/auth/drive.file` (or `https://www.googleapis.com/auth/drive` if you need full access).
+     - Click **Authorize APIs** and follow the prompts.
+     - In Step 2, click **Exchange authorization code for tokens**. You will get an access token and a refresh token.
+     - Copy the **refresh token** (or the access token if you plan to refresh it manually). The environment variable `GOOGLE_DRIVE_TOKEN` expects a valid token; for long-term use, a refresh token is recommended, but the current code uses the token directly. You may need to implement token refresh logic if using a short-lived access token. For simplicity, you can generate a refresh token and use it as the `GOOGLE_DRIVE_TOKEN` value.
+   - **Alternative:** Use the `gcloud` CLI or a Python script to obtain a token. The key is to have a token that grants access to the Drive API.
+6. Create a folder in Google Drive where uploads will be stored:
+   - Go to [Google Drive](https://drive.google.com/).
+   - Create a new folder (e.g., "Wedding Uploads").
+   - Open the folder and note the folder ID from the URL: `https://drive.google.com/drive/folders/<FOLDER_ID>`.
+7. Add the credentials to your `.env` file:
+   ```
+   GOOGLE_DRIVE_CLIENT_ID=your-client-id
+   GOOGLE_DRIVE_CLIENT_SECRET=your-client-secret
+   GOOGLE_DRIVE_TOKEN=your-oauth-token
+   GOOGLE_DRIVE_FOLDER_ID=your-folder-id
+   ```
+
+> **Note:** The current implementation uses the token directly without automatic refresh. For production, consider using a service account or implementing token refresh to avoid expiration issues.
+
+### Nextcloud WebDAV
+
+1. Ensure you have a Nextcloud instance running (self-hosted or a provider).
+2. Create a dedicated user for the app or use an existing one. It is recommended to create an **app password** if your Nextcloud supports it (especially if using two-factor authentication).
+3. Note the **base URL** of your Nextcloud instance (e.g., `https://cloud.example.com`).
+4. Determine the **upload folder path** on Nextcloud (e.g., `/WeddingUploads`). You can create this folder via the Nextcloud web interface.
+5. Add the credentials to your `.env` file:
+   ```
+   NEXTCLOUD_URL=https://your-nextcloud.com
+   NEXTCLOUD_USERNAME=your-username
+   NEXTCLOUD_PASSWORD=your-password-or-app-password
+   NEXTCLOUD_FOLDER=/WeddingUploads
+   ```
+
+> **Note:** The Nextcloud client uses WebDAV basic authentication. Ensure your Nextcloud server allows WebDAV access and that the user has write permissions to the specified folder.
+
 ## Quick Start (Docker)
 
 1. Clone the repository.
