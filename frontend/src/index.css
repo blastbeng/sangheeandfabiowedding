@@ -43,6 +43,7 @@ h1, h2, h3, h4 {
   box-shadow: 0 10px 40px rgba(91, 155, 213, 0.2);
   position: relative;
   overflow: hidden;
+  color: #2C3E50;
 }
 
 .wedding-card::before {
@@ -88,6 +89,7 @@ h1, h2, h3, h4 {
   padding: 12px 20px;
   background: rgba(255, 255, 255, 0.9);
   transition: all 0.3s ease;
+  color: #2C3E50;
 }
 
 .wedding-input:focus {
