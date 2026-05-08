@@ -94,13 +94,15 @@ class PublicMediaSerializer(serializers.ModelSerializer):
     file_url = serializers.SerializerMethodField()
     uploader_username = serializers.CharField(source='user.username', read_only=True)
     uploader_profile_picture = serializers.SerializerMethodField()
+    face_tags = serializers.SerializerMethodField()
 
     class Meta:
         model = Media
         fields = (
             'id', 'user', 'file', 'media_type', 'caption',
             'uploaded_at', 'status', 'view_count', 'file_url',
-            'uploader_username', 'uploader_profile_picture'
+            'uploader_username', 'uploader_profile_picture',
+            'face_tags',
         )
         read_only_fields = fields
 
@@ -114,6 +116,9 @@ class PublicMediaSerializer(serializers.ModelSerializer):
                 return request.build_absolute_uri(obj.user.profile_picture.url)
             return obj.user.profile_picture.url
         return None
+
+    def get_face_tags(self, obj):
+        return list(obj.face_tags.values_list('name', flat=True))
 
 
 class MediaModerationSerializer(serializers.ModelSerializer):

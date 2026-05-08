@@ -10,14 +10,14 @@ const Gallery = () => {
     user_id: '',
     search: ''
   });
-  const [facetag, setFacetag] = useState('');
+  const [selectedFaceTag, setSelectedFaceTag] = useState('');
   const API_URL = import.meta.env.VITE_API_URL;
 
   const fetchMedia = () => {
     const params = new URLSearchParams();
     if (filters.user_id) params.append('user_id', filters.user_id);
     if (filters.search) params.append('search', filters.search);
-    if (facetag) params.append('facetag', facetag);
+    if (selectedFaceTag) params.append('facetag', selectedFaceTag);
 
     fetch(`${API_URL}/api/auth/media/public/?${params}`)
       .then(res => res.json())
@@ -33,7 +33,7 @@ const Gallery = () => {
 
   useEffect(() => {
     fetchMedia();
-  }, [filters, facetag]);
+  }, [filters, selectedFaceTag]);
 
   if (loading) {
     return (
@@ -73,17 +73,21 @@ const Gallery = () => {
             placeholder={t('Search captions...')}
           />
         </div>
-        <div>
-          <label className="block text-sm text-gray-600 mb-1">{t('Face Tag')}</label>
-          <input
-            type="text"
-            value={facetag}
-            onChange={e => setFacetag(e.target.value)}
-            className="wedding-input"
-            placeholder={t('Filter by person...')}
-          />
-        </div>
       </div>
+
+      {selectedFaceTag && (
+        <div className="mb-4 flex items-center gap-2">
+          <span className="text-sm text-gray-600">
+            {t('Filtering by')}: <strong>{selectedFaceTag}</strong>
+          </span>
+          <button
+            onClick={() => setSelectedFaceTag('')}
+            className="text-xs text-pink-600 underline hover:text-pink-800"
+          >
+            {t('Clear filter')}
+          </button>
+        </div>
+      )}
 
       {media.length === 0 ? (
         <div className="text-center py-20 wedding-card">
@@ -126,6 +130,26 @@ const Gallery = () => {
                 <p className="text-gray-700 text-sm mb-2 line-clamp-2">
                   {item.caption || t('beautiful_moment')}
                 </p>
+                {item.face_tags && item.face_tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {item.face_tags.map(tag => (
+                      <button
+                        key={tag}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedFaceTag(prev => prev === tag ? '' : tag);
+                        }}
+                        className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${
+                          selectedFaceTag === tag
+                            ? 'bg-pink-500 text-white border-pink-500'
+                            : 'bg-pink-50 text-pink-700 border-pink-200 hover:bg-pink-100'
+                        }`}
+                      >
+                        {tag}
+                      </button>
+                    ))}
+                  </div>
+                )}
                 <p className="text-gray-500 text-xs">
                   📅 {new Date(item.uploaded_at).toLocaleDateString()}
                 </p>
