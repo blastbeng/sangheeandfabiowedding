@@ -6,7 +6,8 @@ from .views import (
     FacebookRedirectView, InstagramRedirectView, SocialLoginCallbackView,
     MediaListView, MediaUploadView, MediaDeleteView, MyUploadsView,
     MediaModerationView, MediaModerateSingleView, MediaFileView,
-    PublicMediaListView, AdminDashboardView, AdminSettingsView,
+    PublicMediaListView, PublicUserListView, PublicUserDetailView,
+    AdminDashboardView, AdminSettingsView,
     AdminUserListView, AdminUserDetailView, AdminUserToggleStaffView,
     MediaBulkModerationView, TaskStatusView, FaceTagListView, FaceTagDetailView
 )
@@ -34,6 +35,8 @@ urlpatterns = [
     path('media/moderation/bulk/', MediaBulkModerationView.as_view(), name='media-moderation-bulk'),
     path('media/<int:media_id>/file/', MediaFileView.as_view(), name='media-file'),
     path('media/public/', PublicMediaListView.as_view(), name='media-public'),
+    path('users/public/', PublicUserListView.as_view(), name='public-user-list'),
+    path('users/public/<int:user_id>/', PublicUserDetailView.as_view(), name='public-user-detail'),
     path('admin/dashboard/', AdminDashboardView.as_view(), name='admin-dashboard'),
     path('admin/settings/', AdminSettingsView.as_view(), name='admin-settings'),
     path('admin/users/', AdminUserListView.as_view(), name='admin-user-list'),

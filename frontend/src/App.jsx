@@ -9,6 +9,8 @@ import Profile from './components/User/Profile';
 import Upload from './components/User/Upload';
 import MyUploads from './components/User/MyUploads';
 import Gallery from './components/Public/Gallery';
+import UserList from './components/Public/UserList';
+import UserProfile from './components/Public/UserProfile';
 import AdminModeration from './components/Admin/Moderation';
 import AdminDashboard from './components/Admin/AdminDashboard';
 import UserManagement from './components/Admin/UserManagement';
@@ -76,6 +78,7 @@ function App() {
                 {t('Event')}
               </Link>
               <Link to="/gallery" className="hover:text-yellow-200 transition font-medium text-sm md:text-base whitespace-nowrap">{t('Gallery')}</Link>
+              <Link to="/users" className="hover:text-yellow-200 transition font-medium text-sm md:text-base whitespace-nowrap">{t('Guests')}</Link>
             </nav>
             
             {/* Line 3: Auth Buttons */}
@@ -108,6 +111,8 @@ function App() {
               <Route path="/" element={<Home isAuthenticated={isAuthenticated} />} />
               <Route path="/events" element={<Events />} />
               <Route path="/gallery" element={<Gallery />} />
+              <Route path="/users" element={<UserList />} />
+              <Route path="/user/:id" element={<UserProfile />} />
               <Route path="/verify-email" element={<VerifyEmail />} />
               <Route 
                 path="/social-callback" 

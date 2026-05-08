@@ -26,7 +26,7 @@ from .models import Media, SiteSettings, FaceTag
 from .serializers import (
     CustomUserSerializer, MediaSerializer, MediaModerationSerializer,
     AdminUserSerializer, SiteSettingsSerializer, BulkModerationSerializer,
-    PublicMediaSerializer, FaceTagSerializer
+    PublicMediaSerializer, PublicUserSerializer, FaceTagSerializer
 )
 from .cloud_clients import get_file_from_cloud
 from .tasks import upload_media_task, delete_media_task, detect_faces_task
@@ -394,6 +394,29 @@ class SocialLoginCallbackView(APIView):
         frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:5173')
         redirect_url = f"{frontend_url}/social-callback?access={access}&refresh={refresh_token}"
         return redirect(redirect_url)
+
+
+# ==================== PUBLIC USER VIEWS ====================
+
+class PublicUserListView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        queryset = User.objects.filter(is_active=True)
+        search = request.query_params.get('search')
+        if search:
+            queryset = queryset.filter(username__icontains=search)
+        serializer = PublicUserSerializer(queryset.order_by('username'), many=True, context={'request': request})
+        return Response(serializer.data)
+
+
+class PublicUserDetailView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, user_id):
+        user = get_object_or_404(User, id=user_id, is_active=True)
+        serializer = PublicUserSerializer(user, context={'request': request})
+        return Response(serializer.data)
 
 
 # ==================== MEDIA VIEWS ====================
