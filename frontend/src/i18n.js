@@ -183,7 +183,24 @@ const resources = {
       "my_uploads_actions": "⚡ Azioni",
       "my_uploads_delete_button": "🗑️ Elimina",
       "my_uploads_delete_confirm": "Eliminare questo file da tutti i cloud storage?",
-      "my_uploads_preview_alt": "anteprima"
+      "my_uploads_preview_alt": "anteprima",
+      "admin_loading": "Caricamento dashboard admin...",
+      "admin_title": "⭐ Pannello di Amministrazione",
+      "admin_subtitle": "Gestisci utenti, contenuti e impostazioni 💕",
+      "stat_total_users": "Utenti Totali",
+      "stat_administrators": "Amministratori",
+      "stat_total_media": "Media Totali",
+      "stat_pending": "In Attesa",
+      "stat_approved": "Approvati",
+      "stat_rejected": "Rifiutati",
+      "nav_user_management": "Gestione Utenti",
+      "nav_user_management_desc": "Crea, modifica, elimina utenti",
+      "nav_media_moderation": "Moderazione Media",
+      "nav_media_moderation_desc": "Approva o rifiuta caricamenti",
+      "nav_app_settings": "Impostazioni App",
+      "nav_app_settings_desc": "Configura opzioni webapp",
+      "nav_back_home": "Torna alla Home",
+      "nav_back_home_desc": "Ritorna al sito principale"
     }
   },
   ko: {
@@ -367,7 +384,24 @@ const resources = {
       "my_uploads_actions": "⚡ 작업",
       "my_uploads_delete_button": "🗑️ 삭제",
       "my_uploads_delete_confirm": "모든 클라우드 저장소에서 이 파일을 삭제하시겠습니까?",
-      "my_uploads_preview_alt": "미리보기"
+      "my_uploads_preview_alt": "미리보기",
+      "admin_loading": "관리자 대시보드 로딩 중...",
+      "admin_title": "⭐ 관리자 패널",
+      "admin_subtitle": "사용자, 콘텐츠 및 설정 관리 💕",
+      "stat_total_users": "총 사용자",
+      "stat_administrators": "관리자",
+      "stat_total_media": "총 미디어",
+      "stat_pending": "대기 중",
+      "stat_approved": "승인됨",
+      "stat_rejected": "거부됨",
+      "nav_user_management": "사용자 관리",
+      "nav_user_management_desc": "사용자 생성, 편집, 삭제",
+      "nav_media_moderation": "미디어 검토",
+      "nav_media_moderation_desc": "업로드 승인 또는 거부",
+      "nav_app_settings": "앱 설정",
+      "nav_app_settings_desc": "웹앱 옵션 구성",
+      "nav_back_home": "홈으로 돌아가기",
+      "nav_back_home_desc": "메인 사이트로 돌아가기"
     }
   },
   en: {
@@ -551,7 +585,24 @@ const resources = {
       "my_uploads_actions": "⚡ Actions",
       "my_uploads_delete_button": "🗑️ Delete",
       "my_uploads_delete_confirm": "Delete this file from all cloud storage?",
-      "my_uploads_preview_alt": "preview"
+      "my_uploads_preview_alt": "preview",
+      "admin_loading": "Loading admin dashboard...",
+      "admin_title": "⭐ Administration Panel",
+      "admin_subtitle": "Manage users, content, and settings 💕",
+      "stat_total_users": "Total Users",
+      "stat_administrators": "Administrators",
+      "stat_total_media": "Total Media",
+      "stat_pending": "Pending",
+      "stat_approved": "Approved",
+      "stat_rejected": "Rejected",
+      "nav_user_management": "User Management",
+      "nav_user_management_desc": "Create, edit, delete users",
+      "nav_media_moderation": "Media Moderation",
+      "nav_media_moderation_desc": "Approve or reject uploads",
+      "nav_app_settings": "App Settings",
+      "nav_app_settings_desc": "Configure webapp options",
+      "nav_back_home": "Back to Home",
+      "nav_back_home_desc": "Return to main site"
     }
   }
 };

@@ -27,25 +27,25 @@ const AdminDashboard = () => {
     return (
       <div className="text-center py-20">
         <span className="text-5xl heart-decoration inline-block">💝</span>
-        <p className="mt-4 text-gray-600">Loading admin dashboard...</p>
+        <p className="mt-4 text-gray-600">{t('admin_loading')}</p>
       </div>
     );
   }
 
   const statCards = [
-    { title: 'Total Users', value: stats?.total_users || 0, icon: '👥', color: 'from-blue-400 to-blue-500' },
-    { title: 'Administrators', value: stats?.total_admins || 0, icon: '⭐', color: 'from-yellow-400 to-yellow-500' },
-    { title: 'Total Media', value: stats?.total_media || 0, icon: '📸', color: 'from-pink-400 to-pink-500' },
-    { title: 'Pending', value: stats?.pending_media || 0, icon: '⏳', color: 'from-orange-400 to-orange-500' },
-    { title: 'Approved', value: stats?.approved_media || 0, icon: '✅', color: 'from-green-400 to-green-500' },
-    { title: 'Rejected', value: stats?.rejected_media || 0, icon: '❌', color: 'from-red-400 to-red-500' },
+    { title: t('stat_total_users'), value: stats?.total_users || 0, icon: '👥', color: 'from-blue-400 to-blue-500' },
+    { title: t('stat_administrators'), value: stats?.total_admins || 0, icon: '⭐', color: 'from-yellow-400 to-yellow-500' },
+    { title: t('stat_total_media'), value: stats?.total_media || 0, icon: '📸', color: 'from-pink-400 to-pink-500' },
+    { title: t('stat_pending'), value: stats?.pending_media || 0, icon: '⏳', color: 'from-orange-400 to-orange-500' },
+    { title: t('stat_approved'), value: stats?.approved_media || 0, icon: '✅', color: 'from-green-400 to-green-500' },
+    { title: t('stat_rejected'), value: stats?.rejected_media || 0, icon: '❌', color: 'from-red-400 to-red-500' },
   ];
 
   return (
     <div className="max-w-6xl mx-auto p-4">
       <div className="wedding-card p-8 mb-8">
-        <h1 className="text-4xl wedding-title text-center mb-2">⭐ Administration Panel</h1>
-        <p className="text-center text-gray-600 italic">Manage users, content, and settings 💕</p>
+        <h1 className="text-4xl wedding-title text-center mb-2">{t('admin_title')}</h1>
+        <p className="text-center text-gray-600 italic">{t('admin_subtitle')}</p>
         <div className="floral-divider">✿ ─────── ✿ ─────── ✿</div>
       </div>
 
@@ -62,26 +62,26 @@ const AdminDashboard = () => {
       <div className="grid md:grid-cols-4 gap-6">
         <Link to="/admin/users" className="wedding-card p-6 text-center wedding-glow hover:scale-105 transition">
           <span className="text-5xl block mb-4">👥</span>
-          <h3 className="text-xl font-bold text-pink-600 mb-2">User Management</h3>
-          <p className="text-gray-600 text-sm">Create, edit, delete users</p>
+          <h3 className="text-xl font-bold text-pink-600 mb-2">{t('nav_user_management')}</h3>
+          <p className="text-gray-600 text-sm">{t('nav_user_management_desc')}</p>
         </Link>
         
         <Link to="/admin/moderation" className="wedding-card p-6 text-center wedding-glow hover:scale-105 transition">
           <span className="text-5xl block mb-4">📸</span>
-          <h3 className="text-xl font-bold text-pink-600 mb-2">Media Moderation</h3>
-          <p className="text-gray-600 text-sm">Approve or reject uploads</p>
+          <h3 className="text-xl font-bold text-pink-600 mb-2">{t('nav_media_moderation')}</h3>
+          <p className="text-gray-600 text-sm">{t('nav_media_moderation_desc')}</p>
         </Link>
         
         <Link to="/admin/settings" className="wedding-card p-6 text-center wedding-glow hover:scale-105 transition">
           <span className="text-5xl block mb-4">⚙️</span>
-          <h3 className="text-xl font-bold text-pink-600 mb-2">App Settings</h3>
-          <p className="text-gray-600 text-sm">Configure webapp options</p>
+          <h3 className="text-xl font-bold text-pink-600 mb-2">{t('nav_app_settings')}</h3>
+          <p className="text-gray-600 text-sm">{t('nav_app_settings_desc')}</p>
         </Link>
         
         <Link to="/" className="wedding-card p-6 text-center wedding-glow hover:scale-105 transition">
           <span className="text-5xl block mb-4">🏠</span>
-          <h3 className="text-xl font-bold text-pink-600 mb-2">Back to Home</h3>
-          <p className="text-gray-600 text-sm">Return to main site</p>
+          <h3 className="text-xl font-bold text-pink-600 mb-2">{t('nav_back_home')}</h3>
+          <p className="text-gray-600 text-sm">{t('nav_back_home_desc')}</p>
         </Link>
       </div>
     </div>
