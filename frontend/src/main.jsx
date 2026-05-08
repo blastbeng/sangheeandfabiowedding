@@ -35,7 +35,12 @@ class ErrorBoundary extends React.Component {
             <h1 className="text-2xl text-red-600 mb-4">Something went wrong</h1>
             <p className="text-gray-600">Please refresh the page</p>
             <button 
-              onClick={() => window.location.reload()}
+              onClick={() => {
+                localStorage.removeItem('accessToken');
+                localStorage.removeItem('refreshToken');
+                localStorage.removeItem('isAdmin');
+                window.location.href = '/';
+              }}
               className="mt-4 px-4 py-2 bg-red-600 text-white rounded"
             >
               Refresh
