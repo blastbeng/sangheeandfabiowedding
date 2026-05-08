@@ -305,6 +305,14 @@ class SocialLoginRedirectView(APIView):
         return redirect(f'/accounts/{self.provider}/login/')
 
 
+class FacebookRedirectView(SocialLoginRedirectView):
+    provider = 'facebook'
+
+
+class InstagramRedirectView(SocialLoginRedirectView):
+    provider = 'instagram'
+
+
 class SocialLoginCallbackView(APIView):
     """
     Called by django-allauth after successful OAuth login.
