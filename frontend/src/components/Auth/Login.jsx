@@ -152,7 +152,7 @@ const Login = ({ setIsAuthenticated, setIsAdmin }) => {
           <p className="text-gray-600 text-center mb-4 text-sm">{t('Or login with')}</p>
           <div className="flex flex-col gap-3 w-full">
             {/* Google */}
-            <div className="flex justify-center w-full">
+            <div className="h-10 w-full">
               <GoogleLogin
                 onSuccess={handleGoogleSuccess}
                 onError={handleGoogleError}
@@ -165,7 +165,7 @@ const Login = ({ setIsAuthenticated, setIsAdmin }) => {
             {/* Facebook */}
             <button
               onClick={handleFacebookLogin}
-              className="w-full py-3 px-4 rounded-xl font-semibold text-white transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+              className="h-10 w-full px-4 rounded-xl font-semibold text-white text-sm transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
               style={{ background: '#1877F2' }}
             >
               <span className="text-lg">📘</span>
@@ -174,7 +174,7 @@ const Login = ({ setIsAuthenticated, setIsAdmin }) => {
             {/* Instagram */}
             <button
               onClick={handleInstagramLogin}
-              className="w-full py-3 px-4 rounded-xl font-semibold text-white transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+              className="h-10 w-full px-4 rounded-xl font-semibold text-white text-sm transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
               style={{ background: 'linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)' }}
             >
               <span className="text-lg">📷</span>

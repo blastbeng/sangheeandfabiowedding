@@ -200,7 +200,7 @@ function App() {
         </main>
 
         <footer className="bg-gradient-to-r from-wedding-navy via-wedding-azure to-wedding-navy text-white text-center p-6">
-          <p className="wedding-title text-2xl mb-2">🌸 {t('footer_crafted')} 🌸</p>
+          <p className="wedding-title text-2xl mb-2 text-white">🌸 {t('footer_crafted')} 🌸</p>
           <p className="text-sm opacity-80">
             {t('footer_thank_you')}
           </p>
