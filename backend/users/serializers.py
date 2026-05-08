@@ -10,12 +10,15 @@ class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = ('id', 'username', 'email', 'first_name', 'last_name',
-                  'date_of_birth', 'password', 'password_confirm', 'language', 'profile_picture')
+                  'date_of_birth', 'password', 'password_confirm', 'language',
+                  'profile_picture', 'is_staff', 'is_superuser')
         extra_kwargs = {
             'email': {'required': False, 'allow_blank': True},
             'username': {'required': False},
             'language': {'required': False},
             'profile_picture': {'required': False},
+            'is_staff': {'read_only': True},
+            'is_superuser': {'read_only': True},
         }
 
     def validate(self, attrs):
