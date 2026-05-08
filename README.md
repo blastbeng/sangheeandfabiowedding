@@ -29,10 +29,67 @@ A responsive multilingual web platform for managing a wedding event, focused on 
 - Password reset flow
 - Responsive design (mobile-friendly)
 
+## Prerequisites
+
+- Docker and Docker Compose (for containerized deployment)
+- Python 3.11+ (for local development)
+- Node.js 18+ and npm (for frontend development)
+- PostgreSQL 15 (if running services locally)
+- Redis (if running services locally)
+
+## Environment Variables
+
+Copy `.env.example` to `.env` and fill in all required values. The following variables are used:
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `POSTGRES_DB` | PostgreSQL database name | Yes |
+| `POSTGRES_USER` | PostgreSQL username | Yes |
+| `POSTGRES_PASSWORD` | PostgreSQL password | Yes |
+| `DJANGO_SECRET_KEY` | Django secret key | Yes |
+| `DEBUG` | Debug mode (`1` for True, `0` for False) | Yes |
+| `ADMIN_USERNAME` | Default admin username | Yes |
+| `ADMIN_PASSWORD` | Default admin password | Yes |
+| `ADMIN_EMAIL` | Default admin email | Yes |
+| `FRONTEND_URL` | Frontend URL (used for email links) | Yes |
+| `GOOGLE_CLIENT_ID` | Google OAuth2 client ID (social login) | Yes |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth2 client secret | Yes |
+| `FACEBOOK_APP_ID` | Facebook app ID | Yes |
+| `FACEBOOK_APP_SECRET` | Facebook app secret | Yes |
+| `INSTAGRAM_APP_ID` | Instagram app ID | Yes |
+| `INSTAGRAM_APP_SECRET` | Instagram app secret | Yes |
+| `NEXTCLOUD_URL` | Nextcloud base URL | Yes |
+| `NEXTCLOUD_USERNAME` | Nextcloud username | Yes |
+| `NEXTCLOUD_PASSWORD` | Nextcloud password | Yes |
+| `NEXTCLOUD_FOLDER` | Nextcloud upload folder path | Yes |
+| `GOOGLE_DRIVE_CLIENT_ID` | Google Drive API client ID | Yes |
+| `GOOGLE_DRIVE_CLIENT_SECRET` | Google Drive API client secret | Yes |
+| `GOOGLE_DRIVE_TOKEN` | Google Drive OAuth2 token | Yes |
+| `GOOGLE_DRIVE_FOLDER_ID` | Google Drive folder ID for uploads | Yes |
+| `REDIS_HOST` | Redis hostname (default: `redis`) | Yes |
+| `REDIS_PORT` | Redis port (default: `6379`) | Yes |
+| `TIME_ZONE` | Time zone (e.g., `Europe/Rome`) | Yes |
+| `DEFAULT_LANGUAGE` | Default language code (e.g., `it`) | Yes |
+| `EMAIL_BACKEND` | Django email backend | Yes |
+| `EMAIL_HOST` | SMTP server host | Yes |
+| `EMAIL_PORT` | SMTP server port | Yes |
+| `EMAIL_USE_TLS` | Use TLS for email (`True`/`False`) | Yes |
+| `EMAIL_HOST_USER` | SMTP username | Yes |
+| `EMAIL_HOST_PASSWORD` | SMTP password | Yes |
+| `DEFAULT_FROM_EMAIL` | Sender email address | Yes |
+| `VITE_API_URL` | API base URL for frontend (empty for relative) | Yes |
+| `VITE_GOOGLE_CLIENT_ID` | Google OAuth2 client ID for frontend | Yes |
+| `VITE_DEFAULT_LANGUAGE` | Default language for frontend | Yes |
+| `VITE_SUPPORTED_LANGUAGES` | Comma-separated supported languages | Yes |
+| `LOG_LEVEL` | Backend log level (e.g., `INFO`) | Yes |
+| `VITE_LOG_LEVEL` | Frontend log level (e.g., `error`) | Yes |
+
+Refer to `.env.example` for the exact variable names and default values.
+
 ## Quick Start (Docker)
 
 1. Clone the repository.
-2. Copy `.env.example` to `.env` and fill in the required values (see Environment Variables below).
+2. Copy `.env.example` to `.env` and fill in the required values (see Environment Variables above).
 3. Run:
    ```bash
    docker-compose up -d
