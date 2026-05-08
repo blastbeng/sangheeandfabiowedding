@@ -86,6 +86,74 @@ Copy `.env.example` to `.env` and fill in all required values. The following var
 
 Refer to `.env.example` for the exact variable names and default values.
 
+## Setting Up Social Authentication
+
+This guide walks you through creating the necessary credentials for Google, Facebook, and Instagram social login. You will need these values to fill in the corresponding environment variables in your `.env` file.
+
+### Google OAuth2
+
+1. Go to the [Google Cloud Console](https://console.cloud.google.com/).
+2. Create a new project or select an existing one.
+3. Navigate to **APIs & Services** > **Credentials**.
+4. Click **Create Credentials** > **OAuth client ID**.
+5. If prompted, configure the **OAuth consent screen**:
+   - Choose **External** (or Internal if you have a Google Workspace organization).
+   - Fill in the app name, user support email, and developer contact information.
+   - Add the scopes `email`, `profile`, and `openid` (these are usually pre-selected).
+   - Add your email as a test user if the app is in testing mode.
+6. After the consent screen is configured, return to **Credentials** and create an **OAuth client ID**.
+7. Select **Web application** as the application type.
+8. Add a name (e.g., "Wedding Web App").
+9. Under **Authorized redirect URIs**, add:
+   - For local development: `http://localhost:5232/accounts/google/login/callback/`
+   - For production: `https://yourdomain.com/accounts/google/login/callback/`
+10. Click **Create**. You will receive a **Client ID** and **Client Secret**.
+11. Copy these values into your `.env` file:
+    ```
+    GOOGLE_CLIENT_ID=your-client-id
+    GOOGLE_CLIENT_SECRET=your-client-secret
+    ```
+
+### Facebook Login
+
+1. Go to the [Facebook for Developers](https://developers.facebook.com/) portal.
+2. Create a new app or use an existing one. Choose **Consumer** as the app type.
+3. In the app dashboard, go to **Settings** > **Basic**.
+4. Note the **App ID** and **App Secret** (you may need to reveal the secret).
+5. Add the **Facebook Login** product to your app:
+   - In the left sidebar, click **Add Product** and choose **Facebook Login**.
+   - Select **Web** as the platform.
+6. Configure the **Valid OAuth Redirect URIs**:
+   - For local development: `http://localhost:5232/accounts/facebook/login/callback/`
+   - For production: `https://yourdomain.com/accounts/facebook/login/callback/`
+7. Save changes.
+8. Copy the App ID and App Secret into your `.env` file:
+   ```
+   FACEBOOK_APP_ID=your-app-id
+   FACEBOOK_APP_SECRET=your-app-secret
+   ```
+
+### Instagram Login
+
+Instagram login uses the **Instagram Basic Display API**, which is managed through a Facebook app.
+
+1. Ensure you have a Facebook app (see the Facebook section above). You can use the same app.
+2. In the Facebook app dashboard, go to **Add Product** and select **Instagram Basic Display**.
+3. Configure the **Instagram Basic Display** settings:
+   - Set the **Valid OAuth Redirect URIs**:
+     - For local development: `http://localhost:5232/accounts/instagram/login/callback/`
+     - For production: `https://yourdomain.com/accounts/instagram/login/callback/`
+   - Add the required **Deauthorize Callback URL** (optional, can be left blank).
+   - Add a **Privacy Policy URL** (required for going live).
+4. Under **Instagram Basic Display** > **Basic Display**, you will find the **Instagram App ID** and **Instagram App Secret**.
+5. Copy these values into your `.env` file:
+   ```
+   INSTAGRAM_APP_ID=your-instagram-app-id
+   INSTAGRAM_APP_SECRET=your-instagram-app-secret
+   ```
+
+> **Note:** For local testing, you may need to add `localhost` as a valid domain in the Facebook app settings (under **Settings** > **Basic** > **App Domains**) and ensure your redirect URIs use `http://localhost`. For production, replace `localhost` with your actual domain and use `https`.
+
 ## Quick Start (Docker)
 
 1. Clone the repository.
