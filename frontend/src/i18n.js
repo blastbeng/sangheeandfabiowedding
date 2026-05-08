@@ -169,7 +169,21 @@ const resources = {
       "error_during_upload": "Si è verificato un errore durante il caricamento",
       "upload_failed": "Caricamento fallito",
       "login_subtitle": "Ci sei mancato/a! Accedi per continuare la nostra storia d'amore 🌹",
-      "username_or_email_placeholder": "nome utente o email"
+      "username_or_email_placeholder": "nome utente o email",
+      "my_uploads_loading": "Caricamento dei tuoi ricordi...",
+      "my_uploads_title": "📁 I Miei Ricordi",
+      "my_uploads_subtitle": "Tutti i tuoi bellissimi caricamenti in un unico posto 💕",
+      "my_uploads_no_uploads": "Nessun caricamento ancora!",
+      "my_uploads_share_first": "Condividi il tuo primo ricordo con noi 🌸",
+      "my_uploads_upload_now": "✨ Carica Ora",
+      "my_uploads_preview": "🖼️ Anteprima",
+      "my_uploads_caption": "📝 Didascalia",
+      "my_uploads_uploaded": "📅 Caricato",
+      "my_uploads_status": "💫 Stato",
+      "my_uploads_actions": "⚡ Azioni",
+      "my_uploads_delete_button": "🗑️ Elimina",
+      "my_uploads_delete_confirm": "Eliminare questo file da tutti i cloud storage?",
+      "my_uploads_preview_alt": "anteprima"
     }
   },
   ko: {
@@ -339,7 +353,21 @@ const resources = {
       "error_during_upload": "업로드 중 오류가 발생했습니다",
       "upload_failed": "업로드 실패",
       "login_subtitle": "보고 싶었어요! 우리의 사랑 이야기를 계속하려면 로그인하세요 🌹",
-      "username_or_email_placeholder": "사용자명 또는 이메일"
+      "username_or_email_placeholder": "사용자명 또는 이메일",
+      "my_uploads_loading": "소중한 추억을 불러오는 중...",
+      "my_uploads_title": "📁 내 추억",
+      "my_uploads_subtitle": "당신의 아름다운 업로드를 한 곳에 💕",
+      "my_uploads_no_uploads": "아직 업로드가 없습니다!",
+      "my_uploads_share_first": "첫 추억을 우리와 공유하세요 🌸",
+      "my_uploads_upload_now": "✨ 지금 업로드",
+      "my_uploads_preview": "🖼️ 미리보기",
+      "my_uploads_caption": "📝 캡션",
+      "my_uploads_uploaded": "📅 업로드 날짜",
+      "my_uploads_status": "💫 상태",
+      "my_uploads_actions": "⚡ 작업",
+      "my_uploads_delete_button": "🗑️ 삭제",
+      "my_uploads_delete_confirm": "모든 클라우드 저장소에서 이 파일을 삭제하시겠습니까?",
+      "my_uploads_preview_alt": "미리보기"
     }
   },
   en: {
@@ -509,7 +537,21 @@ const resources = {
       "error_during_upload": "An error occurred during upload",
       "upload_failed": "Upload failed",
       "login_subtitle": "We've missed you! Sign in to continue your love story with us 🌹",
-      "username_or_email_placeholder": "username or email"
+      "username_or_email_placeholder": "username or email",
+      "my_uploads_loading": "Loading your memories...",
+      "my_uploads_title": "📁 My Memories",
+      "my_uploads_subtitle": "All your beautiful uploads in one place 💕",
+      "my_uploads_no_uploads": "No uploads yet!",
+      "my_uploads_share_first": "Share your first memory with us 🌸",
+      "my_uploads_upload_now": "✨ Upload Now",
+      "my_uploads_preview": "🖼️ Preview",
+      "my_uploads_caption": "📝 Caption",
+      "my_uploads_uploaded": "📅 Uploaded",
+      "my_uploads_status": "💫 Status",
+      "my_uploads_actions": "⚡ Actions",
+      "my_uploads_delete_button": "🗑️ Delete",
+      "my_uploads_delete_confirm": "Delete this file from all cloud storage?",
+      "my_uploads_preview_alt": "preview"
     }
   }
 };
