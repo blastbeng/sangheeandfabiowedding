@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import Login from './components/Auth/Login';
@@ -71,22 +71,22 @@ function App() {
             
             {/* Line 2: Navigation Links */}
             <nav className="flex flex-wrap gap-4 items-center justify-center">
-              <a href="/" className="hover:text-yellow-200 transition font-medium text-sm md:text-base whitespace-nowrap">{t('Home')}</a>
-              <a href="/events" className="hover:text-yellow-200 transition font-medium text-sm md:text-base whitespace-nowrap">
+              <Link to="/" className="hover:text-yellow-200 transition font-medium text-sm md:text-base whitespace-nowrap">{t('Home')}</Link>
+              <Link to="/events" className="hover:text-yellow-200 transition font-medium text-sm md:text-base whitespace-nowrap">
                 {t('Event')}
-              </a>
-              <a href="/gallery" className="hover:text-yellow-200 transition font-medium text-sm md:text-base whitespace-nowrap">{t('Gallery')}</a>
+              </Link>
+              <Link to="/gallery" className="hover:text-yellow-200 transition font-medium text-sm md:text-base whitespace-nowrap">{t('Gallery')}</Link>
             </nav>
             
             {/* Line 3: Auth Buttons */}
             <div className="flex flex-wrap gap-3 items-center justify-center">
               {isAuthenticated ? (
                 <>
-                  <a href="/upload" className="hover:text-yellow-200 transition font-medium text-sm md:text-base whitespace-nowrap">{t('Share')}</a>
-                  <a href="/my-uploads" className="hover:text-yellow-200 transition font-medium text-sm md:text-base whitespace-nowrap">{t('My Uploads')}</a>
-                  <a href="/profile" className="hover:text-yellow-200 transition font-medium text-sm md:text-base whitespace-nowrap">{t('Profile')}</a>
+                  <Link to="/upload" className="hover:text-yellow-200 transition font-medium text-sm md:text-base whitespace-nowrap">{t('Share')}</Link>
+                  <Link to="/my-uploads" className="hover:text-yellow-200 transition font-medium text-sm md:text-base whitespace-nowrap">{t('My Uploads')}</Link>
+                  <Link to="/profile" className="hover:text-yellow-200 transition font-medium text-sm md:text-base whitespace-nowrap">{t('Profile')}</Link>
                   {isAdmin && (
-                    <a href="/admin" className="hover:text-yellow-200 transition font-medium text-sm md:text-base whitespace-nowrap">⭐ Admin</a>
+                    <Link to="/admin" className="hover:text-yellow-200 transition font-medium text-sm md:text-base whitespace-nowrap">⭐ Admin</Link>
                   )}
                   <button onClick={handleLogout} className="wedding-btn text-xs md:text-sm px-3 md:px-4 py-2">
                     {t('Logout')}
@@ -94,8 +94,8 @@ function App() {
                 </>
               ) : (
                 <>
-                  <a href="/login" className="wedding-btn text-xs md:text-sm px-3 md:px-4 py-2">{t('Sign In')}</a>
-                  <a href="/register" className="wedding-btn text-xs md:text-sm px-3 md:px-4 py-2">{t('Join Us')}</a>
+                  <Link to="/login" className="wedding-btn text-xs md:text-sm px-3 md:px-4 py-2">{t('Sign In')}</Link>
+                  <Link to="/register" className="wedding-btn text-xs md:text-sm px-3 md:px-4 py-2">{t('Join Us')}</Link>
                 </>
               )}
             </div>

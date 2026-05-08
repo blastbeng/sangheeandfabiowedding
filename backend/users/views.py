@@ -299,9 +299,10 @@ class SocialLoginView(APIView):
 class SocialLoginRedirectView(APIView):
     """Redirect to OAuth provider for Facebook/Instagram login via django-allauth"""
     permission_classes = [AllowAny]
+    provider = None
 
-    def get(self, request, provider):
-        return redirect(f'/accounts/{provider}/login/')
+    def get(self, request):
+        return redirect(f'/accounts/{self.provider}/login/')
 
 
 class SocialLoginCallbackView(APIView):
