@@ -39,6 +39,7 @@ const resources = {
       "한국어": "🇰🇷 한국어",
       "Login failed": "Accesso fallito 💔",
       "An error occurred during login": "Qualcosa è andato storto",
+      "An error occurred during Google login": "Si è verificato un errore durante l'accesso con Google",
       "Google login failed": "Accesso Google fallito",
       "Welcome Back!": "Bentornato/a! 💕",
       "Join Our Celebration!": "Unisciti alla Celebrazione! 🌸",
@@ -166,7 +167,9 @@ const resources = {
       "Unknown error": "Errore sconosciuto",
       "failed_check_status": "Impossibile verificare lo stato del caricamento",
       "error_during_upload": "Si è verificato un errore durante il caricamento",
-      "upload_failed": "Caricamento fallito"
+      "upload_failed": "Caricamento fallito",
+      "login_subtitle": "Ci sei mancato/a! Accedi per continuare la nostra storia d'amore 🌹",
+      "username_or_email_placeholder": "nome utente o email"
     }
   },
   ko: {
@@ -206,6 +209,7 @@ const resources = {
       "한국어": "🇰🇷 한국어",
       "Login failed": "로그인 실패 💔",
       "An error occurred during login": "오류가 발생했습니다",
+      "An error occurred during Google login": "구글 로그인 중 오류가 발생했습니다",
       "Google login failed": "구글 로그인 실패",
       "Welcome Back!": "다시 오신 것을 환영합니다! 💕",
       "Join Our Celebration!": "축하에 참여하세요! 🌸",
@@ -333,7 +337,9 @@ const resources = {
       "Unknown error": "알 수 없는 오류",
       "failed_check_status": "업로드 상태를 확인할 수 없습니다",
       "error_during_upload": "업로드 중 오류가 발생했습니다",
-      "upload_failed": "업로드 실패"
+      "upload_failed": "업로드 실패",
+      "login_subtitle": "보고 싶었어요! 우리의 사랑 이야기를 계속하려면 로그인하세요 🌹",
+      "username_or_email_placeholder": "사용자명 또는 이메일"
     }
   },
   en: {
@@ -373,6 +379,7 @@ const resources = {
       "한국어": "🇰🇷 한국어",
       "Login failed": "Login failed 💔",
       "An error occurred during login": "Something went wrong",
+      "An error occurred during Google login": "An error occurred during Google login",
       "Google login failed": "Google login failed",
       "Welcome Back!": "Welcome Back, Lovely! 💕",
       "Join Our Celebration!": "Join Our Celebration! 🌸",
@@ -500,7 +507,9 @@ const resources = {
       "Unknown error": "Unknown error",
       "failed_check_status": "Failed to check upload status",
       "error_during_upload": "An error occurred during upload",
-      "upload_failed": "Upload failed"
+      "upload_failed": "Upload failed",
+      "login_subtitle": "We've missed you! Sign in to continue your love story with us 🌹",
+      "username_or_email_placeholder": "username or email"
     }
   }
 };

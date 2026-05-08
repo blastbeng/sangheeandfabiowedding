@@ -99,7 +99,7 @@ const Login = ({ setIsAuthenticated, setIsAdmin }) => {
       <div className="wedding-card p-10 w-full max-w-md ribbon">
         <h2 className="text-4xl wedding-title text-center mb-2">{t('Welcome Back!')}</h2>
         <p className="text-center text-gray-600 mb-6 italic">
-          We've missed you! Sign in to continue your love story with us 🌹
+          {t('login_subtitle')}
         </p>
         {error && (
           <div className="bg-red-50 border-2 border-red-300 text-red-700 px-4 py-3 rounded-xl mb-4 text-center">
@@ -118,7 +118,7 @@ const Login = ({ setIsAuthenticated, setIsAdmin }) => {
               value={formData.username_or_email}
               onChange={handleChange}
               className="wedding-input w-full"
-              placeholder="username or email"
+              placeholder={t('username_or_email_placeholder')}
               required
             />
           </div>
@@ -169,7 +169,7 @@ const Login = ({ setIsAuthenticated, setIsAdmin }) => {
               style={{ background: '#1877F2' }}
             >
               <span className="text-lg">📘</span>
-              <span>Facebook</span>
+              <span>{t('Facebook')}</span>
             </button>
             {/* Instagram */}
             <button
@@ -178,7 +178,7 @@ const Login = ({ setIsAuthenticated, setIsAdmin }) => {
               style={{ background: 'linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)' }}
             >
               <span className="text-lg">📷</span>
-              <span>Instagram</span>
+              <span>{t('Instagram')}</span>
             </button>
           </div>
         </div>
