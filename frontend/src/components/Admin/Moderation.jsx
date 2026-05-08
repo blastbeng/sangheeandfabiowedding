@@ -110,7 +110,7 @@ const AdminModeration = () => {
   const handleBulkAction = (action) => {
     if (selectedIds.length === 0) return;
     if (action === 'reject' && !rejectionReason) {
-      alert('Please provide a rejection reason');
+      alert(t('admin_rejection_reason_required'));
       return;
     }
     fetch(`${API_URL}/api/auth/media/moderation/bulk/`, {
@@ -144,7 +144,7 @@ const AdminModeration = () => {
     return (
       <div className="text-center py-10">
         <span className="text-4xl heart-decoration inline-block">💝</span>
-        <p className="mt-4 text-gray-600">Loading submissions...</p>
+        <p className="mt-4 text-gray-600">{t('admin_moderation_loading')}</p>
       </div>
     );
   }
@@ -152,28 +152,28 @@ const AdminModeration = () => {
   return (
     <div className="max-w-6xl mx-auto p-4">
       <div className="wedding-card p-8">
-        <h2 className="text-3xl wedding-title text-center mb-2">⭐ Moderation Center</h2>
-        <p className="text-center text-gray-600 mb-6 italic">Review and approve beautiful memories 💕</p>
+        <h2 className="text-3xl wedding-title text-center mb-2">{t('admin_moderation_title')}</h2>
+        <p className="text-center text-gray-600 mb-6 italic">{t('admin_moderation_subtitle')}</p>
         <div className="floral-divider">✿ ─────── ✿ ─────── ✿</div>
 
         <div className="mb-6 flex gap-4 flex-wrap items-center">
           <select value={filters.status} onChange={(e) => setFilters({ ...filters, status: e.target.value })} className="wedding-input">
-            <option value="pending">⏳ Pending</option>
-            <option value="approved">✅ Approved</option>
-            <option value="rejected">❌ Rejected</option>
+            <option value="pending">{t('pending')}</option>
+            <option value="approved">{t('approved')}</option>
+            <option value="rejected">{t('rejected')}</option>
           </select>
           <select value={filters.media_type} onChange={(e) => setFilters({ ...filters, media_type: e.target.value })} className="wedding-input">
-            <option value="">🎬 All Types</option>
-            <option value="image">📸 Photos</option>
-            <option value="video">🎥 Videos</option>
+            <option value="">{t('admin_filter_all_types')}</option>
+            <option value="image">{t('admin_filter_photos')}</option>
+            <option value="video">{t('admin_filter_videos')}</option>
           </select>
           {selectedIds.length > 0 && (
             <div className="flex gap-2 ml-auto">
               <button onClick={() => handleBulkAction('approve')} className="bg-green-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-600">
-                ✅ Approve Selected ({selectedIds.length})
+                {t('admin_bulk_approve', { count: selectedIds.length })}
               </button>
               <button onClick={() => handleBulkAction('reject')} className="bg-red-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-red-600">
-                ❌ Reject Selected ({selectedIds.length})
+                {t('admin_bulk_reject', { count: selectedIds.length })}
               </button>
             </div>
           )}
@@ -186,12 +186,12 @@ const AdminModeration = () => {
                 <th className="text-left py-3 text-pink-600">
                   <input type="checkbox" checked={selectAll} onChange={toggleSelectAll} />
                 </th>
-                <th className="text-left py-3 text-pink-600">🖼️</th>
-                <th className="text-left py-3 text-pink-600">👤 User</th>
-                <th className="text-left py-3 text-pink-600">📝 Caption</th>
-                <th className="text-left py-3 text-pink-600">📅 Date</th>
-                <th className="text-left py-3 text-pink-600">💫 Status</th>
-                <th className="text-left py-3 text-pink-600">⚡ Actions</th>
+                <th className="text-left py-3 text-pink-600">{t('admin_mod_col_preview')}</th>
+                <th className="text-left py-3 text-pink-600">{t('admin_mod_col_user')}</th>
+                <th className="text-left py-3 text-pink-600">{t('admin_mod_col_caption')}</th>
+                <th className="text-left py-3 text-pink-600">{t('admin_mod_col_date')}</th>
+                <th className="text-left py-3 text-pink-600">{t('admin_mod_col_status')}</th>
+                <th className="text-left py-3 text-pink-600">{t('admin_mod_col_actions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -214,8 +214,8 @@ const AdminModeration = () => {
                   <td className="py-3">
                     {item.status === 'pending' && (
                       <div className="flex gap-2">
-                        <button onClick={() => handleApprove(item.id)} className="bg-green-500 text-white px-3 py-1 rounded-lg text-sm hover:bg-green-600">✅ Approve</button>
-                        <button onClick={() => handleReject(item.id)} className="bg-red-500 text-white px-3 py-1 rounded-lg text-sm hover:bg-red-600">❌ Reject</button>
+                        <button onClick={() => handleApprove(item.id)} className="bg-green-500 text-white px-3 py-1 rounded-lg text-sm hover:bg-green-600">{t('admin_approve')}</button>
+                        <button onClick={() => handleReject(item.id)} className="bg-red-500 text-white px-3 py-1 rounded-lg text-sm hover:bg-red-600">{t('admin_reject')}</button>
                       </div>
                     )}
                   </td>
@@ -229,11 +229,11 @@ const AdminModeration = () => {
       {showRejectModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
           <div className="wedding-card p-6 max-w-md w-full">
-            <h3 className="text-lg font-bold mb-4 text-pink-600">💔 Rejection Reason</h3>
-            <textarea value={rejectionReason} onChange={(e) => setRejectionReason(e.target.value)} className="wedding-input w-full mb-4" rows="4" placeholder="Enter reason for rejection..." />
+            <h3 className="text-lg font-bold mb-4 text-pink-600">{t('admin_rejection_reason_title')}</h3>
+            <textarea value={rejectionReason} onChange={(e) => setRejectionReason(e.target.value)} className="wedding-input w-full mb-4" rows="4" placeholder={t('admin_rejection_reason_placeholder')} />
             <div className="flex gap-2">
-              <button onClick={confirmReject} className="flex-1 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Confirm Reject</button>
-              <button onClick={() => { setShowRejectModal(false); setRejectionReason(''); setSelectedId(null); }} className="flex-1 bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500">Cancel</button>
+              <button onClick={confirmReject} className="flex-1 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">{t('admin_confirm_reject')}</button>
+              <button onClick={() => { setShowRejectModal(false); setRejectionReason(''); setSelectedId(null); }} className="flex-1 bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500">{t('admin_cancel')}</button>
             </div>
           </div>
         </div>

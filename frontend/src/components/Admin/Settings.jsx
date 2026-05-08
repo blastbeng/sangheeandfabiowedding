@@ -31,7 +31,7 @@ const Settings = () => {
         },
         body: JSON.stringify(settings)
       });
-      if (res.ok) setSuccess('Settings saved successfully! ✅');
+      if (res.ok) setSuccess(t('admin_settings_saved'));
     } catch (err) {
       logger.error('[Settings] Settings save error:', err);
       logger.error('[Settings] Settings data:', settings);
@@ -41,46 +41,46 @@ const Settings = () => {
   return (
     <div className="max-w-2xl mx-auto p-4">
       <div className="wedding-card p-8">
-        <h2 className="text-3xl wedding-title text-center mb-2">⚙️ App Settings</h2>
-        <p className="text-center text-gray-600 mb-6 italic">Configure your webapp 💕</p>
+        <h2 className="text-3xl wedding-title text-center mb-2">{t('admin_settings_title')}</h2>
+        <p className="text-center text-gray-600 mb-6 italic">{t('admin_settings_subtitle')}</p>
         {success && <div className="bg-green-50 border-2 border-green-300 text-green-700 px-4 py-3 rounded-xl mb-4">{success}</div>}
         
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2">Site Name</label>
+            <label className="block text-gray-700 text-sm font-bold mb-2">{t('admin_settings_site_name')}</label>
             <input type="text" value={settings.site_name} onChange={(e) => setSettings({...settings, site_name: e.target.value})} className="wedding-input w-full" />
           </div>
           <div className="mb-4">
             <label className="flex items-center">
               <input type="checkbox" checked={settings.maintenance_mode} onChange={(e) => setSettings({...settings, maintenance_mode: e.target.checked})} className="mr-2" />
-              Maintenance Mode
+              {t('admin_settings_maintenance_mode')}
             </label>
           </div>
           <div className="mb-4">
             <label className="flex items-center">
               <input type="checkbox" checked={settings.allow_registrations} onChange={(e) => setSettings({...settings, allow_registrations: e.target.checked})} className="mr-2" />
-              Allow New Registrations
+              {t('admin_settings_allow_registrations')}
             </label>
           </div>
           <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2">Max Upload Size (MB)</label>
+            <label className="block text-gray-700 text-sm font-bold mb-2">{t('admin_settings_max_upload_size')}</label>
             <input type="number" value={settings.max_upload_size_mb} onChange={(e) => setSettings({...settings, max_upload_size_mb: parseInt(e.target.value)})} className="wedding-input w-full" />
           </div>
           <div className="mb-4">
             <label className="flex items-center">
               <input type="checkbox" checked={settings.require_approval} onChange={(e) => setSettings({...settings, require_approval: e.target.checked})} className="mr-2" />
-              Require Media Approval
+              {t('admin_settings_require_approval')}
             </label>
           </div>
           <div className="mb-6">
-            <label className="block text-gray-700 text-sm font-bold mb-2">Default Language</label>
+            <label className="block text-gray-700 text-sm font-bold mb-2">{t('admin_settings_default_language')}</label>
             <select value={settings.default_language} onChange={(e) => setSettings({...settings, default_language: e.target.value})} className="wedding-input w-full">
-              <option value="it">🇮🇹 Italiano</option>
-              <option value="ko">🇰🇷 한국어</option>
-              <option value="en">🇬🇧 English</option>
+              <option value="it">{t('Italiano')}</option>
+              <option value="ko">{t('한국어')}</option>
+              <option value="en">{t('English')}</option>
             </select>
           </div>
-          <button type="submit" className="wedding-btn w-full">💾 Save Settings</button>
+          <button type="submit" className="wedding-btn w-full">{t('admin_save_settings')}</button>
         </form>
       </div>
     </div>

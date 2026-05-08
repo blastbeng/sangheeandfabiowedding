@@ -57,7 +57,7 @@ const UserManagement = () => {
   };
 
   const handleDelete = async (userId) => {
-    if (!confirm('Delete this user?')) return;
+    if (!confirm(t('admin_delete_user_confirm'))) return;
     try {
       const res = await fetch(`${API_URL}/api/auth/admin/users/${userId}/`, {
         method: 'DELETE',
@@ -89,7 +89,7 @@ const UserManagement = () => {
     return (
       <div className="text-center py-20">
         <span className="text-5xl heart-decoration inline-block">💝</span>
-        <p className="mt-4 text-gray-600">Loading users...</p>
+        <p className="mt-4 text-gray-600">{t('admin_users_loading')}</p>
       </div>
     );
   }
@@ -98,20 +98,20 @@ const UserManagement = () => {
     <div className="max-w-6xl mx-auto p-4">
       <div className="wedding-card p-8">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-3xl wedding-title">👥 User Management</h2>
-          <button onClick={() => setShowModal(true)} className="wedding-btn">➕ Add User</button>
+          <h2 className="text-3xl wedding-title">{t('admin_users_title')}</h2>
+          <button onClick={() => setShowModal(true)} className="wedding-btn">{t('admin_add_user')}</button>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b-2 border-pink-200">
-                <th className="text-left py-3 text-pink-600">Username</th>
-                <th className="text-left py-3 text-pink-600">Email</th>
-                <th className="text-left py-3 text-pink-600">Name</th>
-                <th className="text-left py-3 text-pink-600">Role</th>
-                <th className="text-left py-3 text-pink-600">Status</th>
-                <th className="text-left py-3 text-pink-600">Actions</th>
+                <th className="text-left py-3 text-pink-600">{t('admin_users_col_username')}</th>
+                <th className="text-left py-3 text-pink-600">{t('admin_users_col_email')}</th>
+                <th className="text-left py-3 text-pink-600">{t('admin_users_col_name')}</th>
+                <th className="text-left py-3 text-pink-600">{t('admin_users_col_role')}</th>
+                <th className="text-left py-3 text-pink-600">{t('admin_users_col_status')}</th>
+                <th className="text-left py-3 text-pink-600">{t('admin_users_col_actions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -121,17 +121,17 @@ const UserManagement = () => {
                   <td className="py-3">{user.email}</td>
                   <td className="py-3">{user.first_name} {user.last_name}</td>
                   <td className="py-3">
-                    {user.is_superuser ? '👑 Superadmin' : user.is_staff ? '⭐ Admin' : '👤 User'}
+                    {user.is_superuser ? t('admin_role_superadmin') : user.is_staff ? t('admin_role_admin') : t('admin_role_user')}
                   </td>
                   <td className="py-3">
                     <span className={`status-badge ${user.is_active ? 'status-approved' : 'status-rejected'}`}>
-                      {user.is_active ? 'Active' : 'Inactive'}
+                      {user.is_active ? t('admin_status_active') : t('admin_status_inactive')}
                     </span>
                   </td>
                   <td className="py-3">
-                    <button onClick={() => { setEditingUser(user); setFormData({...user, password: ''}); setShowModal(true); }} className="text-blue-500 hover:text-blue-700 text-sm mr-2">✏️ Edit</button>
+                    <button onClick={() => { setEditingUser(user); setFormData({...user, password: ''}); setShowModal(true); }} className="text-blue-500 hover:text-blue-700 text-sm mr-2">{t('admin_edit')}</button>
                     {!user.is_superuser && (
-                      <button onClick={() => handleDelete(user.id)} className="text-red-500 hover:text-red-700 text-sm">🗑️ Delete</button>
+                      <button onClick={() => handleDelete(user.id)} className="text-red-500 hover:text-red-700 text-sm">{t('admin_delete')}</button>
                     )}
                   </td>
                 </tr>
@@ -144,26 +144,26 @@ const UserManagement = () => {
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="wedding-card p-6 max-w-md w-full">
-            <h3 className="text-xl font-bold mb-4 text-pink-600">{editingUser ? 'Edit User' : 'Add New User'}</h3>
+            <h3 className="text-xl font-bold mb-4 text-pink-600">{editingUser ? t('admin_edit_user') : t('admin_add_new_user')}</h3>
             <form onSubmit={handleSubmit}>
-              <input type="text" placeholder="Username" value={formData.username} onChange={(e) => setFormData({...formData, username: e.target.value})} className="wedding-input w-full mb-3" required />
-              <input type="email" placeholder="Email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="wedding-input w-full mb-3" required />
-              <input type="text" placeholder="First Name" value={formData.first_name} onChange={(e) => setFormData({...formData, first_name: e.target.value})} className="wedding-input w-full mb-3" />
-              <input type="text" placeholder="Last Name" value={formData.last_name} onChange={(e) => setFormData({...formData, last_name: e.target.value})} className="wedding-input w-full mb-3" />
+              <input type="text" placeholder={t('admin_form_username')} value={formData.username} onChange={(e) => setFormData({...formData, username: e.target.value})} className="wedding-input w-full mb-3" required />
+              <input type="email" placeholder={t('admin_form_email')} value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="wedding-input w-full mb-3" required />
+              <input type="text" placeholder={t('admin_form_first_name')} value={formData.first_name} onChange={(e) => setFormData({...formData, first_name: e.target.value})} className="wedding-input w-full mb-3" />
+              <input type="text" placeholder={t('admin_form_last_name')} value={formData.last_name} onChange={(e) => setFormData({...formData, last_name: e.target.value})} className="wedding-input w-full mb-3" />
               {!editingUser && (
-                <input type="password" placeholder="Password" value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} className="wedding-input w-full mb-3" required={!editingUser} />
+                <input type="password" placeholder={t('admin_form_password')} value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} className="wedding-input w-full mb-3" required={!editingUser} />
               )}
               <label className="flex items-center mb-3">
                 <input type="checkbox" checked={formData.is_staff} onChange={(e) => setFormData({...formData, is_staff: e.target.checked})} className="mr-2" />
-                Admin Access
+                {t('admin_form_admin_access')}
               </label>
               <label className="flex items-center mb-4">
                 <input type="checkbox" checked={formData.is_active} onChange={(e) => setFormData({...formData, is_active: e.target.checked})} className="mr-2" />
-                Active
+                {t('admin_form_active')}
               </label>
               <div className="flex gap-2">
-                <button type="submit" className="flex-1 wedding-btn">Save</button>
-                <button type="button" onClick={() => { setShowModal(false); setEditingUser(null); }} className="flex-1 bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500">Cancel</button>
+                <button type="submit" className="flex-1 wedding-btn">{t('admin_save')}</button>
+                <button type="button" onClick={() => { setShowModal(false); setEditingUser(null); }} className="flex-1 bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500">{t('admin_cancel')}</button>
               </div>
             </form>
           </div>
