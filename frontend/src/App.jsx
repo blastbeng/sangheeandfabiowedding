@@ -88,14 +88,14 @@ function App() {
                   {isAdmin && (
                     <Link to="/admin" className="hover:text-yellow-200 transition font-medium text-sm md:text-base whitespace-nowrap">⭐ Admin</Link>
                   )}
-                  <button onClick={handleLogout} className="wedding-btn text-xs md:text-sm px-3 md:px-4 py-2">
+                  <button onClick={handleLogout} className="border-2 border-white/80 text-white rounded-full px-3 md:px-4 py-2 text-xs md:text-sm font-semibold hover:bg-white/20 transition-all whitespace-nowrap">
                     {t('Logout')}
                   </button>
                 </>
               ) : (
                 <>
-                  <Link to="/login" className="wedding-btn text-xs md:text-sm px-3 md:px-4 py-2">{t('Sign In')}</Link>
-                  <Link to="/register" className="wedding-btn text-xs md:text-sm px-3 md:px-4 py-2">{t('Join Us')}</Link>
+                  <Link to="/login" className="border-2 border-white/80 text-white rounded-full px-3 md:px-4 py-2 text-xs md:text-sm font-semibold hover:bg-white/20 transition-all whitespace-nowrap">{t('Sign In')}</Link>
+                  <Link to="/register" className="border-2 border-white/80 text-white rounded-full px-3 md:px-4 py-2 text-xs md:text-sm font-semibold hover:bg-white/20 transition-all whitespace-nowrap">{t('Join Us')}</Link>
                 </>
               )}
             </div>
@@ -200,7 +200,7 @@ function App() {
         </main>
 
         <footer className="bg-gradient-to-r from-wedding-navy via-wedding-azure to-wedding-navy text-white text-center p-6">
-          <p className="wedding-title text-2xl mb-2 text-white">🌸 {t('footer_crafted')} 🌸</p>
+          <p className="text-2xl mb-2 text-white" style={{ fontFamily: "'Great Vibes', cursive", textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>🌸 {t('footer_crafted')} 🌸</p>
           <p className="text-sm opacity-80">
             {t('footer_thank_you')}
           </p>
