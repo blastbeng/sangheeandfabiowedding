@@ -294,6 +294,11 @@ h1, h2, h3, h4 {
   letter-spacing: 5px;
 }
 
+/* Footer text shadow for readability on gradient */
+footer p {
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
 /* Mobile-responsive auth pages */
 @media (max-width: 640px) {
   .wedding-card {
