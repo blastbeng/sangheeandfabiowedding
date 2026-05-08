@@ -114,11 +114,11 @@ services:
     build:
       context: ./frontend
       args:
-        - VITE_API_URL=${VITE_API_URL}
+        - VITE_API_URL=
         - VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}
     command: npm run serve
     environment:
-      - VITE_API_URL=${VITE_API_URL}
+      - VITE_API_URL=
       - VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}
       - VITE_DEFAULT_LANGUAGE=it
       - VITE_SUPPORTED_LANGUAGES=it,ko,en
