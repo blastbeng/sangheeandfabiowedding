@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import coupleImage from '../../static/images/SangHeeAndFabio.png';
 
-const Home = () => {
+const Home = ({ isAuthenticated }) => {
   const { t } = useTranslation();
 
   return (
@@ -83,18 +83,20 @@ const Home = () => {
         </div>
       </div>
 
-      {/* Final CTA */}
-      <div className="text-center p-8 mt-12 mb-8">
-        <div className="wedding-card mx-auto max-w-2xl p-10 ribbon wedding-glow">
-          <p className="text-2xl wedding-title mb-4">{t('join_us_title')}</p>
-          <p className="text-gray-600 mb-6 leading-relaxed">
-            {t('join_us_message')}
-          </p>
-          <Link to="/register" className="wedding-btn text-lg px-8 py-3">
-            {t('Create Account')}
-          </Link>
+      {/* Final CTA - only shown when not authenticated */}
+      {!isAuthenticated && (
+        <div className="text-center p-8 mt-12 mb-8">
+          <div className="wedding-card mx-auto max-w-2xl p-10 ribbon wedding-glow">
+            <p className="text-2xl wedding-title mb-4">{t('join_us_title')}</p>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              {t('join_us_message')}
+            </p>
+            <Link to="/register" className="wedding-btn text-lg px-8 py-3">
+              {t('Create Account')}
+            </Link>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Footer */}
       <div className="text-center pb-12">

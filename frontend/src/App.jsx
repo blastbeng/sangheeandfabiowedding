@@ -105,7 +105,7 @@ function App() {
         <main className="flex-grow p-4">
           <div className="max-w-6xl mx-auto">
             <Routes>
-              <Route path="/" element={<Home />} />
+              <Route path="/" element={<Home isAuthenticated={isAuthenticated} />} />
               <Route path="/events" element={<Events />} />
               <Route path="/gallery" element={<Gallery />} />
               <Route path="/verify-email" element={<VerifyEmail />} />
