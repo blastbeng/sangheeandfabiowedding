@@ -8,8 +8,6 @@ const Gallery = () => {
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
     user_id: '',
-    date_from: '',
-    date_to: '',
     search: ''
   });
   const [facetag, setFacetag] = useState('');
@@ -18,8 +16,6 @@ const Gallery = () => {
   const fetchMedia = () => {
     const params = new URLSearchParams();
     if (filters.user_id) params.append('user_id', filters.user_id);
-    if (filters.date_from) params.append('date_from', filters.date_from);
-    if (filters.date_to) params.append('date_to', filters.date_to);
     if (filters.search) params.append('search', filters.search);
     if (facetag) params.append('facetag', facetag);
 
@@ -65,24 +61,6 @@ const Gallery = () => {
             onChange={e => setFilters({ ...filters, user_id: e.target.value })}
             className="wedding-input"
             placeholder="Filter by user"
-          />
-        </div>
-        <div>
-          <label className="block text-sm text-gray-600 mb-1">{t('From')}</label>
-          <input
-            type="date"
-            value={filters.date_from}
-            onChange={e => setFilters({ ...filters, date_from: e.target.value })}
-            className="wedding-input"
-          />
-        </div>
-        <div>
-          <label className="block text-sm text-gray-600 mb-1">{t('To')}</label>
-          <input
-            type="date"
-            value={filters.date_to}
-            onChange={e => setFilters({ ...filters, date_to: e.target.value })}
-            className="wedding-input"
           />
         </div>
         <div>
