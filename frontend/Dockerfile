@@ -25,6 +25,8 @@ RUN npm run build
 # Verify dist folder exists
 RUN ls -la /app/dist/
 
+COPY health-server.js .
+
 EXPOSE 5173
 
-CMD ["npm", "run", "serve"]
+CMD ["node", "health-server.js"]
