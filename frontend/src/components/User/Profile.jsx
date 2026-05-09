@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import logger from '../../utils/logger';
+import authFetch from '../../utils/authFetch';
 
 const Profile = () => {
   const { t, i18n } = useTranslation();
@@ -27,9 +28,7 @@ const Profile = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/auth/profile/`, {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
-        });
+        const res = await authFetch(`${API_URL}/api/auth/profile/`);
         if (res.ok) {
           const data = await res.json();
           setUser(data);
@@ -40,13 +39,6 @@ const Profile = () => {
             email: data.email || ''
           });
         } else {
-          if (res.status === 401) {
-            localStorage.removeItem('accessToken');
-            localStorage.removeItem('refreshToken');
-            localStorage.removeItem('isAdmin');
-            navigate('/login');
-            return;
-          }
           setError(t('profile_load_error'));
         }
       } catch (err) {
@@ -88,9 +80,8 @@ const Profile = () => {
     }
 
     try {
-      const res = await fetch(`${API_URL}/api/auth/profile/`, {
+      const res = await authFetch(`${API_URL}/api/auth/profile/`, {
         method: 'PUT',
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` },
         body: data
       });
 
@@ -118,11 +109,10 @@ const Profile = () => {
     }
 
     try {
-      const res = await fetch(`${API_URL}/api/auth/profile/`, {
+      const res = await authFetch(`${API_URL}/api/auth/profile/`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
         },
         body: JSON.stringify({
           current_password: passwordData.current_password,
