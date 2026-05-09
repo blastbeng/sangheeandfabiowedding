@@ -167,7 +167,7 @@ class LoginView(APIView):
             return Response({
                 'refresh': str(refresh),
                 'access': str(refresh.access_token),
-                'user': CustomUserSerializer(user).data
+                'user': CustomUserSerializer(user, context={'request': request}).data
             })
         logger.warning(f"Login failed for: {username_or_email}")
         return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
@@ -240,7 +240,7 @@ class ProfileView(APIView):
     parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def get(self, request):
-        return Response(CustomUserSerializer(request.user).data)
+        return Response(CustomUserSerializer(request.user, context={'request': request}).data)
 
     def put(self, request):
         # Check if this is a password change request
@@ -262,7 +262,7 @@ class ProfileView(APIView):
             return Response({'message': 'Password updated successfully'})
 
         # Regular profile update
-        serializer = CustomUserSerializer(request.user, data=request.data, partial=True)
+        serializer = CustomUserSerializer(request.user, data=request.data, partial=True, context={'request': request})
         if serializer.is_valid():
             serializer.save()
             logger.info(f"Profile updated for user: {request.user.username}")
@@ -280,10 +280,10 @@ class SocialLoginView(APIView):
         if not provider or not access_token:
             return Response({'error': 'Provider and access_token are required'}, status=status.HTTP_400_BAD_REQUEST)
         if provider == 'google':
-            return self.handle_google(access_token)
+            return self.handle_google(access_token, request)
         return Response({'error': 'Unsupported provider'}, status=status.HTTP_400_BAD_REQUEST)
 
-    def handle_google(self, access_token):
+    def handle_google(self, access_token, request):
         try:
             user_info = self.get_google_user_info(access_token)
         except Exception as e:
@@ -304,7 +304,7 @@ class SocialLoginView(APIView):
         return Response({
             'refresh': str(refresh),
             'access': str(refresh.access_token),
-            'user': CustomUserSerializer(user).data
+            'user': CustomUserSerializer(user, context={'request': request}).data
         })
 
     def get_google_user_info(self, id_token):
