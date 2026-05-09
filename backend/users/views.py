@@ -10,6 +10,7 @@ from django.core.signing import TimestampSigner, BadSignature, SignatureExpired
 from django.contrib.auth import get_user_model, login, logout, authenticate
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.staticfiles.storage import staticfiles_storage
+from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
 from django.utils.translation import gettext as _
@@ -623,6 +624,7 @@ class PublicMediaListView(APIView):
         date_from = request.query_params.get('date_from')
         date_to = request.query_params.get('date_to')
         search = request.query_params.get('search')
+        user_search = request.query_params.get('user_search')
         if user_id:
             queryset = queryset.filter(user_id=user_id)
         if date_from:
@@ -631,6 +633,12 @@ class PublicMediaListView(APIView):
             queryset = queryset.filter(uploaded_at__lte=date_to)
         if search:
             queryset = queryset.filter(caption__icontains=search)
+        if user_search:
+            queryset = queryset.filter(
+                Q(user__username__icontains=user_search) |
+                Q(user__first_name__icontains=user_search) |
+                Q(user__last_name__icontains=user_search)
+            )
         facetag = request.query_params.get('facetag')
         if facetag:
             media_ids = FaceTag.objects.filter(name__iexact=facetag).values_list('media_id', flat=True)
