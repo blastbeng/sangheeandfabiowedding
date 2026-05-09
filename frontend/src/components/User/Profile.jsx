@@ -222,7 +222,7 @@ const Profile = () => {
               className="wedding-input w-full"
             />
             {user.profile_picture_url && (
-              <img src={user.profile_picture_url} alt={t('Current')} className="w-20 h-20 object-cover rounded-full mt-2 border-2 border-pink-200" />
+              <img src={`${API_URL}${user.profile_picture_url}`} alt={t('Current')} className="w-20 h-20 object-cover rounded-full mt-2 border-2 border-pink-200" />
             )}
           </div>
           <button type="submit" className="wedding-btn">
