@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import logger from '../../utils/logger';
+import authFetch from '../../utils/authFetch';
 
 const MyUploads = () => {
   const { t } = useTranslation();
@@ -15,9 +16,8 @@ const MyUploads = () => {
   const handleDelete = async (id) => {
     if (!confirm(t('my_uploads_delete_confirm'))) return;
     try {
-      const res = await fetch(`${API_URL}/api/auth/media/${id}/`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
+      const res = await authFetch(`${API_URL}/api/auth/media/${id}/`, {
+        method: 'DELETE'
       });
       if (res.ok) refreshUploads();
     } catch (err) {
@@ -26,9 +26,7 @@ const MyUploads = () => {
   };
 
   useEffect(() => {
-    fetch(`${API_URL}/api/auth/media/my-uploads/`, {
-      headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
-    })
+    authFetch(`${API_URL}/api/auth/media/my-uploads/`)
       .then(res => res.json())
       .then(data => { setUploads(data); setLoading(false); })
       .catch(err => { 
