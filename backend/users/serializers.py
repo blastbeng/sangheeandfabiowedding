@@ -25,17 +25,12 @@ class CustomUserSerializer(serializers.ModelSerializer):
         }
 
     def get_profile_picture_url(self, obj):
-        if obj.profile_picture and obj.profile_picture.storage.exists(obj.profile_picture.name):
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.profile_picture.url)
-            return obj.profile_picture.url
-        # Ultimate fallback (should rarely be needed)
         request = self.context.get('request')
+        if obj.profile_picture and obj.profile_picture.storage.exists(obj.profile_picture.name):
+            return request.build_absolute_uri(f'/api/auth/users/{obj.id}/profile-picture/') if request else f'/api/auth/users/{obj.id}/profile-picture/'
+        # Fallback to default
         static_url = staticfiles_storage.url('images/default_profile_pic.png')
-        if request:
-            return request.build_absolute_uri(static_url)
-        return static_url
+        return request.build_absolute_uri(static_url) if request else static_url
 
     def validate(self, attrs):
         password = attrs.get('password')
@@ -100,17 +95,12 @@ class PublicUserSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
     def get_profile_picture_url(self, obj):
-        if obj.profile_picture and obj.profile_picture.storage.exists(obj.profile_picture.name):
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.profile_picture.url)
-            return obj.profile_picture.url
-        # Ultimate fallback (should rarely be needed)
         request = self.context.get('request')
+        if obj.profile_picture and obj.profile_picture.storage.exists(obj.profile_picture.name):
+            return request.build_absolute_uri(f'/api/auth/users/{obj.id}/profile-picture/') if request else f'/api/auth/users/{obj.id}/profile-picture/'
+        # Fallback to default
         static_url = staticfiles_storage.url('images/default_profile_pic.png')
-        if request:
-            return request.build_absolute_uri(static_url)
-        return static_url
+        return request.build_absolute_uri(static_url) if request else static_url
 
 
 class MediaSerializer(serializers.ModelSerializer):
@@ -149,8 +139,8 @@ class PublicMediaSerializer(serializers.ModelSerializer):
         if obj.user and obj.user.profile_picture and obj.user.profile_picture.storage.exists(obj.user.profile_picture.name):
             request = self.context.get('request')
             if request:
-                return request.build_absolute_uri(obj.user.profile_picture.url)
-            return obj.user.profile_picture.url
+                return request.build_absolute_uri(f'/api/auth/users/{obj.user.id}/profile-picture/')
+            return f'/api/auth/users/{obj.user.id}/profile-picture/'
         # Ultimate fallback (should rarely be needed)
         request = self.context.get('request')
         static_url = staticfiles_storage.url('images/default_profile_pic.png')

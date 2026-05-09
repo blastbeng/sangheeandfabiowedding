@@ -13,6 +13,12 @@ const UserManagement = () => {
     username: '', email: '', first_name: '', last_name: '',
     is_staff: false, is_active: true, password: ''
   });
+  const [filters, setFilters] = useState({
+    username: '',
+    email: '',
+    role: '',
+    status: ''
+  });
   const API_URL = import.meta.env.VITE_API_URL;
 
   const fetchUsers = () => {
@@ -77,6 +83,19 @@ const UserManagement = () => {
     }
   };
 
+  const filteredUsers = users.filter(user => {
+    const matchUsername = user.username.toLowerCase().includes(filters.username.toLowerCase());
+    const matchEmail = user.email.toLowerCase().includes(filters.email.toLowerCase());
+    const matchRole = filters.role === '' || 
+      (filters.role === 'superadmin' && user.is_superuser) ||
+      (filters.role === 'admin' && user.is_staff && !user.is_superuser) ||
+      (filters.role === 'user' && !user.is_staff);
+    const matchStatus = filters.status === '' || 
+      (filters.status === 'active' && user.is_active) ||
+      (filters.status === 'inactive' && !user.is_active);
+    return matchUsername && matchEmail && matchRole && matchStatus;
+  });
+
   if (loading) {
     return (
       <div className="text-center py-20">
@@ -98,6 +117,7 @@ const UserManagement = () => {
           <table className="w-full">
             <thead>
               <tr className="border-b-2 border-pink-200">
+                <th className="text-left py-3 text-pink-600">{t('admin_users_col_picture')}</th>
                 <th className="text-left py-3 text-pink-600">{t('admin_users_col_username')}</th>
                 <th className="text-left py-3 text-pink-600">{t('admin_users_col_email')}</th>
                 <th className="text-left py-3 text-pink-600">{t('admin_users_col_name')}</th>
@@ -105,10 +125,63 @@ const UserManagement = () => {
                 <th className="text-left py-3 text-pink-600">{t('admin_users_col_status')}</th>
                 <th className="text-left py-3 text-pink-600">{t('admin_users_col_actions')}</th>
               </tr>
+              <tr className="border-b border-pink-100">
+                <th></th>
+                <th className="py-2">
+                  <input
+                    type="text"
+                    placeholder={t('filter_username')}
+                    value={filters.username}
+                    onChange={(e) => setFilters({...filters, username: e.target.value})}
+                    className="wedding-input w-full text-xs py-1"
+                  />
+                </th>
+                <th className="py-2">
+                  <input
+                    type="text"
+                    placeholder={t('filter_email')}
+                    value={filters.email}
+                    onChange={(e) => setFilters({...filters, email: e.target.value})}
+                    className="wedding-input w-full text-xs py-1"
+                  />
+                </th>
+                <th></th>
+                <th className="py-2">
+                  <select
+                    value={filters.role}
+                    onChange={(e) => setFilters({...filters, role: e.target.value})}
+                    className="wedding-input w-full text-xs py-1"
+                  >
+                    <option value="">{t('all')}</option>
+                    <option value="superadmin">{t('admin_role_superadmin')}</option>
+                    <option value="admin">{t('admin_role_admin')}</option>
+                    <option value="user">{t('admin_role_user')}</option>
+                  </select>
+                </th>
+                <th className="py-2">
+                  <select
+                    value={filters.status}
+                    onChange={(e) => setFilters({...filters, status: e.target.value})}
+                    className="wedding-input w-full text-xs py-1"
+                  >
+                    <option value="">{t('all')}</option>
+                    <option value="active">{t('admin_status_active')}</option>
+                    <option value="inactive">{t('admin_status_inactive')}</option>
+                  </select>
+                </th>
+                <th></th>
+              </tr>
             </thead>
             <tbody>
-              {users.map((user) => (
+              {filteredUsers.map((user) => (
                 <tr key={user.id} className="border-b border-pink-100 hover:bg-pink-50">
+                  <td className="py-3">
+                    <img
+                      src={`${API_URL}/api/auth/users/${user.id}/profile-picture/`}
+                      alt=""
+                      className="w-10 h-10 object-cover rounded-full border border-pink-200"
+                    />
+                  </td>
                   <td className="py-3">{user.username}</td>
                   <td className="py-3">{user.email}</td>
                   <td className="py-3">{user.first_name} {user.last_name}</td>

@@ -266,6 +266,13 @@ class ProfileView(APIView):
         serializer = CustomUserSerializer(request.user, data=request.data, partial=True, context={'request': request})
         if serializer.is_valid():
             serializer.save()
+            # Invalidate profile picture cache
+            redis_client = redis.Redis(
+                host=django_settings.REDIS_HOST,
+                port=django_settings.REDIS_PORT,
+            )
+            cache_key = f"user_profile_pic:{request.user.id}"
+            redis_client.delete(cache_key)
             logger.info(f"Profile updated for user: {request.user.username}")
             return Response(serializer.data)
         logger.error(f"Profile update failed: {serializer.errors}")
@@ -458,6 +465,39 @@ class PublicUserDetailView(APIView):
         user = get_object_or_404(User, id=user_id, is_active=True)
         serializer = PublicUserSerializer(user, context={'request': request})
         return Response(serializer.data)
+
+
+class UserProfilePictureView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, user_id):
+        user = get_object_or_404(User, id=user_id, is_active=True)
+        if not user.profile_picture:
+            raise Http404("No profile picture")
+
+        redis_client = redis.Redis(
+            host=django_settings.REDIS_HOST,
+            port=django_settings.REDIS_PORT,
+            decode_responses=False
+        )
+        cache_key = f"user_profile_pic:{user.id}"
+        cached = redis_client.get(cache_key)
+        if cached:
+            ext = os.path.splitext(user.profile_picture.name)[1].lower()
+            content_type = 'image/jpeg' if ext in ['.jpg', '.jpeg'] else 'image/png'
+            return HttpResponse(cached, content_type=content_type)
+
+        try:
+            with user.profile_picture.open('rb') as f:
+                content = f.read()
+        except Exception:
+            raise Http404("Profile picture not found")
+
+        redis_client.setex(cache_key, 3600, content)  # cache for 1 hour
+
+        ext = os.path.splitext(user.profile_picture.name)[1].lower()
+        content_type = 'image/jpeg' if ext in ['.jpg', '.jpeg'] else 'image/png'
+        return HttpResponse(content, content_type=content_type)
 
 
 # ==================== MEDIA VIEWS ====================

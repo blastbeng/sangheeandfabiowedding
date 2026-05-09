@@ -7,6 +7,7 @@ from .views import (
     MediaListView, MediaUploadView, MediaDeleteView, MyUploadsView,
     MediaModerationView, MediaModerateSingleView, MediaFileView,
     PublicMediaListView, PublicUserListView, PublicUserDetailView,
+    UserProfilePictureView,
     AdminDashboardView, AdminSettingsView,
     AdminUserListView, AdminUserDetailView, AdminUserToggleStaffView,
     MediaBulkModerationView, TaskStatusView, FaceTagListView, FaceTagDetailView
@@ -37,6 +38,7 @@ urlpatterns = [
     path('media/public/', PublicMediaListView.as_view(), name='media-public'),
     path('users/public/', PublicUserListView.as_view(), name='public-user-list'),
     path('users/public/<int:user_id>/', PublicUserDetailView.as_view(), name='public-user-detail'),
+    path('users/<int:user_id>/profile-picture/', UserProfilePictureView.as_view(), name='user-profile-picture'),
     path('admin/dashboard/', AdminDashboardView.as_view(), name='admin-dashboard'),
     path('admin/settings/', AdminSettingsView.as_view(), name='admin-settings'),
     path('admin/users/', AdminUserListView.as_view(), name='admin-user-list'),
