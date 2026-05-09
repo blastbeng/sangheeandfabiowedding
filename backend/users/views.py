@@ -142,6 +142,7 @@ class VerifyEmailView(APIView):
 
 class LoginView(APIView):
     permission_classes = [AllowAny]
+    authentication_classes = []  # Disable authentication to avoid CSRF check on login
 
     def post(self, request):
         username_or_email = request.data.get('username_or_email', '')
