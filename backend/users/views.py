@@ -9,6 +9,7 @@ from django.core.mail import send_mail
 from django.core.signing import TimestampSigner, BadSignature, SignatureExpired
 from django.contrib.auth import get_user_model, login, logout, authenticate
 from django.contrib.auth.password_validation import validate_password
+from django.contrib.staticfiles.storage import staticfiles_storage
 from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
 from django.utils.translation import gettext as _
@@ -415,12 +416,11 @@ class SocialLoginCallbackView(APIView):
                     except Exception as e:
                         logger.error(f"Failed to download profile picture for {user.email}: {e}")
 
-            # Fallback to default profile picture if none was set
+            # Fallback to default profile picture from local static file if none was set
             if not user.profile_picture or user.profile_picture.name == 'profile_pics/default.png':
                 try:
-                    resp = requests.get('https://i.imgur.com/V4RclNb.png')
-                    if resp.status_code == 200:
-                        user.profile_picture.save('default.png', ContentFile(resp.content), save=False)
+                    with staticfiles_storage.open('images/default_profile_pic.png', 'rb') as f:
+                        user.profile_picture.save('default.png', ContentFile(f.read()), save=False)
                 except Exception as e:
                     logger.error(f"Failed to set default profile picture for {user.email}: {e}")
 

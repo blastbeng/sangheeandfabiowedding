@@ -25,14 +25,12 @@ class CustomUserSerializer(serializers.ModelSerializer):
         }
 
     def get_profile_picture_url(self, obj):
-        if obj.profile_picture:
-            # Check if the file actually exists in storage
-            if obj.profile_picture.storage.exists(obj.profile_picture.name):
-                request = self.context.get('request')
-                if request:
-                    return request.build_absolute_uri(obj.profile_picture.url)
-                return obj.profile_picture.url
-        # Fallback to static default image
+        if obj.profile_picture and obj.profile_picture.storage.exists(obj.profile_picture.name):
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.profile_picture.url)
+            return obj.profile_picture.url
+        # Ultimate fallback (should rarely be needed)
         request = self.context.get('request')
         static_url = staticfiles_storage.url('images/default_profile_pic.png')
         if request:
@@ -85,14 +83,12 @@ class CustomUserSerializer(serializers.ModelSerializer):
         return instance
 
     def set_default_profile_picture(self, user):
-        import requests
         from django.core.files.base import ContentFile
         try:
-            response = requests.get('https://i.imgur.com/V4RclNb.png')
-            if response.status_code == 200:
-                user.profile_picture.save('default.png', ContentFile(response.content), save=True)
+            with staticfiles_storage.open('images/default_profile_pic.png', 'rb') as f:
+                user.profile_picture.save('default.png', ContentFile(f.read()), save=True)
         except Exception as e:
-            print(f"Failed to download default profile picture: {e}")
+            print(f"Failed to set default profile picture: {e}")
 
 
 class PublicUserSerializer(serializers.ModelSerializer):
@@ -104,14 +100,12 @@ class PublicUserSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
     def get_profile_picture_url(self, obj):
-        if obj.profile_picture:
-            # Check if the file actually exists in storage
-            if obj.profile_picture.storage.exists(obj.profile_picture.name):
-                request = self.context.get('request')
-                if request:
-                    return request.build_absolute_uri(obj.profile_picture.url)
-                return obj.profile_picture.url
-        # Fallback to static default image
+        if obj.profile_picture and obj.profile_picture.storage.exists(obj.profile_picture.name):
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.profile_picture.url)
+            return obj.profile_picture.url
+        # Ultimate fallback (should rarely be needed)
         request = self.context.get('request')
         static_url = staticfiles_storage.url('images/default_profile_pic.png')
         if request:
@@ -152,14 +146,12 @@ class PublicMediaSerializer(serializers.ModelSerializer):
         return f"/api/auth/media/{obj.id}/file/"
 
     def get_uploader_profile_picture(self, obj):
-        if obj.user and obj.user.profile_picture:
-            # Check if the file actually exists in storage
-            if obj.user.profile_picture.storage.exists(obj.user.profile_picture.name):
-                request = self.context.get('request')
-                if request:
-                    return request.build_absolute_uri(obj.user.profile_picture.url)
-                return obj.user.profile_picture.url
-        # Fallback to static default image
+        if obj.user and obj.user.profile_picture and obj.user.profile_picture.storage.exists(obj.user.profile_picture.name):
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.user.profile_picture.url)
+            return obj.user.profile_picture.url
+        # Ultimate fallback (should rarely be needed)
         request = self.context.get('request')
         static_url = staticfiles_storage.url('images/default_profile_pic.png')
         if request:

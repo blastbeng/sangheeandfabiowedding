@@ -1,8 +1,8 @@
 from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
+from django.contrib.staticfiles.storage import staticfiles_storage
 import os
-import requests
 
 
 class Command(BaseCommand):
@@ -29,10 +29,9 @@ class Command(BaseCommand):
             # Ensure default profile picture exists
             if not user.profile_picture or not user.profile_picture.storage.exists(user.profile_picture.name):
                 try:
-                    response = requests.get('https://i.imgur.com/V4RclNb.png')
-                    if response.status_code == 200:
-                        user.profile_picture.save('default.png', ContentFile(response.content), save=True)
-                        self.stdout.write(self.style.SUCCESS('Default profile picture set'))
+                    with staticfiles_storage.open('images/default_profile_pic.png', 'rb') as f:
+                        user.profile_picture.save('default.png', ContentFile(f.read()), save=True)
+                    self.stdout.write(self.style.SUCCESS('Default profile picture set'))
                 except Exception as e:
                     self.stdout.write(self.style.WARNING(f'Could not set default profile picture: {e}'))
         else:
@@ -45,9 +44,8 @@ class Command(BaseCommand):
             # Ensure default profile picture exists
             if not user.profile_picture or not user.profile_picture.storage.exists(user.profile_picture.name):
                 try:
-                    response = requests.get('https://i.imgur.com/V4RclNb.png')
-                    if response.status_code == 200:
-                        user.profile_picture.save('default.png', ContentFile(response.content), save=True)
-                        self.stdout.write(self.style.SUCCESS('Default profile picture set'))
+                    with staticfiles_storage.open('images/default_profile_pic.png', 'rb') as f:
+                        user.profile_picture.save('default.png', ContentFile(f.read()), save=True)
+                    self.stdout.write(self.style.SUCCESS('Default profile picture set'))
                 except Exception as e:
                     self.stdout.write(self.style.WARNING(f'Could not set default profile picture: {e}'))
