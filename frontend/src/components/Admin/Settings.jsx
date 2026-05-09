@@ -106,11 +106,11 @@ const Settings = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-1">{t('Client ID')}</label>
-                <input type="text" name="google_client_id" value={settings.google_client_id} onChange={handleChange} className="w-full p-2 border rounded" />
+                <input type="text" name="google_client_id" value={settings.google_client_id} onChange={handleChange} className="wedding-input w-full" />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">{t('Client Secret')}</label>
-                <input type="password" name="google_client_secret" value={settings.google_client_secret} onChange={handleChange} className="w-full p-2 border rounded" />
+                <input type="password" name="google_client_secret" value={settings.google_client_secret} onChange={handleChange} className="wedding-input w-full" />
               </div>
             </div>
           </div>
@@ -120,11 +120,11 @@ const Settings = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-1">{t('App ID')}</label>
-                <input type="text" name="facebook_app_id" value={settings.facebook_app_id} onChange={handleChange} className="w-full p-2 border rounded" />
+                <input type="text" name="facebook_app_id" value={settings.facebook_app_id} onChange={handleChange} className="wedding-input w-full" />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">{t('App Secret')}</label>
-                <input type="password" name="facebook_app_secret" value={settings.facebook_app_secret} onChange={handleChange} className="w-full p-2 border rounded" />
+                <input type="password" name="facebook_app_secret" value={settings.facebook_app_secret} onChange={handleChange} className="wedding-input w-full" />
               </div>
             </div>
           </div>
@@ -134,11 +134,11 @@ const Settings = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-1">{t('App ID')}</label>
-                <input type="text" name="instagram_app_id" value={settings.instagram_app_id} onChange={handleChange} className="w-full p-2 border rounded" />
+                <input type="text" name="instagram_app_id" value={settings.instagram_app_id} onChange={handleChange} className="wedding-input w-full" />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">{t('App Secret')}</label>
-                <input type="password" name="instagram_app_secret" value={settings.instagram_app_secret} onChange={handleChange} className="w-full p-2 border rounded" />
+                <input type="password" name="instagram_app_secret" value={settings.instagram_app_secret} onChange={handleChange} className="wedding-input w-full" />
               </div>
             </div>
           </div>
@@ -148,19 +148,19 @@ const Settings = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-1">{t('URL')}</label>
-                <input type="text" name="nextcloud_url" value={settings.nextcloud_url} onChange={handleChange} className="w-full p-2 border rounded" />
+                <input type="text" name="nextcloud_url" value={settings.nextcloud_url} onChange={handleChange} className="wedding-input w-full" />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">{t('Username')}</label>
-                <input type="text" name="nextcloud_username" value={settings.nextcloud_username} onChange={handleChange} className="w-full p-2 border rounded" />
+                <input type="text" name="nextcloud_username" value={settings.nextcloud_username} onChange={handleChange} className="wedding-input w-full" />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">{t('Password')}</label>
-                <input type="password" name="nextcloud_password" value={settings.nextcloud_password} onChange={handleChange} className="w-full p-2 border rounded" />
+                <input type="password" name="nextcloud_password" value={settings.nextcloud_password} onChange={handleChange} className="wedding-input w-full" />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">{t('Folder')}</label>
-                <input type="text" name="nextcloud_folder" value={settings.nextcloud_folder} onChange={handleChange} className="w-full p-2 border rounded" />
+                <input type="text" name="nextcloud_folder" value={settings.nextcloud_folder} onChange={handleChange} className="wedding-input w-full" />
               </div>
             </div>
           </div>
@@ -170,19 +170,19 @@ const Settings = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-1">{t('Client ID')}</label>
-                <input type="text" name="google_drive_client_id" value={settings.google_drive_client_id} onChange={handleChange} className="w-full p-2 border rounded" />
+                <input type="text" name="google_drive_client_id" value={settings.google_drive_client_id} onChange={handleChange} className="wedding-input w-full" />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">{t('Client Secret')}</label>
-                <input type="password" name="google_drive_client_secret" value={settings.google_drive_client_secret} onChange={handleChange} className="w-full p-2 border rounded" />
+                <input type="password" name="google_drive_client_secret" value={settings.google_drive_client_secret} onChange={handleChange} className="wedding-input w-full" />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">{t('Token')}</label>
-                <input type="password" name="google_drive_token" value={settings.google_drive_token} onChange={handleChange} className="w-full p-2 border rounded" />
+                <input type="password" name="google_drive_token" value={settings.google_drive_token} onChange={handleChange} className="wedding-input w-full" />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">{t('Folder ID')}</label>
-                <input type="text" name="google_drive_folder_id" value={settings.google_drive_folder_id} onChange={handleChange} className="w-full p-2 border rounded" />
+                <input type="text" name="google_drive_folder_id" value={settings.google_drive_folder_id} onChange={handleChange} className="wedding-input w-full" />
               </div>
             </div>
           </div>
@@ -192,11 +192,11 @@ const Settings = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-1">{t('Host')}</label>
-                <input type="text" name="email_host" value={settings.email_host} onChange={handleChange} className="w-full p-2 border rounded" />
+                <input type="text" name="email_host" value={settings.email_host} onChange={handleChange} className="wedding-input w-full" />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">{t('Port')}</label>
-                <input type="number" name="email_port" value={settings.email_port} onChange={handleChange} className="w-full p-2 border rounded" />
+                <input type="number" name="email_port" value={settings.email_port} onChange={handleChange} className="wedding-input w-full" />
               </div>
               <div>
                 <label className="flex items-center">
@@ -206,15 +206,15 @@ const Settings = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">{t('Username')}</label>
-                <input type="text" name="email_host_user" value={settings.email_host_user} onChange={handleChange} className="w-full p-2 border rounded" />
+                <input type="text" name="email_host_user" value={settings.email_host_user} onChange={handleChange} className="wedding-input w-full" />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">{t('Password')}</label>
-                <input type="password" name="email_host_password" value={settings.email_host_password} onChange={handleChange} className="w-full p-2 border rounded" />
+                <input type="password" name="email_host_password" value={settings.email_host_password} onChange={handleChange} className="wedding-input w-full" />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">{t('From Email')}</label>
-                <input type="email" name="default_from_email" value={settings.default_from_email} onChange={handleChange} className="w-full p-2 border rounded" />
+                <input type="email" name="default_from_email" value={settings.default_from_email} onChange={handleChange} className="wedding-input w-full" />
               </div>
             </div>
           </div>
