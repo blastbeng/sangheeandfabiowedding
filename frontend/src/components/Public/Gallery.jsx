@@ -7,8 +7,7 @@ const Gallery = () => {
   const [media, setMedia] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
-    user_id: '',
-    search: ''
+    user_id: ''
   });
   const [selectedFaceTag, setSelectedFaceTag] = useState('');
   const API_URL = import.meta.env.VITE_API_URL;
@@ -16,7 +15,6 @@ const Gallery = () => {
   const fetchMedia = () => {
     const params = new URLSearchParams();
     if (filters.user_id) params.append('user_id', filters.user_id);
-    if (filters.search) params.append('search', filters.search);
     if (selectedFaceTag) params.append('facetag', selectedFaceTag);
 
     fetch(`${API_URL}/api/auth/media/public/?${params}`)
@@ -61,16 +59,6 @@ const Gallery = () => {
             onChange={e => setFilters({ ...filters, user_id: e.target.value })}
             className="wedding-input"
             placeholder="Filter by user"
-          />
-        </div>
-        <div>
-          <label className="block text-sm text-gray-600 mb-1">{t('Search')}</label>
-          <input
-            type="text"
-            value={filters.search}
-            onChange={e => setFilters({ ...filters, search: e.target.value })}
-            className="wedding-input"
-            placeholder={t('Search captions...')}
           />
         </div>
       </div>
