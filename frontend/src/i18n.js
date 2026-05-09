@@ -271,7 +271,18 @@ const resources = {
       "password_update_success": "Password aggiornata con successo! 🔐",
       "password_update_error": "Aggiornamento della password fallito",
       "password_update_generic_error": "Si è verificato un errore durante l'aggiornamento della password",
-      "Current": "Attuale"
+      "Current": "Attuale",
+      "loading_guests": "Caricamento ospiti...",
+      "guests_title": "I Nostri Ospiti",
+      "guests_subtitle": "Tutti i nostri cari amici e familiari 💕",
+      "search_guests_placeholder": "Cerca ospiti...",
+      "no_guests_yet": "Nessun ospite ancora!",
+      "loading_profile": "Caricamento profilo...",
+      "user_not_found": "Utente non trovato",
+      "back_to_guests": "← Torna agli ospiti",
+      "guest_uploads": "Caricamenti dell'ospite",
+      "guest_uploads_subtitle": "I ricordi condivisi da questo ospite",
+      "no_uploads_from_guest": "Nessun caricamento da questo ospite"
     }
   },
   ko: {
@@ -543,7 +554,18 @@ const resources = {
       "password_update_success": "비밀번호가 성공적으로 업데이트되었습니다! 🔐",
       "password_update_error": "비밀번호 업데이트 실패",
       "password_update_generic_error": "비밀번호 업데이트 중 오류가 발생했습니다",
-      "Current": "현재"
+      "Current": "현재",
+      "loading_guests": "하객 로딩 중...",
+      "guests_title": "우리의 하객들",
+      "guests_subtitle": "사랑하는 친구와 가족들 💕",
+      "search_guests_placeholder": "하객 검색...",
+      "no_guests_yet": "아직 하객이 없습니다!",
+      "loading_profile": "프로필 로딩 중...",
+      "user_not_found": "사용자를 찾을 수 없습니다",
+      "back_to_guests": "← 하객 목록으로",
+      "guest_uploads": "하객 업로드",
+      "guest_uploads_subtitle": "이 하객이 공유한 추억",
+      "no_uploads_from_guest": "이 하객의 업로드가 없습니다"
     }
   },
   en: {
@@ -815,7 +837,18 @@ const resources = {
       "password_update_success": "Password updated successfully! 🔐",
       "password_update_error": "Failed to update password",
       "password_update_generic_error": "An error occurred while updating password",
-      "Current": "Current"
+      "Current": "Current",
+      "loading_guests": "Loading guests...",
+      "guests_title": "Our Guests",
+      "guests_subtitle": "All our dear friends and family 💕",
+      "search_guests_placeholder": "Search guests...",
+      "no_guests_yet": "No guests yet!",
+      "loading_profile": "Loading profile...",
+      "user_not_found": "User not found",
+      "back_to_guests": "← Back to guests",
+      "guest_uploads": "Guest Uploads",
+      "guest_uploads_subtitle": "Memories shared by this guest",
+      "no_uploads_from_guest": "No uploads from this guest"
     }
   }
 };
