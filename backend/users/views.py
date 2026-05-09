@@ -461,7 +461,7 @@ class MediaDeleteView(APIView):
 
     def delete(self, request, media_id):
         media = get_object_or_404(Media, id=media_id, user=request.user)
-        delete_media_task.delay(media.id, request.user.id)
+        delete_media_task.delay(media.id)
         return Response({'message': 'Deletion started'}, status=status.HTTP_202_ACCEPTED)
 
 
@@ -656,8 +656,20 @@ class AdminUserDetailView(APIView):
 
     def delete(self, request, user_id):
         user = self.get_object(user_id)
-        if user.is_superuser:
-            return Response({'error': 'Cannot delete superuser'}, status=status.HTTP_403_FORBIDDEN)
+
+        # Protect the default superuser created from environment variables
+        default_admin_username = os.getenv('ADMIN_USERNAME')
+        if user.is_superuser and user.username == default_admin_username:
+            return Response(
+                {'error': 'Cannot delete the default superuser account'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # Delete all media owned by this user from cloud storage and DB
+        for media in user.uploaded_media.all():
+            delete_media_task.delay(media.id)
+
+        # Now delete the user (media objects will be cleaned up by the tasks)
         user.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -667,7 +679,7 @@ class AdminUserToggleStaffView(APIView):
 
     def post(self, request, user_id):
         user = get_object_or_404(User, id=user_id)
-        user.is_staff = not user.is_staff
+        user.is_staff = notuser.is_staff
         user.save()
         return Response(AdminUserSerializer(user).data)
 

@@ -109,7 +109,7 @@ def upload_media_task(self, user_id, file_data_list):
 
 
 @shared_task
-def delete_media_task(media_id, user_id):
+def delete_media_task(media_id):
     """
     Celery task for async media deletion from Nextcloud, Google Drive, and Redis cache
     """
@@ -118,7 +118,7 @@ def delete_media_task(media_id, user_id):
     logger.info(f"Deleting media {media_id}")
 
     try:
-        media = Media.objects.get(id=media_id, user_id=user_id)
+        media = Media.objects.get(id=media_id)
     except Media.DoesNotExist:
         logger.error(f"Delete task failed: Media {media_id} not found")
         return {'error': 'Media not found'}
