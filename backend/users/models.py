@@ -119,6 +119,32 @@ class SiteSettings(models.Model):
         ('ko', '한국어'),
         ('en', 'English'),
     ])
+    # Google OAuth
+    google_client_id = models.CharField(max_length=255, blank=True, null=True)
+    google_client_secret = models.CharField(max_length=255, blank=True, null=True)
+    # Facebook OAuth
+    facebook_app_id = models.CharField(max_length=255, blank=True, null=True)
+    facebook_app_secret = models.CharField(max_length=255, blank=True, null=True)
+    # Instagram OAuth
+    instagram_app_id = models.CharField(max_length=255, blank=True, null=True)
+    instagram_app_secret = models.CharField(max_length=255, blank=True, null=True)
+    # Nextcloud
+    nextcloud_url = models.CharField(max_length=255, blank=True, null=True)
+    nextcloud_username = models.CharField(max_length=255, blank=True, null=True)
+    nextcloud_password = models.CharField(max_length=255, blank=True, null=True)
+    nextcloud_folder = models.CharField(max_length=255, blank=True, null=True)
+    # Google Drive
+    google_drive_client_id = models.CharField(max_length=255, blank=True, null=True)
+    google_drive_client_secret = models.CharField(max_length=255, blank=True, null=True)
+    google_drive_token = models.CharField(max_length=255, blank=True, null=True)
+    google_drive_folder_id = models.CharField(max_length=255, blank=True, null=True)
+    # SMTP
+    email_host = models.CharField(max_length=255, blank=True, null=True)
+    email_port = models.IntegerField(null=True, blank=True)
+    email_use_tls = models.BooleanField(default=True)
+    email_host_user = models.CharField(max_length=255, blank=True, null=True)
+    email_host_password = models.CharField(max_length=255, blank=True, null=True)
+    default_from_email = models.EmailField(max_length=255, blank=True, null=True)
 
     class Meta:
         db_table = 'users_site_settings'

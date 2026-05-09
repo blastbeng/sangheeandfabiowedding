@@ -6,7 +6,19 @@ const Settings = () => {
   const { t } = useTranslation();
   const [settings, setSettings] = useState({
     site_name: '', maintenance_mode: false, allow_registrations: true,
-    max_upload_size_mb: 50, require_approval: true, default_language: 'it'
+    max_upload_size_mb: 50, require_approval: true, default_language: 'it',
+    // Google OAuth
+    google_client_id: '', google_client_secret: '',
+    // Facebook OAuth
+    facebook_app_id: '', facebook_app_secret: '',
+    // Instagram OAuth
+    instagram_app_id: '', instagram_app_secret: '',
+    // Nextcloud
+    nextcloud_url: '', nextcloud_username: '', nextcloud_password: '', nextcloud_folder: '',
+    // Google Drive
+    google_drive_client_id: '', google_drive_client_secret: '', google_drive_token: '', google_drive_folder_id: '',
+    // SMTP
+    email_host: '', email_port: 587, email_use_tls: true, email_host_user: '', email_host_password: '', default_from_email: ''
   });
   const [success, setSuccess] = useState('');
   const API_URL = import.meta.env.VITE_API_URL;
@@ -19,6 +31,14 @@ const Settings = () => {
       .then(data => setSettings(data))
       .catch(err => logger.error('[Settings] Settings fetch error:', err));
   }, [API_URL]);
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setSettings(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -80,6 +100,125 @@ const Settings = () => {
               <option value="en">{t('English')}</option>
             </select>
           </div>
+
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold mb-2">{t('Google OAuth')}</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">{t('Client ID')}</label>
+                <input type="text" name="google_client_id" value={settings.google_client_id} onChange={handleChange} className="w-full p-2 border rounded" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">{t('Client Secret')}</label>
+                <input type="password" name="google_client_secret" value={settings.google_client_secret} onChange={handleChange} className="w-full p-2 border rounded" />
+              </div>
+            </div>
+          </div>
+
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold mb-2">{t('Facebook OAuth')}</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">{t('App ID')}</label>
+                <input type="text" name="facebook_app_id" value={settings.facebook_app_id} onChange={handleChange} className="w-full p-2 border rounded" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">{t('App Secret')}</label>
+                <input type="password" name="facebook_app_secret" value={settings.facebook_app_secret} onChange={handleChange} className="w-full p-2 border rounded" />
+              </div>
+            </div>
+          </div>
+
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold mb-2">{t('Instagram OAuth')}</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">{t('App ID')}</label>
+                <input type="text" name="instagram_app_id" value={settings.instagram_app_id} onChange={handleChange} className="w-full p-2 border rounded" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">{t('App Secret')}</label>
+                <input type="password" name="instagram_app_secret" value={settings.instagram_app_secret} onChange={handleChange} className="w-full p-2 border rounded" />
+              </div>
+            </div>
+          </div>
+
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold mb-2">{t('Nextcloud')}</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">{t('URL')}</label>
+                <input type="text" name="nextcloud_url" value={settings.nextcloud_url} onChange={handleChange} className="w-full p-2 border rounded" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">{t('Username')}</label>
+                <input type="text" name="nextcloud_username" value={settings.nextcloud_username} onChange={handleChange} className="w-full p-2 border rounded" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">{t('Password')}</label>
+                <input type="password" name="nextcloud_password" value={settings.nextcloud_password} onChange={handleChange} className="w-full p-2 border rounded" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">{t('Folder')}</label>
+                <input type="text" name="nextcloud_folder" value={settings.nextcloud_folder} onChange={handleChange} className="w-full p-2 border rounded" />
+              </div>
+            </div>
+          </div>
+
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold mb-2">{t('Google Drive')}</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">{t('Client ID')}</label>
+                <input type="text" name="google_drive_client_id" value={settings.google_drive_client_id} onChange={handleChange} className="w-full p-2 border rounded" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">{t('Client Secret')}</label>
+                <input type="password" name="google_drive_client_secret" value={settings.google_drive_client_secret} onChange={handleChange} className="w-full p-2 border rounded" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">{t('Token')}</label>
+                <input type="password" name="google_drive_token" value={settings.google_drive_token} onChange={handleChange} className="w-full p-2 border rounded" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">{t('Folder ID')}</label>
+                <input type="text" name="google_drive_folder_id" value={settings.google_drive_folder_id} onChange={handleChange} className="w-full p-2 border rounded" />
+              </div>
+            </div>
+          </div>
+
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold mb-2">{t('SMTP')}</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">{t('Host')}</label>
+                <input type="text" name="email_host" value={settings.email_host} onChange={handleChange} className="w-full p-2 border rounded" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">{t('Port')}</label>
+                <input type="number" name="email_port" value={settings.email_port} onChange={handleChange} className="w-full p-2 border rounded" />
+              </div>
+              <div>
+                <label className="flex items-center">
+                  <input type="checkbox" name="email_use_tls" checked={settings.email_use_tls} onChange={handleChange} className="mr-2" />
+                  {t('Use TLS')}
+                </label>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">{t('Username')}</label>
+                <input type="text" name="email_host_user" value={settings.email_host_user} onChange={handleChange} className="w-full p-2 border rounded" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">{t('Password')}</label>
+                <input type="password" name="email_host_password" value={settings.email_host_password} onChange={handleChange} className="w-full p-2 border rounded" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">{t('From Email')}</label>
+                <input type="email" name="default_from_email" value={settings.default_from_email} onChange={handleChange} className="w-full p-2 border rounded" />
+              </div>
+            </div>
+          </div>
+
           <button type="submit" className="wedding-btn w-full">{t('admin_save_settings')}</button>
         </form>
       </div>

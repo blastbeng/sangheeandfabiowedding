@@ -14,6 +14,7 @@ from django.utils import timezone
 from django.utils.translation import gettext as _
 from django.conf import settings as django_settings
 from django.http import HttpResponse, Http404
+from dotenv import set_key
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -33,6 +34,45 @@ from .tasks import upload_media_task, delete_media_task, detect_faces_task
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
+
+ENV_MAPPING = {
+    'google_client_id': 'GOOGLE_CLIENT_ID',
+    'google_client_secret': 'GOOGLE_CLIENT_SECRET',
+    'facebook_app_id': 'FACEBOOK_APP_ID',
+    'facebook_app_secret': 'FACEBOOK_APP_SECRET',
+    'instagram_app_id': 'INSTAGRAM_APP_ID',
+    'instagram_app_secret': 'INSTAGRAM_APP_SECRET',
+    'nextcloud_url': 'NEXTCLOUD_URL',
+    'nextcloud_username': 'NEXTCLOUD_USERNAME',
+    'nextcloud_password': 'NEXTCLOUD_PASSWORD',
+    'nextcloud_folder': 'NEXTCLOUD_FOLDER',
+    'google_drive_client_id': 'GOOGLE_DRIVE_CLIENT_ID',
+    'google_drive_client_secret': 'GOOGLE_DRIVE_CLIENT_SECRET',
+    'google_drive_token': 'GOOGLE_DRIVE_TOKEN',
+    'google_drive_folder_id': 'GOOGLE_DRIVE_FOLDER_ID',
+    'email_host': 'EMAIL_HOST',
+    'email_port': 'EMAIL_PORT',
+    'email_use_tls': 'EMAIL_USE_TLS',
+    'email_host_user': 'EMAIL_HOST_USER',
+    'email_host_password': 'EMAIL_HOST_PASSWORD',
+    'default_from_email': 'DEFAULT_FROM_EMAIL',
+}
+
+
+def update_env_file(settings_obj):
+    try:
+        env_path = os.path.join(django_settings.BASE_DIR, '.env')
+        for field_name, env_key in ENV_MAPPING.items():
+            value = getattr(settings_obj, field_name, None)
+            if value is not None:
+                if isinstance(value, bool):
+                    value = 'True' if value else 'False'
+                else:
+                    value = str(value)
+                set_key(env_path, env_key, value)
+        logger.info("Updated .env file with new settings")
+    except Exception as e:
+        logger.error(f"Failed to update .env file: {e}")
 
 
 # ==================== AUTH VIEWS ====================
@@ -611,6 +651,7 @@ class AdminSettingsView(APIView):
         serializer = SiteSettingsSerializer(settings, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
+            update_env_file(settings)
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
