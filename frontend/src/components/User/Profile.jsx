@@ -39,15 +39,15 @@ const Profile = () => {
             email: data.email || ''
           });
         } else {
-          setError('Failed to load profile');
+          setError(t('profile_load_error'));
         }
       } catch (err) {
         logger.error('[Profile] Error loading profile:', err);
-        setError('An error occurred while loading profile');
+        setError(t('profile_load_generic_error'));
       }
     };
     fetchProfile();
-  }, []);
+  }, [t]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -85,15 +85,15 @@ const Profile = () => {
       });
 
       if (res.ok) {
-        setSuccess('Profile updated successfully');
+        setSuccess(t('profile_update_success'));
         setProfilePicture(null);
       } else {
         const result = await res.json();
-        setError(Object.values(result)[0] || 'Failed to update profile');
+        setError(Object.values(result)[0] || t('profile_update_error'));
       }
     } catch (err) {
       logger.error('[Profile] Profile update error:', err);
-      setError('An error occurred while updating profile');
+      setError(t('profile_update_generic_error'));
     }
   };
 
@@ -103,7 +103,7 @@ const Profile = () => {
     setSuccess('');
 
     if (passwordData.new_password !== passwordData.new_password_confirm) {
-      setError("New passwords don't match");
+      setError(t('password_mismatch'));
       return;
     }
 
@@ -121,26 +121,26 @@ const Profile = () => {
       });
 
       if (res.ok) {
-        setSuccess('Password updated successfully');
+        setSuccess(t('password_update_success'));
         setPasswordData({ current_password: '', new_password: '', new_password_confirm: '' });
       } else {
         const data = await res.json();
-        setError(data.detail || 'Failed to update password');
+        setError(data.detail || t('password_update_error'));
       }
     } catch (err) {
       logger.error('[Profile] Password update error:', err);
-      setError('An error occurred while updating password');
+      setError(t('password_update_generic_error'));
     }
   };
 
-  if (!user) return <div>Loading...</div>;
+  if (!user) return <div>{t('Loading...')}</div>;
 
   return (
     <div className="max-w-2xl mx-auto p-4">
       <div className="wedding-card p-8">
         <h2 className="text-3xl wedding-title text-center mb-2">👤 {t('Your Special Profile')}</h2>
         <p className="text-center text-gray-600 mb-6 italic">
-          Tell us about yourself, lovely! 💕
+          {t('profile_subtitle')}
         </p>
 
         {error && (

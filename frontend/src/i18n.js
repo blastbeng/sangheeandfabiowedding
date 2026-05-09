@@ -260,7 +260,17 @@ const resources = {
       "admin_settings_max_upload_size": "Dimensione Max Upload (MB)",
       "admin_settings_require_approval": "Richiedi Approvazione Media",
       "admin_settings_default_language": "Lingua Predefinita",
-      "admin_save_settings": "💾 Salva Impostazioni"
+      "admin_save_settings": "💾 Salva Impostazioni",
+      "profile_subtitle": "Raccontaci di te, caro/a! 💕",
+      "profile_load_error": "Impossibile caricare il profilo",
+      "profile_load_generic_error": "Si è verificato un errore durante il caricamento del profilo",
+      "profile_update_success": "Profilo aggiornato con successo! 🎉",
+      "profile_update_error": "Aggiornamento del profilo fallito",
+      "profile_update_generic_error": "Si è verificato un errore durante l'aggiornamento del profilo",
+      "password_mismatch": "Le nuove password non corrispondono",
+      "password_update_success": "Password aggiornata con successo! 🔐",
+      "password_update_error": "Aggiornamento della password fallito",
+      "password_update_generic_error": "Si è verificato un errore durante l'aggiornamento della password"
     }
   },
   ko: {
@@ -521,7 +531,17 @@ const resources = {
       "admin_settings_max_upload_size": "최대 업로드 크기 (MB)",
       "admin_settings_require_approval": "미디어 승인 필요",
       "admin_settings_default_language": "기본 언어",
-      "admin_save_settings": "💾 설정 저장"
+      "admin_save_settings": "💾 설정 저장",
+      "profile_subtitle": "자기소개를 해주세요! 💕",
+      "profile_load_error": "프로필을 불러올 수 없습니다",
+      "profile_load_generic_error": "프로필을 불러오는 중 오류가 발생했습니다",
+      "profile_update_success": "프로필이 성공적으로 업데이트되었습니다! 🎉",
+      "profile_update_error": "프로필 업데이트 실패",
+      "profile_update_generic_error": "프로필 업데이트 중 오류가 발생했습니다",
+      "password_mismatch": "새 비밀번호가 일치하지 않습니다",
+      "password_update_success": "비밀번호가 성공적으로 업데이트되었습니다! 🔐",
+      "password_update_error": "비밀번호 업데이트 실패",
+      "password_update_generic_error": "비밀번호 업데이트 중 오류가 발생했습니다"
     }
   },
   en: {
@@ -782,7 +802,17 @@ const resources = {
       "admin_settings_max_upload_size": "Max Upload Size (MB)",
       "admin_settings_require_approval": "Require Media Approval",
       "admin_settings_default_language": "Default Language",
-      "admin_save_settings": "💾 Save Settings"
+      "admin_save_settings": "💾 Save Settings",
+      "profile_subtitle": "Tell us about yourself, lovely! 💕",
+      "profile_load_error": "Failed to load profile",
+      "profile_load_generic_error": "An error occurred while loading profile",
+      "profile_update_success": "Profile updated successfully! 🎉",
+      "profile_update_error": "Failed to update profile",
+      "profile_update_generic_error": "An error occurred while updating profile",
+      "password_mismatch": "New passwords don't match",
+      "password_update_success": "Password updated successfully! 🔐",
+      "password_update_error": "Failed to update password",
+      "password_update_generic_error": "An error occurred while updating password"
     }
   }
 };
