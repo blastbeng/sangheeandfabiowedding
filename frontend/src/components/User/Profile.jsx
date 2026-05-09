@@ -6,6 +6,7 @@ import logger from '../../utils/logger';
 const Profile = () => {
   const { t, i18n } = useTranslation();
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     username: '',
     first_name: '',
@@ -39,15 +40,24 @@ const Profile = () => {
             email: data.email || ''
           });
         } else {
+          if (res.status === 401) {
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            localStorage.removeItem('isAdmin');
+            navigate('/login');
+            return;
+          }
           setError(t('profile_load_error'));
         }
       } catch (err) {
         logger.error('[Profile] Error loading profile:', err);
         setError(t('profile_load_generic_error'));
+      } finally {
+        setLoading(false);
       }
     };
     fetchProfile();
-  }, [t]);
+  }, [t, navigate]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -133,7 +143,22 @@ const Profile = () => {
     }
   };
 
-  if (!user) return <div>{t('Loading...')}</div>;
+  if (loading) {
+    return <div className="text-center py-8">{t('Loading...')}</div>;
+  }
+
+  if (!user) {
+    return (
+      <div className="max-w-2xl mx-auto p-4">
+        <div className="wedding-card p-8 text-center">
+          <p className="text-red-600 mb-4">💔 {error || t('profile_load_generic_error')}</p>
+          <button onClick={() => navigate('/login')} className="wedding-btn">
+            {t('Sign In')}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-2xl mx-auto p-4">
