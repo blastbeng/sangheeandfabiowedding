@@ -679,7 +679,7 @@ class AdminUserToggleStaffView(APIView):
 
     def post(self, request, user_id):
         user = get_object_or_404(User, id=user_id)
-        user.is_staff = notuser.is_staff
+        user.is_staff = not user.is_staff
         user.save()
         return Response(AdminUserSerializer(user).data)
 
