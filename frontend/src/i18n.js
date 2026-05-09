@@ -270,7 +270,8 @@ const resources = {
       "password_mismatch": "Le nuove password non corrispondono",
       "password_update_success": "Password aggiornata con successo! 🔐",
       "password_update_error": "Aggiornamento della password fallito",
-      "password_update_generic_error": "Si è verificato un errore durante l'aggiornamento della password"
+      "password_update_generic_error": "Si è verificato un errore durante l'aggiornamento della password",
+      "Current": "Attuale"
     }
   },
   ko: {
@@ -541,7 +542,8 @@ const resources = {
       "password_mismatch": "새 비밀번호가 일치하지 않습니다",
       "password_update_success": "비밀번호가 성공적으로 업데이트되었습니다! 🔐",
       "password_update_error": "비밀번호 업데이트 실패",
-      "password_update_generic_error": "비밀번호 업데이트 중 오류가 발생했습니다"
+      "password_update_generic_error": "비밀번호 업데이트 중 오류가 발생했습니다",
+      "Current": "현재"
     }
   },
   en: {
@@ -812,7 +814,8 @@ const resources = {
       "password_mismatch": "New passwords don't match",
       "password_update_success": "Password updated successfully! 🔐",
       "password_update_error": "Failed to update password",
-      "password_update_generic_error": "An error occurred while updating password"
+      "password_update_generic_error": "An error occurred while updating password",
+      "Current": "Current"
     }
   }
 };
