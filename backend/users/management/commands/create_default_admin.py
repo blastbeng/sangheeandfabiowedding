@@ -23,4 +23,8 @@ class Command(BaseCommand):
             user.save()
             self.stdout.write(self.style.SUCCESS(f'Admin user "{username}" created'))
         else:
-            self.stdout.write(self.style.WARNING(f'Admin user "{username}" already exists'))
+            user = User.objects.get(username=username)
+            user.is_active = True
+            user.email_verified = True
+            user.save()
+            self.stdout.write(self.style.WARNING(f'Admin user "{username}" already exists, ensured active'))
