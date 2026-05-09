@@ -16,6 +16,8 @@ const UserManagement = () => {
   const [filters, setFilters] = useState({
     username: '',
     email: '',
+    first_name: '',
+    last_name: '',
     role: '',
     status: ''
   });
@@ -86,6 +88,8 @@ const UserManagement = () => {
   const filteredUsers = users.filter(user => {
     const matchUsername = user.username.toLowerCase().includes(filters.username.toLowerCase());
     const matchEmail = user.email.toLowerCase().includes(filters.email.toLowerCase());
+    const matchFirstName = user.first_name.toLowerCase().includes(filters.first_name.toLowerCase());
+    const matchLastName = user.last_name.toLowerCase().includes(filters.last_name.toLowerCase());
     const matchRole = filters.role === '' || 
       (filters.role === 'superadmin' && user.is_superuser) ||
       (filters.role === 'admin' && user.is_staff && !user.is_superuser) ||
@@ -93,7 +97,7 @@ const UserManagement = () => {
     const matchStatus = filters.status === '' || 
       (filters.status === 'active' && user.is_active) ||
       (filters.status === 'inactive' && !user.is_active);
-    return matchUsername && matchEmail && matchRole && matchStatus;
+    return matchUsername && matchEmail && matchFirstName && matchLastName && matchRole && matchStatus;
   });
 
   if (loading) {
@@ -146,8 +150,24 @@ const UserManagement = () => {
                     className="wedding-input w-full text-xs py-1"
                   />
                 </th>
-                <th></th>
-                <th></th>
+                <th className="py-2">
+                  <input
+                    type="text"
+                    placeholder={t('filter_first_name')}
+                    value={filters.first_name}
+                    onChange={(e) => setFilters({...filters, first_name: e.target.value})}
+                    className="wedding-input w-full text-xs py-1"
+                  />
+                </th>
+                <th className="py-2">
+                  <input
+                    type="text"
+                    placeholder={t('filter_last_name')}
+                    value={filters.last_name}
+                    onChange={(e) => setFilters({...filters, last_name: e.target.value})}
+                    className="wedding-input w-full text-xs py-1"
+                  />
+                </th>
                 <th className="py-2">
                   <select
                     value={filters.role}

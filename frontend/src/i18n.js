@@ -286,7 +286,13 @@ const resources = {
       "back_to_guests": "← Torna agli ospiti",
       "guest_uploads": "Caricamenti dell'ospite",
       "guest_uploads_subtitle": "I ricordi condivisi da questo ospite",
-      "no_uploads_from_guest": "Nessun caricamento da questo ospite"
+      "no_uploads_from_guest": "Nessun caricamento da questo ospite",
+      "admin_users_col_picture": "Foto",
+      "filter_username": "Filtra username...",
+      "filter_email": "Filtra email...",
+      "filter_first_name": "Filtra nome...",
+      "filter_last_name": "Filtra cognome...",
+      "all": "Tutti"
     }
   },
   ko: {
@@ -573,7 +579,13 @@ const resources = {
       "back_to_guests": "← 하객 목록으로",
       "guest_uploads": "하객 업로드",
       "guest_uploads_subtitle": "이 하객이 공유한 추억",
-      "no_uploads_from_guest": "이 하객의 업로드가 없습니다"
+      "no_uploads_from_guest": "이 하객의 업로드가 없습니다",
+      "admin_users_col_picture": "사진",
+      "filter_username": "사용자명 필터...",
+      "filter_email": "이메일 필터...",
+      "filter_first_name": "이름 필터...",
+      "filter_last_name": "성 필터...",
+      "all": "전체"
     }
   },
   en: {
@@ -860,7 +872,13 @@ const resources = {
       "back_to_guests": "← Back to guests",
       "guest_uploads": "Guest Uploads",
       "guest_uploads_subtitle": "Memories shared by this guest",
-      "no_uploads_from_guest": "No uploads from this guest"
+      "no_uploads_from_guest": "No uploads from this guest",
+      "admin_users_col_picture": "Picture",
+      "filter_username": "Filter username...",
+      "filter_email": "Filter email...",
+      "filter_first_name": "Filter first name...",
+      "filter_last_name": "Filter last name...",
+      "all": "All"
     }
   }
 };
