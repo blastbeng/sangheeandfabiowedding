@@ -72,8 +72,8 @@ const UserList = () => {
                 onError={(e) => { e.target.src = 'https://i.imgur.com/V4RclNb.png'; }}
               />
               <span className="text-gray-700 font-medium text-center text-sm">
-                {user.first_name && user.last_name
-                  ? `${user.first_name} ${user.last_name}`
+                {user.first_name || user.last_name
+                  ? `${user.first_name || ''} ${user.last_name || ''}`.trim()
                   : user.username}
               </span>
             </Link>
