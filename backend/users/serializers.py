@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
+from django.contrib.staticfiles.storage import staticfiles_storage
 from .models import CustomUser, Media, SiteSettings, FaceTag
 
 
@@ -25,11 +26,18 @@ class CustomUserSerializer(serializers.ModelSerializer):
 
     def get_profile_picture_url(self, obj):
         if obj.profile_picture:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.profile_picture.url)
-            return obj.profile_picture.url
-        return None
+            # Check if the file actually exists in storage
+            if obj.profile_picture.storage.exists(obj.profile_picture.name):
+                request = self.context.get('request')
+                if request:
+                    return request.build_absolute_uri(obj.profile_picture.url)
+                return obj.profile_picture.url
+        # Fallback to static default image
+        request = self.context.get('request')
+        static_url = staticfiles_storage.url('images/default_profile_pic.png')
+        if request:
+            return request.build_absolute_uri(static_url)
+        return static_url
 
     def validate(self, attrs):
         password = attrs.get('password')
@@ -97,11 +105,18 @@ class PublicUserSerializer(serializers.ModelSerializer):
 
     def get_profile_picture_url(self, obj):
         if obj.profile_picture:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.profile_picture.url)
-            return obj.profile_picture.url
-        return None
+            # Check if the file actually exists in storage
+            if obj.profile_picture.storage.exists(obj.profile_picture.name):
+                request = self.context.get('request')
+                if request:
+                    return request.build_absolute_uri(obj.profile_picture.url)
+                return obj.profile_picture.url
+        # Fallback to static default image
+        request = self.context.get('request')
+        static_url = staticfiles_storage.url('images/default_profile_pic.png')
+        if request:
+            return request.build_absolute_uri(static_url)
+        return static_url
 
 
 class MediaSerializer(serializers.ModelSerializer):
@@ -138,11 +153,18 @@ class PublicMediaSerializer(serializers.ModelSerializer):
 
     def get_uploader_profile_picture(self, obj):
         if obj.user and obj.user.profile_picture:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.user.profile_picture.url)
-            return obj.user.profile_picture.url
-        return None
+            # Check if the file actually exists in storage
+            if obj.user.profile_picture.storage.exists(obj.user.profile_picture.name):
+                request = self.context.get('request')
+                if request:
+                    return request.build_absolute_uri(obj.user.profile_picture.url)
+                return obj.user.profile_picture.url
+        # Fallback to static default image
+        request = self.context.get('request')
+        static_url = staticfiles_storage.url('images/default_profile_pic.png')
+        if request:
+            return request.build_absolute_uri(static_url)
+        return static_url
 
     def get_face_tags(self, obj):
         return list(obj.face_tags.values_list('name', flat=True))
