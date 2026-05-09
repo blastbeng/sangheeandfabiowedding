@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import authFetch from '../../utils/authFetch';
 
 const Upload = () => {
   const { t } = useTranslation();
@@ -46,9 +47,8 @@ const Upload = () => {
     });
 
     try {
-      const res = await fetch(`${API_URL}/api/auth/media/upload/`, {
+      const res = await authFetch(`${API_URL}/api/auth/media/upload/`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` },
         body: formData
       });
       const data = await res.json();
@@ -64,9 +64,7 @@ const Upload = () => {
       // Poll task status
       const pollInterval = setInterval(async () => {
         try {
-          const statusRes = await fetch(`${API_URL}/api/auth/media/upload/status/${taskId}/`, {
-            headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
-          });
+          const statusRes = await authFetch(`${API_URL}/api/auth/media/upload/status/${taskId}/`);
           const statusData = await statusRes.json();
           if (statusData.status === 'SUCCESS') {
             clearInterval(pollInterval);
