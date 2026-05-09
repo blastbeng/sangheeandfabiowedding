@@ -120,7 +120,8 @@ const UserManagement = () => {
                 <th className="text-left py-3 text-pink-600">{t('admin_users_col_picture')}</th>
                 <th className="text-left py-3 text-pink-600">{t('admin_users_col_username')}</th>
                 <th className="text-left py-3 text-pink-600">{t('admin_users_col_email')}</th>
-                <th className="text-left py-3 text-pink-600">{t('admin_users_col_name')}</th>
+                <th className="text-left py-3 text-pink-600">{t('First Name')}</th>
+                <th className="text-left py-3 text-pink-600">{t('Last Name')}</th>
                 <th className="text-left py-3 text-pink-600">{t('admin_users_col_role')}</th>
                 <th className="text-left py-3 text-pink-600">{t('admin_users_col_status')}</th>
                 <th className="text-left py-3 text-pink-600">{t('admin_users_col_actions')}</th>
@@ -145,6 +146,7 @@ const UserManagement = () => {
                     className="wedding-input w-full text-xs py-1"
                   />
                 </th>
+                <th></th>
                 <th></th>
                 <th className="py-2">
                   <select
@@ -177,14 +179,16 @@ const UserManagement = () => {
                 <tr key={user.id} className="border-b border-pink-100 hover:bg-pink-50">
                   <td className="py-3">
                     <img
-                      src={`${API_URL}/api/auth/users/${user.id}/profile-picture/`}
+                      src={user.profile_picture ? `${API_URL}${user.profile_picture}` : 'https://i.imgur.com/V4RclNb.png'}
                       alt=""
                       className="w-10 h-10 object-cover rounded-full border border-pink-200"
+                      onError={(e) => { e.target.src = 'https://i.imgur.com/V4RclNb.png'; }}
                     />
                   </td>
                   <td className="py-3">{user.username}</td>
                   <td className="py-3">{user.email}</td>
-                  <td className="py-3">{user.first_name} {user.last_name}</td>
+                  <td className="py-3">{user.first_name}</td>
+                  <td className="py-3">{user.last_name}</td>
                   <td className="py-3">
                     {user.is_superuser ? t('admin_role_superadmin') : user.is_staff ? t('admin_role_admin') : t('admin_role_user')}
                   </td>
