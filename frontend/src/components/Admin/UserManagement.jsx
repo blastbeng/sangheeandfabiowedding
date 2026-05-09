@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import logger from '../../utils/logger';
+import authFetch from '../../utils/authFetch';
 
 const UserManagement = () => {
   const { t } = useTranslation();
@@ -15,9 +16,7 @@ const UserManagement = () => {
   const API_URL = import.meta.env.VITE_API_URL;
 
   const fetchUsers = () => {
-    fetch(`${API_URL}/api/auth/admin/users/`, {
-      headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
-    })
+    authFetch(`${API_URL}/api/auth/admin/users/`)
       .then(res => res.json())
       .then(data => { setUsers(data); setLoading(false); })
       .catch(err => { 
@@ -36,12 +35,9 @@ const UserManagement = () => {
     const method = editingUser ? 'PUT' : 'POST';
 
     try {
-      const res = await fetch(url, {
+      const res = await authFetch(url, {
         method,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
       });
       if (res.ok) {
@@ -59,9 +55,8 @@ const UserManagement = () => {
   const handleDelete = async (userId) => {
     if (!confirm(t('admin_delete_user_confirm'))) return;
     try {
-      const res = await fetch(`${API_URL}/api/auth/admin/users/${userId}/`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
+      const res = await authFetch(`${API_URL}/api/auth/admin/users/${userId}/`, {
+        method: 'DELETE'
       });
       if (res.ok) fetchUsers();
     } catch (err) {
@@ -71,12 +66,9 @@ const UserManagement = () => {
 
   const handleToggleStaff = async (userId) => {
     try {
-      const res = await fetch(`${API_URL}/api/auth/admin/users/${userId}/toggle-staff/`, {
+      const res = await authFetch(`${API_URL}/api/auth/admin/users/${userId}/toggle-staff/`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ is_staff: true })
       });
       if (res.ok) fetchUsers();

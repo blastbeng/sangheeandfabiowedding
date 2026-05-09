@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import logger from '../../utils/logger';
+import authFetch from '../../utils/authFetch';
 
 const AdminModeration = () => {
   const { t } = useTranslation();
@@ -16,9 +17,7 @@ const AdminModeration = () => {
 
   const fetchMedia = () => {
     const params = new URLSearchParams(filters);
-    fetch(`${API_URL}/api/auth/media/moderation/?${params}`, {
-      headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
-    })
+    authFetch(`${API_URL}/api/auth/media/moderation/?${params}`)
       .then(res => {
         if (!res.ok) {
           logger.error('[Moderation] Fetch failed with status:', res.status);
@@ -41,12 +40,9 @@ const AdminModeration = () => {
   useEffect(() => { fetchMedia(); }, [filters]);
 
   const handleApprove = (id) => {
-    fetch(`${API_URL}/api/auth/media/moderation/${id}/`, {
+    authFetch(`${API_URL}/api/auth/media/moderation/${id}/`, {
       method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: 'approved' })
     }).then(res => {
       if (!res.ok) logger.error('[Moderation] Approve failed for ID:', id);
@@ -60,12 +56,9 @@ const AdminModeration = () => {
   };
 
   const confirmReject = () => {
-    fetch(`${API_URL}/api/auth/media/moderation/${selectedId}/`, {
+    authFetch(`${API_URL}/api/auth/media/moderation/${selectedId}/`, {
       method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: 'rejected', rejection_reason: rejectionReason })
     }).then(res => {
       if (!res.ok) logger.error('[Moderation] Reject failed for ID:', selectedId);
@@ -113,12 +106,9 @@ const AdminModeration = () => {
       alert(t('admin_rejection_reason_required'));
       return;
     }
-    fetch(`${API_URL}/api/auth/media/moderation/bulk/`, {
+    authFetch(`${API_URL}/api/auth/media/moderation/bulk/`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         media_ids: selectedIds,
         action: action,

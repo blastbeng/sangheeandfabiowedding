@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import logger from '../../utils/logger';
+import authFetch from '../../utils/authFetch';
 
 const Settings = () => {
   const { t } = useTranslation();
@@ -24,9 +25,7 @@ const Settings = () => {
   const API_URL = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
-    fetch(`${API_URL}/api/auth/admin/settings/`, {
-      headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
-    })
+    authFetch(`${API_URL}/api/auth/admin/settings/`)
       .then(res => res.json())
       .then(data => setSettings(data))
       .catch(err => logger.error('[Settings] Settings fetch error:', err));
@@ -43,12 +42,9 @@ const Settings = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch(`${API_URL}/api/auth/admin/settings/`, {
+      const res = await authFetch(`${API_URL}/api/auth/admin/settings/`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(settings)
       });
       if (res.ok) setSuccess(t('admin_settings_saved'));

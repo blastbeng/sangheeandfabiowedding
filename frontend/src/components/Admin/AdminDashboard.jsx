@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import logger from '../../utils/logger';
+import authFetch from '../../utils/authFetch';
 
 const AdminDashboard = () => {
   const { t } = useTranslation();
@@ -10,9 +11,7 @@ const AdminDashboard = () => {
   const API_URL = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
-    fetch(`${API_URL}/api/auth/admin/dashboard/`, {
-      headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
-    })
+    authFetch(`${API_URL}/api/auth/admin/dashboard/`)
       .then(res => res.json())
       .then(data => { setStats(data); setLoading(false); })
       .catch(err => { 
