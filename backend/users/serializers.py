@@ -11,13 +11,14 @@ class CustomUserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=False, allow_blank=True)
     password_confirm = serializers.CharField(write_only=True, required=False, allow_blank=True)
     profile_picture_url = serializers.SerializerMethodField()
+    has_password = serializers.SerializerMethodField()
 
     class Meta:
         model = CustomUser
         fields = ('id', 'username', 'email', 'first_name', 'last_name',
                   'date_of_birth', 'password', 'password_confirm', 'language',
                   'profile_picture', 'profile_picture_url',
-                  'is_staff', 'is_superuser')
+                  'is_staff', 'is_superuser', 'has_password')
         extra_kwargs = {
             'email': {'required': False, 'allow_blank': True},
             'username': {'required': False},
@@ -33,6 +34,9 @@ class CustomUserSerializer(serializers.ModelSerializer):
         if request:
             return request.build_absolute_uri(url)
         return url
+
+    def get_has_password(self, obj):
+        return obj.has_usable_password()
 
     def validate(self, attrs):
         password = attrs.get('password')

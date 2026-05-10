@@ -20,6 +20,7 @@ const Profile = () => {
     new_password: '',
     new_password_confirm: ''
   });
+  const [hasPassword, setHasPassword] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const navigate = useNavigate();
@@ -32,6 +33,7 @@ const Profile = () => {
         if (res.ok) {
           const data = await res.json();
           setUser(data);
+          setHasPassword(data.has_password);
           setFormData({
             username: data.username || '',
             first_name: data.first_name || '',
@@ -108,21 +110,26 @@ const Profile = () => {
       return;
     }
 
+    const payload = {
+      password: passwordData.new_password,
+      password_confirm: passwordData.new_password_confirm,
+    };
+    if (hasPassword) {
+      payload.current_password = passwordData.current_password;
+    }
+
     try {
       const res = await authFetch(`${API_URL}/api/auth/profile/`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          current_password: passwordData.current_password,
-          password: passwordData.new_password
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
       });
 
       if (res.ok) {
         setSuccess(t('password_update_success'));
         setPasswordData({ current_password: '', new_password: '', new_password_confirm: '' });
+        // After setting a password, the user now has one – update the flag
+        setHasPassword(true);
       } else {
         const data = await res.json();
         setError(data.detail || t('password_update_error'));
@@ -234,16 +241,21 @@ const Profile = () => {
 
         <h3 className="text-xl font-bold mb-4 text-pink-600">🔐 {t('Keep Your Account Safe')}</h3>
         <form onSubmit={handlePasswordSubmit} className="mb-8">
-          <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2">{t('Current Password')}</label>
-            <input
-              type="password"
-              name="current_password"
-              value={passwordData.current_password}
-              onChange={handlePasswordChange}
-              className="wedding-input w-full"
-            />
-          </div>
+          {hasPassword && (
+            <div className="mb-4">
+              <label className="block text-gray-700 text-sm font-bold mb-2">
+                🔐 {t('Current Password')}
+              </label>
+              <input
+                type="password"
+                name="current_password"
+                value={passwordData.current_password}
+                onChange={handlePasswordChange}
+                className="wedding-input w-full"
+                placeholder="••••••••"
+              />
+            </div>
+          )}
           <div className="mb-4">
             <label className="block text-gray-700 text-sm font-bold mb-2">{t('New Password')}</label>
             <input

@@ -4,7 +4,7 @@ import { GoogleLogin } from '@react-oauth/google';
 import { useTranslation } from 'react-i18next';
 import logger from '../../utils/logger';
 
-const Register = () => {
+const Register = ({ setIsAuthenticated, setIsAdmin }) => {
   const { t } = useTranslation();
   const [formData, setFormData] = useState({
     username: '',
@@ -114,6 +114,9 @@ const Register = () => {
       if (res.ok) {
         localStorage.setItem('accessToken', data.access);
         localStorage.setItem('refreshToken', data.refresh);
+        localStorage.setItem('isAdmin', data.user.is_staff);
+        if (setIsAuthenticated) setIsAuthenticated(true);
+        if (setIsAdmin) setIsAdmin(data.user.is_staff);
         navigate('/gallery');
       } else {
         setError(data.error || 'Google registration failed');

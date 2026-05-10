@@ -135,7 +135,7 @@ function App() {
                 element={
                   isAuthenticated 
                     ? <Navigate to="/" replace /> 
-                    : <Register />
+                    : <Register setIsAuthenticated={setIsAuthenticated} setIsAdmin={setIsAdmin} />
                 } 
               />
               <Route 

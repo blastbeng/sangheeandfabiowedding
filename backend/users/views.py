@@ -454,13 +454,16 @@ class ProfileView(APIView):
 
     def put(self, request):
         # Check if this is a password change request
-        current_password = request.data.get('current_password')
         new_password = request.data.get('password')
 
-        if current_password and new_password:
-            # Verify current password
-            if not request.user.check_password(current_password):
-                return Response({'detail': 'Current password is incorrect'}, status=status.HTTP_400_BAD_REQUEST)
+        if new_password:
+            # If user already has a password, require current password
+            if request.user.has_usable_password():
+                current_password = request.data.get('current_password')
+                if not current_password:
+                    return Response({'detail': 'Current password is required'}, status=status.HTTP_400_BAD_REQUEST)
+                if not request.user.check_password(current_password):
+                    return Response({'detail': 'Current password is incorrect'}, status=status.HTTP_400_BAD_REQUEST)
             # Validate new password
             try:
                 validate_password(new_password, user=request.user)
