@@ -129,10 +129,37 @@ def reload_django_settings():
     django_settings.EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
     django_settings.DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'noreply@sangheeandfabio.com')
 
+    # Validate Google client ID format after reloading
+    google_client_id = django_settings.GOOGLE_CLIENT_ID
+    if google_client_id and not is_valid_google_client_id(google_client_id):
+        logger.warning(
+            "GOOGLE_CLIENT_ID appears invalid after settings reload: '%s'. "
+            "It should end with '.apps.googleusercontent.com'. "
+            "Google login will be disabled until this is corrected in the .env file.",
+            google_client_id
+        )
+
 
 def is_provider_enabled(setting_value):
     """Check if a social provider is enabled based on its environment variable value."""
     return bool(setting_value) and setting_value.strip().lower() != 'disabled'
+
+
+def is_valid_google_client_id(client_id):
+    """Check if the Google client ID looks like a valid OAuth 2.0 client ID for a web application.
+
+    Valid Google OAuth 2.0 client IDs for web applications follow the format:
+    <numeric-id>.apps.googleusercontent.com
+
+    This prevents common misconfigurations such as:
+    - Using the client secret instead of the client ID
+    - Using a client ID from a different project or application type
+    - Using an empty or whitespace-only string
+    """
+    if not client_id:
+        return False
+    client_id = client_id.strip()
+    return client_id.endswith('.apps.googleusercontent.com')
 
 
 def update_env_file(settings_obj):
@@ -201,9 +228,26 @@ class SocialProvidersStatusView(APIView):
 
     def get(self, request):
         google_enabled = is_provider_enabled(django_settings.GOOGLE_CLIENT_ID)
+        google_client_id = django_settings.GOOGLE_CLIENT_ID if google_enabled else None
+
+        # Validate that the Google client ID has the correct format.
+        # If it doesn't look like a valid client ID (e.g. it's the client secret
+        # or a client ID from the wrong project), don't return it — this prevents
+        # the frontend from rendering a Google button that will always fail with
+        # `invalid_client`.
+        if google_client_id and not is_valid_google_client_id(google_client_id):
+            logger.warning(
+                "SocialProvidersStatusView: GOOGLE_CLIENT_ID appears invalid: '%s'. "
+                "It should end with '.apps.googleusercontent.com'. "
+                "Google login will be disabled until this is corrected in the .env file.",
+                google_client_id
+            )
+            google_client_id = None
+            google_enabled = False
+
         return Response({
             'google': google_enabled,
-            'google_client_id': django_settings.GOOGLE_CLIENT_ID if google_enabled else None,
+            'google_client_id': google_client_id,
             'facebook': is_provider_enabled(django_settings.FACEBOOK_APP_ID),
             'instagram': is_provider_enabled(django_settings.INSTAGRAM_APP_ID),
         })
@@ -462,6 +506,19 @@ class SocialLoginView(APIView):
         # Check if provider is enabled
         if provider == 'google' and not is_provider_enabled(django_settings.GOOGLE_CLIENT_ID):
             return Response({'error': 'Google login is currently disabled.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Validate Google client ID format before attempting login
+        if provider == 'google' and not is_valid_google_client_id(django_settings.GOOGLE_CLIENT_ID):
+            logger.error(
+                "SocialLoginView: GOOGLE_CLIENT_ID appears invalid: '%s'. "
+                "It should end with '.apps.googleusercontent.com'. "
+                "Google login is disabled until this is corrected in the .env file.",
+                django_settings.GOOGLE_CLIENT_ID
+            )
+            return Response(
+                {'error': 'Google login is not properly configured. Please contact the site administrator.'},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE
+            )
 
         if provider == 'google':
             return self.handle_google(access_token, request)
