@@ -1,6 +1,6 @@
 # Sang Hee & Fabio - Wedding Web App
 
-A responsive multilingual web platform for managing a wedding event, focused on sharing multimedia memories between spouses and guests. Guests can upload photos and videos during the event, which are stored simultaneously on Nextcloud and Google Drive, with a Redis cache for fast delivery.
+A responsive multilingual web platform for managing a wedding event, focused on sharing multimedia memories between spouses and guests. Guests can upload photos and videos during the event, which are stored on Nextcloud, with a Redis cache for fast delivery.
 
 ## Tech Stack
 
@@ -8,7 +8,7 @@ A responsive multilingual web platform for managing a wedding event, focused on 
 - **Frontend:** React 18, Vite, Tailwind CSS, i18next
 - **Database:** PostgreSQL 15
 - **Task Queue:** Celery with Redis broker
-- **Storage:** Nextcloud (WebDAV) + Google Drive (API)
+- **Storage:** Nextcloud (WebDAV)
 - **Cache:** Redis (max 1 GB, LRU eviction)
 - **Authentication:** JWT (SimpleJWT), django-allauth (Facebook, Instagram), Google OAuth2
 - **Deployment:** Docker Compose, Nginx reverse proxy
@@ -19,7 +19,7 @@ A responsive multilingual web platform for managing a wedding event, focused on 
 - User registration with email verification
 - Social login via Google, Facebook, Instagram
 - Media upload (photos/videos) with asynchronous processing
-- Dual cloud storage (Nextcloud + Google Drive) with atomic rollback
+- Cloud storage (Nextcloud)
 - Redis caching for frequently viewed media
 - Admin panel with dashboard, user management, site settings
 - Moderation workflow: approve/reject single or bulk uploads
@@ -62,10 +62,6 @@ Copy `.env.example` to `.env` and fill in all required values. The following var
 | `NEXTCLOUD_USERNAME` | Nextcloud username | Yes |
 | `NEXTCLOUD_PASSWORD` | Nextcloud password | Yes |
 | `NEXTCLOUD_FOLDER` | Nextcloud upload folder path | Yes |
-| `GOOGLE_DRIVE_CLIENT_ID` | Google Drive API client ID | Yes |
-| `GOOGLE_DRIVE_CLIENT_SECRET` | Google Drive API client secret | Yes |
-| `GOOGLE_DRIVE_TOKEN` | Google Drive OAuth2 token | Yes |
-| `GOOGLE_DRIVE_FOLDER_ID` | Google Drive folder ID for uploads | Yes |
 | `REDIS_HOST` | Redis hostname (default: `redis`) | Yes |
 | `REDIS_PORT` | Redis port (default: `6379`) | Yes |
 | `TIME_ZONE` | Time zone (e.g., `Europe/Rome`) | Yes |
@@ -128,10 +124,10 @@ This guide walks you through creating the necessary credentials for Google, Face
    - For production: `https://yourdomain.com/accounts/facebook/login/callback/`
 7. Save changes.
 8. Copy the App ID and App Secret into your `.env` file:
-   ```
-   FACEBOOK_APP_ID=your-app-id
-   FACEBOOK_APP_SECRET=your-app-secret
-   ```
+    ```
+    FACEBOOK_APP_ID=your-app-id
+    FACEBOOK_APP_SECRET=your-app-secret
+    ```
 
 ### Instagram Login
 
@@ -147,53 +143,16 @@ Instagram login uses the **Instagram Basic Display API**, which is managed throu
    - Add a **Privacy Policy URL** (required for going live).
 4. Under **Instagram Basic Display** > **Basic Display**, you will find the **Instagram App ID** and **Instagram App Secret**.
 5. Copy these values into your `.env` file:
-   ```
-   INSTAGRAM_APP_ID=your-instagram-app-id
-   INSTAGRAM_APP_SECRET=your-instagram-app-secret
-   ```
+    ```
+    INSTAGRAM_APP_ID=your-instagram-app-id
+    INSTAGRAM_APP_SECRET=your-instagram-app-secret
+    ```
 
 > **Note:** For local testing, you may need to add `localhost` as a valid domain in the Facebook app settings (under **Settings** > **Basic** > **App Domains**) and ensure your redirect URIs use `http://localhost`. For production, replace `localhost` with your actual domain and use `https`.
 
 ## Setting Up Cloud Storage
 
-Media files are stored simultaneously on Nextcloud (via WebDAV) and Google Drive. You need to configure both services with the appropriate credentials.
-
-### Google Drive API
-
-1. Go to the [Google Cloud Console](https://console.cloud.google.com/).
-2. Create a new project or select an existing one (you can reuse the same project used for social login).
-3. Enable the **Google Drive API**:
-   - Navigate to **APIs & Services** > **Library**.
-   - Search for "Google Drive API" and enable it.
-4. Create credentials for a **Desktop application** (or **Web application** if you prefer, but the current implementation uses a token-based approach):
-   - Go to **APIs & Services** > **Credentials**.
-   - Click **Create Credentials** > **OAuth client ID**.
-   - Choose **Desktop app** as the application type.
-   - Give it a name (e.g., "Wedding Drive Uploader").
-   - Click **Create**. You will receive a **Client ID** and **Client Secret**.
-5. Obtain a refresh token:
-   - The application expects a pre-generated token. You can generate one using the OAuth 2.0 Playground or a quick script.
-   - **Using OAuth 2.0 Playground:**
-     - Go to [OAuth 2.0 Playground](https://developers.google.com/oauthplayground/).
-     - Click the gear icon (⚙️) and check **Use your own OAuth credentials**. Enter your Client ID and Client Secret.
-     - In Step 1, select the scope `https://www.googleapis.com/auth/drive.file` (or `https://www.googleapis.com/auth/drive` if you need full access).
-     - Click **Authorize APIs** and follow the prompts.
-     - In Step 2, click **Exchange authorization code for tokens**. You will get an access token and a refresh token.
-     - Copy the **refresh token** (or the access token if you plan to refresh it manually). The environment variable `GOOGLE_DRIVE_TOKEN` expects a valid token; for long-term use, a refresh token is recommended, but the current code uses the token directly. You may need to implement token refresh logic if using a short-lived access token. For simplicity, you can generate a refresh token and use it as the `GOOGLE_DRIVE_TOKEN` value.
-   - **Alternative:** Use the `gcloud` CLI or a Python script to obtain a token. The key is to have a token that grants access to the Drive API.
-6. Create a folder in Google Drive where uploads will be stored:
-   - Go to [Google Drive](https://drive.google.com/).
-   - Create a new folder (e.g., "Wedding Uploads").
-   - Open the folder and note the folder ID from the URL: `https://drive.google.com/drive/folders/<FOLDER_ID>`.
-7. Add the credentials to your `.env` file:
-   ```
-   GOOGLE_DRIVE_CLIENT_ID=your-client-id
-   GOOGLE_DRIVE_CLIENT_SECRET=your-client-secret
-   GOOGLE_DRIVE_TOKEN=your-oauth-token
-   GOOGLE_DRIVE_FOLDER_ID=your-folder-id
-   ```
-
-> **Note:** The current implementation uses the token directly without automatic refresh. For production, consider using a service account or implementing token refresh to avoid expiration issues.
+Media files are stored on Nextcloud via WebDAV. You need to configure the service with the appropriate credentials.
 
 ### Nextcloud WebDAV
 
