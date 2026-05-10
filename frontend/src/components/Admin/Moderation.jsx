@@ -144,6 +144,7 @@ const AdminModeration = () => {
 
         <div className="mb-6 flex gap-4 flex-wrap items-center">
           <select value={filters.status} onChange={(e) => setFilters({ ...filters, status: e.target.value })} className="wedding-input">
+            <option value="">{t('all')}</option>
             <option value="pending">{t('pending')}</option>
             <option value="approved">{t('approved')}</option>
             <option value="rejected">{t('rejected')}</option>
