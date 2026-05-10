@@ -57,9 +57,16 @@ class NextcloudClient:
 def get_file_from_cloud(media):
     content = None
     content_type = 'video/mp4' if media.media_type == 'video' else 'image/jpeg'
+    nc = NextcloudClient()
+
+    # Try the stored nextcloud_file_id first (works for new uploads)
     if media.nextcloud_file_id:
-        nc = NextcloudClient()
         content = nc.download_file(media.nextcloud_file_id)
-        if content:
-            return content, content_type
+
+    # Fallback to original filename (fixes old uploads that have numeric IDs)
+    if content is None and media.original_filename:
+        content = nc.download_file(media.original_filename)
+
+    if content:
+        return content, content_type
     return None, None
