@@ -11,6 +11,7 @@ from django.core.signing import TimestampSigner, BadSignature, SignatureExpired
 from django.contrib.auth import get_user_model, login, logout, authenticate
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.staticfiles.storage import staticfiles_storage
+from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
@@ -34,6 +35,7 @@ from .serializers import (
 )
 from .cloud_clients import get_file_from_cloud, NextcloudClient
 from .tasks import upload_media_task, delete_media_task, detect_faces_task
+from .utils import process_profile_picture
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
@@ -177,12 +179,12 @@ def update_user_from_social(user, provider, extra_data):
             try:
                 resp = requests.get(picture_url)
                 if resp.status_code == 200:
-                    user.profile_picture.save(
-                        f"{user.username}_social.jpg",
-                        ContentFile(resp.content),
-                        save=False
-                    )
-                    updated = True
+                    try:
+                        processed = process_profile_picture(ContentFile(resp.content, name='social.jpg'))
+                        user.profile_picture.save(f"{user.username}_social.jpg", processed, save=False)
+                        updated = True
+                    except ValidationError:
+                        logger.warning(f"Social profile picture too large for {user.email}, using default.")
             except Exception as e:
                 logger.error(f"Failed to download profile picture for {user.email}: {e}")
 
@@ -210,6 +212,14 @@ class RegisterView(APIView):
     parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def post(self, request):
+        # Process profile picture if provided
+        if 'profile_picture' in request.FILES:
+            try:
+                processed = process_profile_picture(request.FILES['profile_picture'])
+                request.FILES['profile_picture'] = processed  # replace with processed file
+            except ValidationError as e:
+                return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
         serializer = CustomUserSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
@@ -400,6 +410,14 @@ class ProfileView(APIView):
             request.user.save()
             logger.info(f"Password updated for user: {request.user.username}")
             return Response({'message': 'Password updated successfully'})
+
+        # Process profile picture if provided
+        if 'profile_picture' in request.FILES:
+            try:
+                processed = process_profile_picture(request.FILES['profile_picture'])
+                request.FILES['profile_picture'] = processed  # replace with processed file
+            except ValidationError as e:
+                return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         # Regular profile update
         serializer = CustomUserSerializer(request.user, data=request.data, partial=True, context={'request': request})
@@ -612,7 +630,12 @@ class SocialLoginCallbackView(APIView):
                     try:
                         resp = requests.get(picture_url)
                         if resp.status_code == 200:
-                            user.profile_picture.save(f"{user.username}_social.jpg", ContentFile(resp.content), save=False)
+                            # Process the downloaded picture to enforce size limit
+                            try:
+                                processed = process_profile_picture(ContentFile(resp.content, name='social.jpg'))
+                                user.profile_picture.save(f"{user.username}_social.jpg", processed, save=False)
+                            except ValidationError:
+                                logger.warning(f"Could not process social profile picture for {user.email}, using default.")
                     except Exception as e:
                         logger.error(f"Failed to download profile picture for {user.email}: {e}")
 
@@ -964,28 +987,29 @@ class AdminUserListView(APIView):
 
     def get(self, request):
         users = User.objects.all()
-        return Response(AdminUserSerializer(users, many=True).data)
+        return Response(AdminUserSerializer(users, many=True, context={'request': request}).data)
 
     def post(self, request):
-        serializer = AdminUserSerializer(data=request.data)
+        serializer = AdminUserSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             user = serializer.save()
             if 'password' in request.data:
                 user.set_password(request.data['password'])
                 user.save()
-            return Response(AdminUserSerializer(user).data, status=status.HTTP_201_CREATED)
+            return Response(AdminUserSerializer(user, context={'request': request}).data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class AdminUserDetailView(APIView):
     permission_classes = [IsAdminUser]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def get_object(self, user_id):
         return get_object_or_404(User, id=user_id)
 
     def get(self, request, user_id):
         user = self.get_object(user_id)
-        return Response(AdminUserSerializer(user).data)
+        return Response(AdminUserSerializer(user, context={'request': request}).data)
 
     def put(self, request, user_id):
         user = self.get_object(user_id)
@@ -997,13 +1021,21 @@ class AdminUserDetailView(APIView):
                 status=status.HTTP_403_FORBIDDEN
             )
 
-        serializer = AdminUserSerializer(user, data=request.data, partial=True)
+        # Process profile picture if provided
+        if 'profile_picture' in request.FILES:
+            try:
+                processed = process_profile_picture(request.FILES['profile_picture'])
+                request.FILES['profile_picture'] = processed
+            except ValidationError as e:
+                return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = AdminUserSerializer(user, data=request.data, partial=True, context={'request': request})
         if serializer.is_valid():
             user = serializer.save()
             if 'password' in request.data:
                 user.set_password(request.data['password'])
                 user.save()
-            return Response(AdminUserSerializer(user).data)
+            return Response(AdminUserSerializer(user, context={'request': request}).data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, user_id):
@@ -1033,7 +1065,7 @@ class AdminUserToggleStaffView(APIView):
         user = get_object_or_404(User, id=user_id)
         user.is_staff = not user.is_staff
         user.save()
-        return Response(AdminUserSerializer(user).data)
+        return Response(AdminUserSerializer(user, context={'request': request}).data)
 
 
 class MediaBulkModerationView(APIView):

@@ -80,6 +80,14 @@ class CustomUserSerializer(serializers.ModelSerializer):
         validated_data.pop('password_confirm', None)
         password = validated_data.pop('password', None)
 
+        # Handle profile picture replacement
+        new_picture = validated_data.pop('profile_picture', None)
+        if new_picture:
+            # Delete old picture if it's not the default
+            if instance.profile_picture and instance.profile_picture.name != 'profile_pics/default.png':
+                instance.profile_picture.delete(save=False)
+            instance.profile_picture = new_picture
+
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
 
@@ -182,12 +190,13 @@ class MediaModerationSerializer(serializers.ModelSerializer):
 
 class AdminUserSerializer(serializers.ModelSerializer):
     profile_picture_url = serializers.SerializerMethodField()
+    profile_picture = serializers.ImageField(required=False, write_only=True)
 
     class Meta:
         model = CustomUser
         fields = ('id', 'username', 'email', 'first_name', 'last_name',
                   'is_staff', 'is_superuser', 'is_active', 'created_at',
-                  'updated_at', 'language', 'profile_picture_url')
+                  'updated_at', 'language', 'profile_picture', 'profile_picture_url')
         read_only_fields = ('created_at', 'updated_at')
 
     def get_profile_picture_url(self, obj):
@@ -197,6 +206,14 @@ class AdminUserSerializer(serializers.ModelSerializer):
                 return request.build_absolute_uri(obj.profile_picture.url)
             return obj.profile_picture.url
         return None
+
+    def update(self, instance, validated_data):
+        new_picture = validated_data.pop('profile_picture', None)
+        if new_picture:
+            if instance.profile_picture and instance.profile_picture.name != 'profile_pics/default.png':
+                instance.profile_picture.delete(save=False)
+            instance.profile_picture = new_picture
+        return super().update(instance, validated_data)
 
 
 class SiteSettingsSerializer(serializers.ModelSerializer):

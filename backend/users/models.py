@@ -58,6 +58,12 @@ class CustomUser(AbstractUser):
     def get_short_name(self):
         return self.first_name or self.email.split('@')[0] if self.email else self.username
 
+    def delete(self, *args, **kwargs):
+        # Delete the profile picture file if it's not the default
+        if self.profile_picture and self.profile_picture.name != 'profile_pics/default.png':
+            self.profile_picture.delete(save=False)
+        super().delete(*args, **kwargs)
+
     class Meta:
         db_table = 'users_customuser'
 
