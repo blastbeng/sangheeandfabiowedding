@@ -59,6 +59,19 @@ const AdminModeration = () => {
     });
   };
 
+  const handleDelete = (id) => {
+    if (!window.confirm(t('admin_delete_confirm'))) return;
+    authFetch(`${API_URL}/api/auth/media/moderation/${id}/`, {
+      method: 'DELETE'
+    }).then(res => {
+      if (res.ok) {
+        fetchMedia();
+      } else {
+        logger.error('[Moderation] Delete failed for ID:', id);
+      }
+    });
+  };
+
   // Bulk selection handlers
   const toggleSelectAll = () => {
     if (selectAll) {
@@ -147,6 +160,9 @@ const AdminModeration = () => {
               <button onClick={() => handleBulkAction('reject')} className="bg-red-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-red-600">
                 {t('admin_bulk_reject', { count: selectedIds.length })}
               </button>
+              <button onClick={() => handleBulkAction('delete')} className="bg-gray-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-600">
+                {t('admin_bulk_delete', { count: selectedIds.length })}
+              </button>
             </div>
           )}
         </div>
@@ -184,12 +200,15 @@ const AdminModeration = () => {
                   <td className="py-3 text-gray-600 text-sm">{new Date(item.uploaded_at).toLocaleDateString()}</td>
                   <td className="py-3">{getStatusBadge(item.status)}</td>
                   <td className="py-3">
-                    {item.status === 'pending' && (
-                      <div className="flex gap-2">
-                        <button onClick={() => handleApprove(item.id)} className="bg-green-500 text-white px-3 py-1 rounded-lg text-sm hover:bg-green-600">{t('admin_approve')}</button>
-                        <button onClick={() => handleReject(item.id)} className="bg-red-500 text-white px-3 py-1 rounded-lg text-sm hover:bg-red-600">{t('admin_reject')}</button>
-                      </div>
-                    )}
+                    <div className="flex gap-2">
+                      {item.status === 'pending' && (
+                        <>
+                          <button onClick={() => handleApprove(item.id)} className="bg-green-500 text-white px-3 py-1 rounded-lg text-sm hover:bg-green-600">{t('admin_approve')}</button>
+                          <button onClick={() => handleReject(item.id)} className="bg-red-500 text-white px-3 py-1 rounded-lg text-sm hover:bg-red-600">{t('admin_reject')}</button>
+                        </>
+                      )}
+                      <button onClick={() => handleDelete(item.id)} className="bg-gray-500 text-white px-3 py-1 rounded-lg text-sm hover:bg-gray-600">{t('admin_delete')}</button>
+                    </div>
                   </td>
                 </tr>
               ))}

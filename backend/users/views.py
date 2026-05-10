@@ -727,6 +727,12 @@ class MediaModerateSingleView(APIView):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    def delete(self, request, media_id):
+        media = get_object_or_404(Media, id=media_id)
+        delete_media_task.delay(media.id)
+        logger.info(f"Admin {request.user.username} deleted media {media_id}")
+        return Response({'message': 'Deletion started'}, status=status.HTTP_202_ACCEPTED)
+
 
 class MediaFileView(APIView):
     permission_classes = [AllowAny]
@@ -959,7 +965,11 @@ class MediaBulkModerationView(APIView):
                 media.reviewed_at = timezone.now()
                 media.save()
                 updated_count += 1
-        return Response({'message': f'{updated_count} media items {action}d successfully.', 'updated_count': updated_count})
+            elif action == 'delete':
+                delete_media_task.delay(media.id)
+                updated_count += 1
+        action_past = {'approve': 'approved', 'reject': 'rejected', 'delete': 'deleted'}.get(action, action)
+        return Response({'message': f'{updated_count} media items {action_past} successfully.', 'updated_count': updated_count})
 
 
 class FaceTagListView(APIView):
