@@ -61,16 +61,22 @@ def upload_media_task(self, user_id, file_data_list):
                 logger.error(f"Nextcloud upload failed for {filename}")
                 continue
 
-            # Create Media record
+            # Create Media record – auto-approve if user is admin
+            media_status = 'approved' if user.is_staff or user.is_superuser else 'pending'
             media = Media.objects.create(
                 user=user,
                 media_type=media_type,
                 caption=caption,
-                status='pending',
+                status=media_status,
                 nextcloud_file_id=nextcloud_id,
                 original_filename=filename,
                 view_count=0
             )
+
+            # If auto-approved, trigger face detection immediately
+            if media_status == 'approved':
+                detect_faces_task.delay(media.id)
+
             uploaded_media.append({
                 'id': media.id,
                 'filename': filename,
