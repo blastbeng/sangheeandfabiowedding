@@ -739,6 +739,26 @@ class MediaDeleteView(APIView):
         return Response({'message': 'Deletion started'}, status=status.HTTP_202_ACCEPTED)
 
 
+class MediaBulkDeleteView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        media_ids = request.data.get('media_ids', [])
+        if not media_ids:
+            return Response({'error': 'No media IDs provided'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Only delete media that belongs to the requesting user
+        media_items = Media.objects.filter(id__in=media_ids, user=request.user)
+        deleted_count = media_items.count()
+        for media in media_items:
+            delete_media_task.delay(media.id)
+
+        return Response({
+            'message': f'{deleted_count} media items deleted successfully.',
+            'deleted_count': deleted_count
+        })
+
+
 class MyUploadsView(APIView):
     permission_classes = [IsAuthenticated]
 
