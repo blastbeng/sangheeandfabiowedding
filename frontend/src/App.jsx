@@ -19,6 +19,7 @@ import Settings from './components/Admin/Settings';
 import Home from './components/Public/Home';
 import Events from './components/Public/Events';
 import LanguageSwitcher from './components/Common/LanguageSwitcher';
+import CookieConsent from './components/Common/CookieConsent';
 import PasswordReset from './components/Auth/PasswordReset';
 import logger from './utils/logger';
 
@@ -215,6 +216,8 @@ function App() {
             © 2026 {t('footer_project')} - {t('footer_forever')}
           </p>
         </footer>
+
+        <CookieConsent />
       </div>
     </Router>
   );

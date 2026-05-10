@@ -30,11 +30,12 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
 from allauth.socialaccount.models import SocialAccount
 from celery.result import AsyncResult
-from .models import Media, SiteSettings, FaceTag
+from .models import Media, SiteSettings, FaceTag, CookieConsent
 from .serializers import (
     CustomUserSerializer, MediaSerializer, MediaModerationSerializer,
     AdminUserSerializer, SiteSettingsSerializer, BulkModerationSerializer,
-    PublicMediaSerializer, PublicUserSerializer, FaceTagSerializer
+    PublicMediaSerializer, PublicUserSerializer, FaceTagSerializer,
+    CookieConsentSerializer
 )
 from .cloud_clients import get_file_from_cloud, NextcloudClient
 from .tasks import upload_media_task, delete_media_task, detect_faces_task
@@ -1210,3 +1211,30 @@ class FaceTagDetailView(APIView):
         tag.name = name
         tag.save()
         return Response(FaceTagSerializer(tag).data)
+
+
+# ==================== COOKIE CONSENT VIEWS ====================
+
+class CookieConsentView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """Get the current user's cookie consent preferences."""
+        consent, created = CookieConsent.objects.get_or_create(
+            user=request.user,
+            defaults={'analytics': False, 'marketing': False, 'necessary': True}
+        )
+        serializer = CookieConsentSerializer(consent)
+        return Response(serializer.data)
+
+    def put(self, request):
+        """Update the current user's cookie consent preferences."""
+        consent, created = CookieConsent.objects.get_or_create(
+            user=request.user,
+            defaults={'analytics': False, 'marketing': False, 'necessary': True}
+        )
+        serializer = CookieConsentSerializer(consent, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

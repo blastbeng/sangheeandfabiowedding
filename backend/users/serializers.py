@@ -2,7 +2,7 @@ import logging
 from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.staticfiles.storage import staticfiles_storage
-from .models import CustomUser, Media, SiteSettings, FaceTag
+from .models import CustomUser, Media, SiteSettings, FaceTag, CookieConsent
 
 logger = logging.getLogger(__name__)
 
@@ -281,3 +281,10 @@ class FaceTagSerializer(serializers.ModelSerializer):
         model = FaceTag
         fields = ('id', 'media', 'name', 'created_at')
         read_only_fields = ('id', 'media', 'created_at')
+
+
+class CookieConsentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CookieConsent
+        fields = ('id', 'user', 'analytics', 'marketing', 'necessary', 'created_at', 'updated_at')
+        read_only_fields = ('id', 'user', 'created_at', 'updated_at')

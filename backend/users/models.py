@@ -217,3 +217,19 @@ class FaceTag(models.Model):
 
     def __str__(self):
         return f"{self.name} in {self.media}"
+
+
+class CookieConsent(models.Model):
+    """Model for storing user cookie consent preferences"""
+    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='cookie_consent')
+    analytics = models.BooleanField(default=False)
+    marketing = models.BooleanField(default=False)
+    necessary = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'users_cookieconsent'
+
+    def __str__(self):
+        return f"Cookie consent for {self.user.username}"
