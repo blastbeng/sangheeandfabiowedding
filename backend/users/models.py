@@ -1,5 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.conf import settings as django_settings
 
 
 class CustomUser(AbstractUser):
@@ -151,6 +152,50 @@ class SiteSettings(models.Model):
     @classmethod
     def load(cls):
         obj, created = cls.objects.get_or_create(pk=1)
+        updated = False
+
+        # Map model field names to django settings attributes
+        field_map = {
+            'google_client_id': 'GOOGLE_CLIENT_ID',
+            'google_client_secret': 'GOOGLE_CLIENT_SECRET',
+            'facebook_app_id': 'FACEBOOK_APP_ID',
+            'facebook_app_secret': 'FACEBOOK_APP_SECRET',
+            'instagram_app_id': 'INSTAGRAM_APP_ID',
+            'instagram_app_secret': 'INSTAGRAM_APP_SECRET',
+            'nextcloud_url': 'NEXTCLOUD_URL',
+            'nextcloud_username': 'NEXTCLOUD_USERNAME',
+            'nextcloud_password': 'NEXTCLOUD_PASSWORD',
+            'nextcloud_folder': 'NEXTCLOUD_FOLDER',
+            'email_host': 'EMAIL_HOST',
+            'email_port': 'EMAIL_PORT',
+            'email_use_tls': 'EMAIL_USE_TLS',
+            'email_host_user': 'EMAIL_HOST_USER',
+            'email_host_password': 'EMAIL_HOST_PASSWORD',
+            'default_from_email': 'DEFAULT_FROM_EMAIL',
+        }
+
+        for field, setting_name in field_map.items():
+            env_value = getattr(django_settings, setting_name, None)
+            if env_value is None:
+                env_value = ''
+            # Convert to appropriate type for the model field
+            if isinstance(env_value, bool):
+                pass  # already bool
+            elif field == 'email_port':
+                env_value = int(env_value) if env_value != '' else None
+            elif field == 'email_use_tls':
+                env_value = bool(env_value)
+            else:
+                env_value = str(env_value) if env_value else ''
+
+            current = getattr(obj, field)
+            if current != env_value:
+                setattr(obj, field, env_value)
+                updated = True
+
+        if updated:
+            obj.save()
+
         return obj
 
 
