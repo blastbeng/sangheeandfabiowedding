@@ -700,6 +700,24 @@ class AdminSettingsView(APIView):
 
     def get(self, request):
         settings = SiteSettings.load()
+        # Override OAuth / Nextcloud / SMTP fields with current runtime values
+        # so the admin sees what the app is actually using (from .env / environment).
+        settings.google_client_id = django_settings.GOOGLE_CLIENT_ID or ''
+        settings.google_client_secret = django_settings.GOOGLE_CLIENT_SECRET or ''
+        settings.facebook_app_id = django_settings.FACEBOOK_APP_ID or ''
+        settings.facebook_app_secret = django_settings.FACEBOOK_APP_SECRET or ''
+        settings.instagram_app_id = django_settings.INSTAGRAM_APP_ID or ''
+        settings.instagram_app_secret = django_settings.INSTAGRAM_APP_SECRET or ''
+        settings.nextcloud_url = django_settings.NEXTCLOUD_URL or ''
+        settings.nextcloud_username = django_settings.NEXTCLOUD_USERNAME or ''
+        settings.nextcloud_password = django_settings.NEXTCLOUD_PASSWORD or ''
+        settings.nextcloud_folder = django_settings.NEXTCLOUD_FOLDER or ''
+        settings.email_host = django_settings.EMAIL_HOST or ''
+        settings.email_port = django_settings.EMAIL_PORT or 587
+        settings.email_use_tls = django_settings.EMAIL_USE_TLS
+        settings.email_host_user = django_settings.EMAIL_HOST_USER or ''
+        settings.email_host_password = django_settings.EMAIL_HOST_PASSWORD or ''
+        settings.default_from_email = django_settings.DEFAULT_FROM_EMAIL or ''
         return Response(SiteSettingsSerializer(settings).data)
 
     def put(self, request):
