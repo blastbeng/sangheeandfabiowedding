@@ -309,7 +309,11 @@ const resources = {
       "password_too_short": "La password deve contenere almeno 8 caratteri.",
       "password_requirements": "La password deve contenere almeno una lettera minuscola, una maiuscola e un numero.",
       "registration_failed": "Registrazione fallita. Riprova.",
-      "error_during_registration": "Si è verificato un errore durante la registrazione."
+      "error_during_registration": "Si è verificato un errore durante la registrazione.",
+      "register_username_placeholder": "Qualcosa di speciale solo per te",
+      "register_email_placeholder": "tua@felicemail.com",
+      "register_password_placeholder": "Rendila forte e segreta!",
+      "register_password_confirm_placeholder": "Uguale a sopra, per favore!"
     }
   },
   ko: {
@@ -619,7 +623,11 @@ const resources = {
       "password_too_short": "비밀번호는 8자 이상이어야 합니다.",
       "password_requirements": "비밀번호는 소문자, 대문자, 숫자를 각각 하나 이상 포함해야 합니다.",
       "registration_failed": "등록에 실패했습니다. 다시 시도해 주세요.",
-      "error_during_registration": "등록 중 오류가 발생했습니다."
+      "error_during_registration": "등록 중 오류가 발생했습니다.",
+      "register_username_placeholder": "당신만을 위한 특별한 것",
+      "register_email_placeholder": "happy@mail.com",
+      "register_password_placeholder": "강력하고 비밀로 만드세요!",
+      "register_password_confirm_placeholder": "위와 동일하게 입력하세요!"
     }
   },
   en: {
@@ -929,7 +937,11 @@ const resources = {
       "password_too_short": "Password must be at least 8 characters.",
       "password_requirements": "Password must contain at least one lowercase letter, one uppercase letter, and one number.",
       "registration_failed": "Registration failed. Please try again.",
-      "error_during_registration": "An error occurred during registration."
+      "error_during_registration": "An error occurred during registration.",
+      "register_username_placeholder": "Something special just for you",
+      "register_email_placeholder": "your@happymail.com",
+      "register_password_placeholder": "Make it strong & secret!",
+      "register_password_confirm_placeholder": "Same as above, please!"
     }
   }
 };

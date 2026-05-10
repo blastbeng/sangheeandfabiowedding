@@ -164,7 +164,7 @@ const Register = () => {
               value={formData.username}
               onChange={handleChange}
               className="wedding-input w-full"
-              placeholder="Something special just for you"
+              placeholder={t('register_username_placeholder')}
               required
             />
           </div>
@@ -178,7 +178,7 @@ const Register = () => {
               value={formData.email}
               onChange={handleChange}
               className="wedding-input w-full"
-              placeholder="your@happymail.com"
+              placeholder={t('register_email_placeholder')}
               required
             />
           </div>
@@ -192,7 +192,7 @@ const Register = () => {
               value={formData.password}
               onChange={handleChange}
               className="wedding-input w-full"
-              placeholder="Make it strong & secret!"
+              placeholder={t('register_password_placeholder')}
               required
             />
           </div>
@@ -206,7 +206,7 @@ const Register = () => {
               value={formData.password_confirm}
               onChange={handleChange}
               className="wedding-input w-full"
-              placeholder="Same as above, please!"
+              placeholder={t('register_password_confirm_placeholder')}
               required
             />
           </div>
