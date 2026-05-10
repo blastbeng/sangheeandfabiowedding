@@ -11,12 +11,14 @@ const Gallery = () => {
     user_search: ''
   });
   const [selectedFaceTag, setSelectedFaceTag] = useState('');
+  const [captionFilter, setCaptionFilter] = useState('');
   const API_URL = import.meta.env.VITE_API_URL;
 
   const fetchMedia = () => {
     const params = new URLSearchParams();
     if (filters.user_search) params.append('user_search', filters.user_search);
     if (selectedFaceTag) params.append('facetag', selectedFaceTag);
+    if (captionFilter) params.append('caption', captionFilter);
 
     fetch(`${API_URL}/api/auth/media/public/?${params}`)
       .then(res => res.json())
@@ -32,7 +34,7 @@ const Gallery = () => {
 
   useEffect(() => {
     fetchMedia();
-  }, [filters, selectedFaceTag]);
+  }, [filters, selectedFaceTag, captionFilter]);
 
   if (loading) {
     return (
@@ -60,6 +62,16 @@ const Gallery = () => {
             onChange={e => setFilters({ ...filters, user_search: e.target.value })}
             className="wedding-input"
             placeholder={t('Username or name...')}
+          />
+        </div>
+        <div>
+          <label className="block text-sm text-gray-600 mb-1">{t('Search by caption')}</label>
+          <input
+            type="text"
+            value={captionFilter}
+            onChange={e => setCaptionFilter(e.target.value)}
+            className="wedding-input"
+            placeholder={t('Caption...')}
           />
         </div>
       </div>
