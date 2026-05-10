@@ -10,6 +10,7 @@ const Login = ({ setIsAuthenticated, setIsAdmin }) => {
     username_or_email: '',
     password: ''
   });
+  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
@@ -32,7 +33,8 @@ const Login = ({ setIsAuthenticated, setIsAdmin }) => {
         },
         body: JSON.stringify({
           username_or_email: formData.username_or_email,
-          password: formData.password
+          password: formData.password,
+          remember_me: rememberMe
         })
       });
 
@@ -122,7 +124,7 @@ const Login = ({ setIsAuthenticated, setIsAdmin }) => {
               required
             />
           </div>
-          <div className="mb-6">
+          <div className="mb-4">
             <label htmlFor="password" className="block text-gray-700 text-sm font-bold mb-2">
               🔐 {t('Password')}
             </label>
@@ -136,11 +138,23 @@ const Login = ({ setIsAuthenticated, setIsAdmin }) => {
               placeholder="••••••••"
               required
             />
-            <div className="text-right mt-2">
-              <Link to="/password-reset" className="text-sm text-wedding-azure hover:text-wedding-navy underline">
-                {t('Forgot Password?')}
-              </Link>
-            </div>
+          </div>
+          <div className="mb-4 flex items-center">
+            <input
+              type="checkbox"
+              id="remember_me"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              className="mr-2 h-4 w-4 text-wedding-azure focus:ring-wedding-azure"
+            />
+            <label htmlFor="remember_me" className="text-gray-700 text-sm">
+              {t('Remember Me')}
+            </label>
+          </div>
+          <div className="text-right mb-6">
+            <Link to="/password-reset" className="text-sm text-wedding-azure hover:text-wedding-navy underline">
+              {t('Forgot Password?')}
+            </Link>
           </div>
           <button type="submit" className="wedding-btn w-full mb-4">
             💝 {t('Sign In')}

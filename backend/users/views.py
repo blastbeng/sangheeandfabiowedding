@@ -4,6 +4,7 @@ import base64
 import requests
 import redis
 from io import BytesIO
+from datetime import timedelta
 from django.core.files.base import ContentFile
 from django.core.mail import send_mail
 from django.core.signing import TimestampSigner, BadSignature, SignatureExpired
@@ -164,7 +165,17 @@ class LoginView(APIView):
             if not user.is_active:
                 return Response({'error': 'Account is not active. Please verify your email.'}, status=status.HTTP_401_UNAUTHORIZED)
             login(request, user)
+
+            remember_me = request.data.get('remember_me', False)
             refresh = RefreshToken.for_user(user)
+
+            if remember_me:
+                # Long-lived tokens: access 30 days, refresh 90 days
+                access_lifetime = timedelta(days=30)
+                refresh_lifetime = timedelta(days=90)
+                refresh.access_token.set_exp(lifetime=access_lifetime)
+                refresh.set_exp(lifetime=refresh_lifetime)
+
             logger.info(f"User logged in: {user.email}")
             return Response({
                 'refresh': str(refresh),
