@@ -15,7 +15,9 @@ from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
+from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
+from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings as django_settings
 from django.http import HttpResponse, Http404
 from dotenv import load_dotenv, set_key
@@ -207,6 +209,7 @@ class SocialProvidersStatusView(APIView):
         })
 
 
+@method_decorator(csrf_exempt, name='dispatch')
 class RegisterView(APIView):
     permission_classes = [AllowAny]
     parser_classes = [MultiPartParser, FormParser, JSONParser]
