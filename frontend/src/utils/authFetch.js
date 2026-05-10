@@ -79,7 +79,7 @@ const authFetch = async (url, options = {}) => {
         localStorage.removeItem('refreshToken');
         localStorage.removeItem('isAdmin');
         window.location.href = '/login';
-        throw error;
+        // Do NOT throw – the redirect is already happening
       } finally {
         isRefreshing = false;
       }
