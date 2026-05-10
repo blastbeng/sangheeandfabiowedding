@@ -189,8 +189,8 @@ class AdminUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = ('id', 'username', 'email', 'first_name', 'last_name',
-                  'is_staff', 'is_superuser', 'is_active', 'created_at',
-                  'updated_at', 'language', 'profile_picture', 'profile_picture_url')
+                  'is_staff', 'is_superuser', 'is_active', 'email_verified',
+                  'created_at', 'updated_at', 'language', 'profile_picture', 'profile_picture_url')
         read_only_fields = ('created_at', 'updated_at')
 
     def get_profile_picture_url(self, obj):

@@ -11,7 +11,7 @@ const UserManagement = () => {
   const [editingUser, setEditingUser] = useState(null);
   const [formData, setFormData] = useState({
     username: '', email: '', first_name: '', last_name: '',
-    is_staff: false, is_active: true, password: ''
+    is_staff: false, is_active: true, email_verified: false, password: ''
   });
   const [filters, setFilters] = useState({
     username: '',
@@ -52,7 +52,7 @@ const UserManagement = () => {
         fetchUsers();
         setShowModal(false);
         setEditingUser(null);
-        setFormData({ username: '', email: '', first_name: '', last_name: '', is_staff: false, is_active: true, password: '' });
+        setFormData({ username: '', email: '', first_name: '', last_name: '', is_staff: false, is_active: true, email_verified: false, password: '' });
       }
     } catch (err) {
       logger.error('[UserManagement] User save error:', err);
@@ -95,8 +95,9 @@ const UserManagement = () => {
       (filters.role === 'admin' && user.is_staff && !user.is_superuser) ||
       (filters.role === 'user' && !user.is_staff);
     const matchStatus = filters.status === '' || 
-      (filters.status === 'active' && user.is_active) ||
-      (filters.status === 'inactive' && !user.is_active);
+      (filters.status === 'unverified' && !user.email_verified) ||
+      (filters.status === 'inactive' && user.email_verified && !user.is_active) ||
+      (filters.status === 'active' && user.email_verified && user.is_active);
     return matchUsername && matchEmail && matchFirstName && matchLastName && matchRole && matchStatus;
   });
 
@@ -114,7 +115,7 @@ const UserManagement = () => {
       <div className="wedding-card p-8">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-3xl wedding-title">{t('admin_users_title')}</h2>
-          <button onClick={() => setShowModal(true)} className="wedding-btn">{t('admin_add_user')}</button>
+          <button onClick={() => { setEditingUser(null); setFormData({ username: '', email: '', first_name: '', last_name: '', is_staff: false, is_active: true, email_verified: false, password: '' }); setShowModal(true); }} className="wedding-btn">{t('admin_add_user')}</button>
         </div>
 
         <div className="overflow-x-auto">
@@ -187,8 +188,9 @@ const UserManagement = () => {
                     className="wedding-input w-full text-xs py-1"
                   >
                     <option value="">{t('all')}</option>
-                    <option value="active">{t('admin_status_active')}</option>
+                    <option value="unverified">{t('admin_status_unverified')}</option>
                     <option value="inactive">{t('admin_status_inactive')}</option>
+                    <option value="active">{t('admin_status_active')}</option>
                   </select>
                 </th>
                 <th></th>
@@ -213,9 +215,15 @@ const UserManagement = () => {
                     {user.is_superuser ? t('admin_role_superadmin') : user.is_staff ? t('admin_role_admin') : t('admin_role_user')}
                   </td>
                   <td className="py-3">
-                    <span className={`status-badge ${user.is_active ? 'status-approved' : 'status-rejected'}`}>
-                      {user.is_active ? t('admin_status_active') : t('admin_status_inactive')}
-                    </span>
+                    {(() => {
+                      if (!user.email_verified) {
+                        return <span className="status-badge status-pending">{t('admin_status_unverified')}</span>;
+                      } else if (!user.is_active) {
+                        return <span className="status-badge status-rejected">{t('admin_status_inactive')}</span>;
+                      } else {
+                        return <span className="status-badge status-approved">{t('admin_status_active')}</span>;
+                      }
+                    })()}
                   </td>
                   <td className="py-3">
                     <button onClick={() => { setEditingUser(user); setFormData({...user, password: ''}); setShowModal(true); }} className="text-blue-500 hover:text-blue-700 text-sm mr-2">{t('admin_edit')}</button>
@@ -246,9 +254,13 @@ const UserManagement = () => {
                 <input type="checkbox" checked={formData.is_staff} onChange={(e) => setFormData({...formData, is_staff: e.target.checked})} className="mr-2" />
                 {t('admin_form_admin_access')}
               </label>
-              <label className="flex items-center mb-4">
+              <label className="flex items-center mb-3">
                 <input type="checkbox" checked={formData.is_active} onChange={(e) => setFormData({...formData, is_active: e.target.checked})} className="mr-2" />
                 {t('admin_form_active')}
+              </label>
+              <label className="flex items-center mb-4">
+                <input type="checkbox" checked={formData.email_verified} onChange={(e) => setFormData({...formData, email_verified: e.target.checked})} className="mr-2" />
+                {t('admin_form_email_verified')}
               </label>
               <div className="flex gap-2">
                 <button type="submit" className="flex-1 wedding-btn">{t('admin_save')}</button>

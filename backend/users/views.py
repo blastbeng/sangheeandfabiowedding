@@ -278,7 +278,6 @@ class VerifyEmailView(APIView):
         if user.email_verified:
             return redirect(f"{frontend_url}/verify-email?success=already_verified")
         user.email_verified = True
-        user.is_active = True
         user.save()
         return redirect(f"{frontend_url}/verify-email?success=verified")
 
@@ -303,7 +302,11 @@ class LoginView(APIView):
                 pass
         if user and user.check_password(password):
             if not user.is_active:
-                return Response({'error': 'Account is not active. Please verify your email.'}, status=status.HTTP_401_UNAUTHORIZED)
+                if not user.email_verified:
+                    msg = 'Account is not verified. Please check your email for the verification link.'
+                else:
+                    msg = 'Your account is pending admin approval.'
+                return Response({'error': msg}, status=status.HTTP_401_UNAUTHORIZED)
             login(request, user)
 
             remember_me = request.data.get('remember_me', False)
