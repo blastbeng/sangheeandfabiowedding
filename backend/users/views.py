@@ -752,7 +752,23 @@ class MediaFileView(APIView):
 
         content, content_type = get_file_from_cloud(media)
         if content is None:
-            raise Http404("File not found")
+            # Fallback to local file storage
+            if media.file and media.file.storage.exists(media.file.name):
+                with media.file.open('rb') as f:
+                    content = f.read()
+                ext = os.path.splitext(media.file.name)[1].lower()
+                if ext in ['.jpg', '.jpeg']:
+                    content_type = 'image/jpeg'
+                elif ext == '.png':
+                    content_type = 'image/png'
+                elif ext == '.gif':
+                    content_type = 'image/gif'
+                elif ext == '.mp4':
+                    content_type = 'video/mp4'
+                else:
+                    content_type = 'application/octet-stream'
+            else:
+                raise Http404("File not found")
         redis_client.set(cache_key, content)
         media.view_count += 1
         media.save(update_fields=['view_count'])
