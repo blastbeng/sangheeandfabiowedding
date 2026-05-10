@@ -16,6 +16,7 @@ class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
     this.state = { hasError: false, error: null };
+    this.redirectTimer = null;
   }
 
   static getDerivedStateFromError(error) {
@@ -27,28 +28,80 @@ class ErrorBoundary extends React.Component {
     console.error('[ErrorBoundary] Error info:', errorInfo);
   }
 
+  componentDidMount() {
+    if (this.state.hasError) {
+      this.redirectTimer = setTimeout(() => {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('isAdmin');
+        window.location.href = '/';
+      }, 5000);
+    }
+  }
+
+  componentWillUnmount() {
+    if (this.redirectTimer) {
+      clearTimeout(this.redirectTimer);
+    }
+  }
+
   render() {
     if (this.state.hasError) {
+      const containerStyle = {
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#fef2f2',
+        fontFamily: 'system-ui, -apple-system, sans-serif',
+      };
+      const boxStyle = {
+        textAlign: 'center',
+        padding: '2rem',
+        maxWidth: '400px',
+      };
+      const headingStyle = {
+        fontSize: '1.5rem',
+        color: '#dc2626',
+        marginBottom: '1rem',
+      };
+      const textStyle = {
+        color: '#4b5563',
+        marginBottom: '1.5rem',
+      };
+      const buttonStyle = {
+        backgroundColor: '#dc2626',
+        color: 'white',
+        border: 'none',
+        padding: '0.75rem 1.5rem',
+        borderRadius: '0.375rem',
+        cursor: 'pointer',
+        fontSize: '1rem',
+      };
+
       return (
-        <div className="min-h-screen flex items-center justify-center bg-red-50">
-          <div className="text-center p-8">
-            <h1 className="text-2xl text-red-600 mb-4">Something went wrong</h1>
-            <p className="text-gray-600">Please refresh the page</p>
-            <button 
+        <div style={containerStyle}>
+          <div style={boxStyle}>
+            <h1 style={headingStyle}>Something went wrong</h1>
+            <p style={textStyle}>
+              You will be redirected to the home page in a few seconds.
+            </p>
+            <button
+              style={buttonStyle}
               onClick={() => {
                 localStorage.removeItem('accessToken');
                 localStorage.removeItem('refreshToken');
                 localStorage.removeItem('isAdmin');
                 window.location.href = '/';
               }}
-              className="mt-4 px-4 py-2 bg-red-600 text-white rounded"
             >
-              Refresh
+              Go to Home Now
             </button>
           </div>
         </div>
       );
     }
+
     return this.props.children;
   }
 }
