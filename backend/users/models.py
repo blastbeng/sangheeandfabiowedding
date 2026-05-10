@@ -1,3 +1,4 @@
+import os
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.conf import settings as django_settings
@@ -177,7 +178,7 @@ class SiteSettings(models.Model):
         for field, setting_name in field_map.items():
             env_value = getattr(django_settings, setting_name, None)
             if env_value is None:
-                env_value = ''
+                env_value = os.environ.get(setting_name, '')
             # Convert to appropriate type for the model field
             if isinstance(env_value, bool):
                 pass  # already bool
