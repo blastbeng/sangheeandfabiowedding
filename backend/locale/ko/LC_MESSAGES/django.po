@@ -59,3 +59,6 @@ msgstr "비밀번호 불일치"
 
 msgid "Current password is incorrect"
 msgstr "현재 비밀번호 오류"
+
+msgid "Remember Me"
+msgstr "로그인 상태 유지"
