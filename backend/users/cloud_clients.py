@@ -6,23 +6,36 @@ from config.settings import (
 
 class NextcloudClient:
     def __init__(self):
-        self.base_url = NEXTCLOUD_URL
+        self.base_url = NEXTCLOUD_URL.rstrip('/')
         self.username = NEXTCLOUD_USERNAME
         self.password = NEXTCLOUD_PASSWORD
-        self.folder = NEXTCLOUD_FOLDER
+        folder = NEXTCLOUD_FOLDER
+        if not folder.startswith('/'):
+            folder = '/' + folder
+        self.folder = folder
 
     def upload_file(self, file_content, filename):
         url = f"{self.base_url}/remote.php/dav/files/{self.username}{self.folder}/{filename}"
         try:
-            response = requests.put(url, data=file_content, auth=(self.username, self.password),
-                                    headers={'Content-Type': 'application/octet-stream'})
-            if response.status_code in [201, 204]:
+            response = requests.put(
+                url,
+                data=file_content,
+                auth=(self.username, self.password),
+                headers={'Content-Type': 'application/octet-stream'}
+            )
+            if response.status_code in [200, 201, 204]:
                 propfind_url = f"{self.base_url}/remote.php/dav/files/{self.username}{self.folder}/{filename}"
-                propfind_response = requests.request('PROPFIND', propfind_url, auth=(self.username, self.password),
-                                                     headers={'Depth': '0'})
+                propfind_response = requests.request(
+                    'PROPFIND', propfind_url,
+                    auth=(self.username, self.password),
+                    headers={'Depth': '0'}
+                )
                 file_id = propfind_response.headers.get('OC-FileId', filename)
                 return file_id
-            return None
+            else:
+                print(f"Nextcloud upload failed: HTTP {response.status_code} - {response.reason}")
+                print(f"Response body: {response.text[:500]}")
+                return None
         except Exception as e:
             print(f"Nextcloud upload error: {e}")
             return None

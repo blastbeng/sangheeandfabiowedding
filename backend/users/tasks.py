@@ -57,7 +57,7 @@ def upload_media_task(self, user_id, file_data_list):
             # Upload to Nextcloud
             nextcloud_id = nextcloud_client.upload_file(file_content, unique_filename)
             if not nextcloud_id:
-                errors.append(f"Nextcloud upload failed for {filename}")
+                errors.append(f"Nextcloud upload failed for {filename} (check Nextcloud logs for details)")
                 logger.error(f"Nextcloud upload failed for {filename}")
                 continue
 
