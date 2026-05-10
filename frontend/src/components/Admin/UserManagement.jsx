@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import logger from '../../utils/logger';
 import authFetch from '../../utils/authFetch';
@@ -9,6 +9,9 @@ const UserManagement = () => {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
+  const [profilePicFile, setProfilePicFile] = useState(null);
+  const [deletePicture, setDeletePicture] = useState(false);
+  const fileInputRef = useRef(null);
   const [formData, setFormData] = useState({
     username: '', email: '', first_name: '', last_name: '',
     is_staff: false, is_active: true, email_verified: false, password: ''
@@ -35,6 +38,12 @@ const UserManagement = () => {
 
   useEffect(() => { fetchUsers(); }, [API_URL]);
 
+  const resetModalState = () => {
+    setProfilePicFile(null);
+    setDeletePicture(false);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const url = editingUser 
@@ -43,20 +52,52 @@ const UserManagement = () => {
     const method = editingUser ? 'PUT' : 'POST';
 
     try {
-      const res = await authFetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      });
+      let res;
+      if (profilePicFile) {
+        // Use FormData for file upload
+        const fd = new FormData();
+        fd.append('username', formData.username);
+        fd.append('email', formData.email);
+        fd.append('first_name', formData.first_name);
+        fd.append('last_name', formData.last_name);
+        fd.append('is_staff', formData.is_staff);
+        fd.append('is_active', formData.is_active);
+        fd.append('email_verified', formData.email_verified);
+        if (formData.password) fd.append('password', formData.password);
+        fd.append('profile_picture', profilePicFile);
+        res = await authFetch(url, {
+          method,
+          body: fd,
+        });
+      } else if (deletePicture) {
+        // Send JSON with remove_profile_picture flag
+        const body = { ...formData };
+        body.remove_profile_picture = true;
+        res = await authFetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+      } else {
+        // Regular JSON update
+        res = await authFetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData)
+        });
+      }
       if (res.ok) {
         fetchUsers();
         setShowModal(false);
         setEditingUser(null);
+        resetModalState();
         setFormData({ username: '', email: '', first_name: '', last_name: '', is_staff: false, is_active: true, email_verified: false, password: '' });
+      } else {
+        const errorData = await res.json().catch(() => ({}));
+        logger.error('[UserManagement] User save failed:', res.status, errorData);
       }
     } catch (err) {
       logger.error('[UserManagement] User save error:', err);
-      logger.error('[UserManagement] Form data:', formData);
     }
   };
 
@@ -83,6 +124,30 @@ const UserManagement = () => {
     } catch (err) {
       logger.error('[UserManagement] Toggle staff error for user:', userId, err);
     }
+  };
+
+  const handleFileChange = (e) => {
+    if (e.target.files[0]) {
+      setProfilePicFile(e.target.files[0]);
+      setDeletePicture(false);
+    } else {
+      setProfilePicFile(null);
+    }
+  };
+
+  const handleDeletePicture = () => {
+    setDeletePicture(true);
+    setProfilePicFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleCancelDeletePicture = () => {
+    setDeletePicture(false);
+  };
+
+  const handleClearFile = () => {
+    setProfilePicFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const filteredUsers = users.filter(user => {
@@ -115,7 +180,7 @@ const UserManagement = () => {
       <div className="wedding-card p-8">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-3xl wedding-title">{t('admin_users_title')}</h2>
-          <button onClick={() => { setEditingUser(null); setFormData({ username: '', email: '', first_name: '', last_name: '', is_staff: false, is_active: true, email_verified: false, password: '' }); setShowModal(true); }} className="wedding-btn">{t('admin_add_user')}</button>
+          <button onClick={() => { setEditingUser(null); setFormData({ username: '', email: '', first_name: '', last_name: '', is_staff: false, is_active: true, email_verified: false, password: '' }); resetModalState(); setShowModal(true); }} className="wedding-btn">{t('admin_add_user')}</button>
         </div>
 
         <div className="overflow-x-auto">
@@ -226,7 +291,7 @@ const UserManagement = () => {
                     })()}
                   </td>
                   <td className="py-3">
-                    <button onClick={() => { setEditingUser(user); setFormData({...user, password: ''}); setShowModal(true); }} className="text-blue-500 hover:text-blue-700 text-sm mr-2">{t('admin_edit')}</button>
+                    <button onClick={() => { setEditingUser(user); setFormData({...user, password: ''}); resetModalState(); setShowModal(true); }} className="text-blue-500 hover:text-blue-700 text-sm mr-2">{t('admin_edit')}</button>
                     {!user.is_superuser && (
                       <button onClick={() => handleDelete(user.id)} className="text-red-500 hover:text-red-700 text-sm">{t('admin_delete')}</button>
                     )}
@@ -240,7 +305,7 @@ const UserManagement = () => {
 
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="wedding-card p-6 max-w-md w-full">
+          <div className="wedding-card p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
             <h3 className="text-xl font-bold mb-4 text-pink-600">{editingUser ? t('admin_edit_user') : t('admin_add_new_user')}</h3>
             <form onSubmit={handleSubmit}>
               <input type="text" placeholder={t('admin_form_username')} value={formData.username} onChange={(e) => setFormData({...formData, username: e.target.value})} className="wedding-input w-full mb-3" required />
@@ -262,9 +327,70 @@ const UserManagement = () => {
                 <input type="checkbox" checked={formData.email_verified} onChange={(e) => setFormData({...formData, email_verified: e.target.checked})} className="mr-2" />
                 {t('admin_form_email_verified')}
               </label>
+
+              {/* Profile Picture Section */}
+              <div className="mt-2 pt-4 border-t border-pink-200 mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {t('admin_form_profile_picture', 'Profile Picture')}
+                </label>
+                {editingUser && (
+                  <div className="mb-3 flex items-center gap-3">
+                    <img
+                      src={editingUser.profile_picture_url || 'https://i.imgur.com/V4RclNb.png'}
+                      alt=""
+                      className={`w-16 h-16 object-cover rounded-full border border-pink-200${deletePicture ? ' opacity-40' : ''}`}
+                      onError={(e) => { e.target.src = 'https://i.imgur.com/V4RclNb.png'; }}
+                    />
+                    {!deletePicture ? (
+                      <button
+                        type="button"
+                        onClick={handleDeletePicture}
+                        className="text-red-500 hover:text-red-700 text-sm underline"
+                      >
+                        {t('admin_delete_picture', 'Delete Picture')}
+                      </button>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <span className="text-red-500 text-sm font-medium">
+                          {t('admin_picture_will_be_deleted', 'Picture will be deleted on save')}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={handleCancelDeletePicture}
+                          className="text-gray-500 hover:text-gray-700 text-sm underline"
+                        >
+                          {t('admin_cancel_delete_picture', 'Cancel')}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+                <div className="relative">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-pink-50 file:text-pink-700 hover:file:bg-pink-100"
+                  />
+                  {profilePicFile && (
+                    <div className="mt-1 flex items-center gap-2">
+                      <span className="text-sm text-gray-500">{profilePicFile.name}</span>
+                      <button
+                        type="button"
+                        onClick={handleClearFile}
+                        className="text-red-400 hover:text-red-600 text-sm"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
               <div className="flex gap-2">
                 <button type="submit" className="flex-1 wedding-btn">{t('admin_save')}</button>
-                <button type="button" onClick={() => { setShowModal(false); setEditingUser(null); }} className="flex-1 bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500">{t('admin_cancel')}</button>
+                <button type="button" onClick={() => { setShowModal(false); setEditingUser(null); resetModalState(); }} className="flex-1 bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500">{t('admin_cancel')}</button>
               </div>
             </form>
           </div>

@@ -1,7 +1,10 @@
+import logging
 from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.staticfiles.storage import staticfiles_storage
 from .models import CustomUser, Media, SiteSettings, FaceTag
+
+logger = logging.getLogger(__name__)
 
 
 class CustomUserSerializer(serializers.ModelSerializer):
@@ -185,12 +188,14 @@ class MediaModerationSerializer(serializers.ModelSerializer):
 class AdminUserSerializer(serializers.ModelSerializer):
     profile_picture_url = serializers.SerializerMethodField()
     profile_picture = serializers.ImageField(required=False, write_only=True)
+    remove_profile_picture = serializers.BooleanField(write_only=True, required=False, default=False)
 
     class Meta:
         model = CustomUser
         fields = ('id', 'username', 'email', 'first_name', 'last_name',
                   'is_staff', 'is_superuser', 'is_active', 'email_verified',
-                  'created_at', 'updated_at', 'language', 'profile_picture', 'profile_picture_url')
+                  'created_at', 'updated_at', 'language', 'profile_picture', 'profile_picture_url',
+                  'remove_profile_picture')
         read_only_fields = ('created_at', 'updated_at')
 
     def get_profile_picture_url(self, obj):
@@ -201,12 +206,31 @@ class AdminUserSerializer(serializers.ModelSerializer):
         return url
 
     def update(self, instance, validated_data):
+        remove_pic = validated_data.pop('remove_profile_picture', False)
         new_picture = validated_data.pop('profile_picture', None)
+
         if new_picture:
             if instance.profile_picture and instance.profile_picture.name != 'profile_pics/default.png':
                 instance.profile_picture.delete(save=False)
             instance.profile_picture = new_picture
-        return super().update(instance, validated_data)
+        elif remove_pic:
+            if instance.profile_picture and instance.profile_picture.name != 'profile_pics/default.png':
+                instance.profile_picture.delete(save=False)
+
+        instance = super().update(instance, validated_data)
+
+        if remove_pic and not new_picture:
+            self._set_default_profile_picture(instance)
+
+        return instance
+
+    def _set_default_profile_picture(self, user):
+        from django.core.files.base import ContentFile
+        try:
+            with staticfiles_storage.open('images/default_profile_pic.png', 'rb') as f:
+                user.profile_picture.save('default.png', ContentFile(f.read()), save=True)
+        except Exception as e:
+            logger.error(f"Failed to set default profile picture: {e}")
 
 
 class SiteSettingsSerializer(serializers.ModelSerializer):
