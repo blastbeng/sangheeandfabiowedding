@@ -38,7 +38,7 @@ const MyUploads = () => {
   const getStatusBadge = (status) => {
     const badges = { pending: 'status-pending', approved: 'status-approved', rejected: 'status-rejected' };
     const icons = { pending: '⏳', approved: '✅', rejected: '❌' };
-    return <span className={`status-badge ${badges[status]}`}>{icons[status]} {t(status)}</span>;
+    return <span className={`status-badge ${badges[status]} whitespace-nowrap`}>{icons[status]} {t(status)}</span>;
   };
 
   if (loading) {
@@ -69,11 +69,11 @@ const MyUploads = () => {
             <table className="w-full">
               <thead>
                 <tr className="border-b-2 border-pink-200">
-                  <th className="text-left py-3 text-pink-600">{t('my_uploads_preview')}</th>
-                  <th className="text-left py-3 text-pink-600">{t('my_uploads_caption')}</th>
-                  <th className="text-left py-3 text-pink-600">{t('my_uploads_uploaded')}</th>
-                  <th className="text-left py-3 text-pink-600">{t('my_uploads_status')}</th>
-                  <th className="text-left py-3 text-pink-600">{t('my_uploads_actions')}</th>
+                  <th className="text-left py-3 text-pink-600 whitespace-nowrap">{t('my_uploads_preview')}</th>
+                  <th className="text-left py-3 text-pink-600 whitespace-nowrap">{t('my_uploads_caption')}</th>
+                  <th className="text-left py-3 text-pink-600 whitespace-nowrap">{t('my_uploads_uploaded')}</th>
+                  <th className="text-left py-3 text-pink-600 whitespace-nowrap">{t('my_uploads_status')}</th>
+                  <th className="text-left py-3 text-pink-600 whitespace-nowrap">{t('my_uploads_actions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -84,10 +84,10 @@ const MyUploads = () => {
                         <img src={`${API_URL}${upload.file_url}`} alt={t('my_uploads_preview_alt')} className="w-16 h-16 object-cover rounded-lg border-2 border-pink-200" />
                       ) : <span className="text-2xl">🎬</span>}
                     </td>
-                    <td className="py-3 text-gray-700">{upload.caption || '-'}</td>
-                    <td className="py-3 text-gray-600 text-sm">{new Date(upload.uploaded_at).toLocaleDateString()}</td>
-                    <td className="py-3">{getStatusBadge(upload.status)}</td>
-                    <td className="py-3">
+                    <td className="py-3 text-gray-700 whitespace-nowrap">{upload.caption || '-'}</td>
+                    <td className="py-3 text-gray-600 text-sm whitespace-nowrap">{new Date(upload.uploaded_at).toLocaleDateString()}</td>
+                    <td className="py-3 whitespace-nowrap">{getStatusBadge(upload.status)}</td>
+                    <td className="py-3 whitespace-nowrap">
                       <button onClick={() => handleDelete(upload.id)} className="text-red-500 hover:text-red-700 text-sm">{t('my_uploads_delete_button')}</button>
                     </td>
                   </tr>
