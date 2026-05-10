@@ -969,6 +969,14 @@ class AdminUserDetailView(APIView):
 
     def put(self, request, user_id):
         user = self.get_object(user_id)
+
+        # Prevent non-superusers from changing the password of staff users
+        if 'password' in request.data and user.is_staff and not request.user.is_superuser:
+            return Response(
+                {'error': 'Only superusers can change the password of an admin.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
         serializer = AdminUserSerializer(user, data=request.data, partial=True)
         if serializer.is_valid():
             user = serializer.save()
