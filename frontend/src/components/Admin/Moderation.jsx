@@ -199,7 +199,7 @@ const AdminModeration = () => {
                       <img src={`${API_URL}${item.file_url}`} alt="preview" className="w-16 h-16 object-cover rounded-lg border-2 border-pink-200 hover:opacity-80 transition" />
                     </Link>
                   </td>
-                  <td className="py-3 text-gray-700">{item.user_email || 'Anonymous'}</td>
+                  <td className="py-3 text-gray-700">{item.user_email || t('anonymous')}</td>
                   <td className="py-3 text-gray-600 text-sm">{item.caption || '-'}</td>
                   <td className="py-3 text-gray-600 text-sm">{new Date(item.uploaded_at).toLocaleDateString()}</td>
                   <td className="py-3">{getStatusBadge(item.status)}</td>
