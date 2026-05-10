@@ -17,7 +17,7 @@ from django.utils import timezone
 from django.utils.translation import gettext as _
 from django.conf import settings as django_settings
 from django.http import HttpResponse, Http404
-from dotenv import set_key
+from dotenv import load_dotenv, set_key
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -56,6 +56,27 @@ ENV_MAPPING = {
     'email_host_password': 'EMAIL_HOST_PASSWORD',
     'default_from_email': 'DEFAULT_FROM_EMAIL',
 }
+
+
+def reload_django_settings():
+    """Reload .env into os.environ and update django.conf.settings."""
+    load_dotenv(override=True)
+    django_settings.GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID', '')
+    django_settings.GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET', '')
+    django_settings.FACEBOOK_APP_ID = os.environ.get('FACEBOOK_APP_ID', '')
+    django_settings.FACEBOOK_APP_SECRET = os.environ.get('FACEBOOK_APP_SECRET', '')
+    django_settings.INSTAGRAM_APP_ID = os.environ.get('INSTAGRAM_APP_ID', '')
+    django_settings.INSTAGRAM_APP_SECRET = os.environ.get('INSTAGRAM_APP_SECRET', '')
+    django_settings.NEXTCLOUD_URL = os.environ.get('NEXTCLOUD_URL', '')
+    django_settings.NEXTCLOUD_USERNAME = os.environ.get('NEXTCLOUD_USERNAME', '')
+    django_settings.NEXTCLOUD_PASSWORD = os.environ.get('NEXTCLOUD_PASSWORD', '')
+    django_settings.NEXTCLOUD_FOLDER = os.environ.get('NEXTCLOUD_FOLDER', '')
+    django_settings.EMAIL_HOST = os.environ.get('EMAIL_HOST', '')
+    django_settings.EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
+    django_settings.EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
+    django_settings.EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+    django_settings.EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+    django_settings.DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'noreply@sangheeandfabio.com')
 
 
 def is_provider_enabled(setting_value):
@@ -839,6 +860,7 @@ class AdminSettingsView(APIView):
         if serializer.is_valid():
             serializer.save()
             update_env_file(settings)
+            reload_django_settings()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
