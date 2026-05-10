@@ -42,10 +42,31 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    // Password match check
     if (formData.password !== formData.password_confirm) {
-      setError("Passwords don't match");
+      setError(t('password_mismatch'));
       return;
     }
+
+    // Password strength checks
+    if (formData.password.length < 8) {
+      setError(t('password_too_short'));
+      return;
+    }
+    if (!/[a-z]/.test(formData.password)) {
+      setError(t('password_requirements'));
+      return;
+    }
+    if (!/[A-Z]/.test(formData.password)) {
+      setError(t('password_requirements'));
+      return;
+    }
+    if (!/[0-9]/.test(formData.password)) {
+      setError(t('password_requirements'));
+      return;
+    }
+
     const data = new FormData();
     data.append('username', formData.username);
     data.append('email', formData.email);
@@ -54,6 +75,7 @@ const Register = () => {
     if (profilePicture) {
       data.append('profile_picture', profilePicture);
     }
+
     try {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/register/`, {
         method: 'POST',
@@ -61,13 +83,23 @@ const Register = () => {
       });
       const result = await response.json();
       if (response.ok) {
-        setSuccess('Account created successfully! Please check your email to verify your account. 🎉');
+        setSuccess(t('verify_success'));
       } else {
-        setError(Object.values(result)[0] || 'Registration failed');
+        // Handle specific known errors with translations
+        if (result.email) {
+          setError(t('email_already_exists'));
+        } else if (result.username) {
+          setError(t('username_already_taken'));
+        } else {
+          // Fallback: extract first error message
+          const firstError = Object.values(result)[0];
+          const message = Array.isArray(firstError) ? firstError[0] : firstError;
+          setError(message || t('registration_failed'));
+        }
       }
     } catch (err) {
       logger.error('[Register] Registration error:', err);
-      setError('An error occurred during registration');
+      setError(t('error_during_registration'));
     }
   };
 

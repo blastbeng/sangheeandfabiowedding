@@ -303,7 +303,13 @@ const resources = {
       "filter_email": "Filtra email...",
       "filter_first_name": "Filtra nome...",
       "filter_last_name": "Filtra cognome...",
-      "all": "Tutti"
+      "all": "Tutti",
+      "email_already_exists": "Un account con questa email esiste già.",
+      "username_already_taken": "Questo nome utente è già stato preso.",
+      "password_too_short": "La password deve contenere almeno 8 caratteri.",
+      "password_requirements": "La password deve contenere almeno una lettera minuscola, una maiuscola e un numero.",
+      "registration_failed": "Registrazione fallita. Riprova.",
+      "error_during_registration": "Si è verificato un errore durante la registrazione."
     }
   },
   ko: {
@@ -607,7 +613,13 @@ const resources = {
       "filter_email": "이메일 필터...",
       "filter_first_name": "이름 필터...",
       "filter_last_name": "성 필터...",
-      "all": "전체"
+      "all": "전체",
+      "email_already_exists": "이 이메일로 이미 계정이 존재합니다.",
+      "username_already_taken": "이 사용자 이름은 이미 사용 중입니다.",
+      "password_too_short": "비밀번호는 8자 이상이어야 합니다.",
+      "password_requirements": "비밀번호는 소문자, 대문자, 숫자를 각각 하나 이상 포함해야 합니다.",
+      "registration_failed": "등록에 실패했습니다. 다시 시도해 주세요.",
+      "error_during_registration": "등록 중 오류가 발생했습니다."
     }
   },
   en: {
@@ -911,7 +923,13 @@ const resources = {
       "filter_email": "Filter email...",
       "filter_first_name": "Filter first name...",
       "filter_last_name": "Filter last name...",
-      "all": "All"
+      "all": "All",
+      "email_already_exists": "An account with this email already exists.",
+      "username_already_taken": "This username is already taken.",
+      "password_too_short": "Password must be at least 8 characters.",
+      "password_requirements": "Password must contain at least one lowercase letter, one uppercase letter, and one number.",
+      "registration_failed": "Registration failed. Please try again.",
+      "error_during_registration": "An error occurred during registration."
     }
   }
 };

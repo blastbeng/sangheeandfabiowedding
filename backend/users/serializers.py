@@ -50,6 +50,12 @@ class CustomUserSerializer(serializers.ModelSerializer):
             if CustomUser.objects.filter(email=email).exists():
                 raise serializers.ValidationError({"email": "An account with this email already exists."})
 
+        # Check for duplicate username during registration
+        if self.instance is None and attrs.get('username'):
+            username = attrs['username']
+            if CustomUser.objects.filter(username=username).exists():
+                raise serializers.ValidationError({"username": "This username is already taken."})
+
         return attrs
 
     def create(self, validated_data):
