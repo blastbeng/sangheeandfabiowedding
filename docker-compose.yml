@@ -47,6 +47,8 @@ services:
     volumes:
       - ./backend/media:/app/media
     environment:
+      - PUID=1000
+      - PGID=1000
       - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
@@ -97,6 +99,8 @@ services:
     build: ./backend
     command: celery -A config worker --loglevel=info
     environment:
+      - PUID=1000
+      - PGID=1000
       - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
