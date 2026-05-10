@@ -19,6 +19,11 @@ const MIME_TYPES = {
   '.ico': 'image/x-icon',
 };
 
+function hasFileExtension(url) {
+  const lastSegment = url.split('/').pop();
+  return lastSegment.includes('.');
+}
+
 function logHealthCheck() {
   const timestamp = new Date().toISOString();
   fs.appendFileSync(HEALTH_LOG, `${timestamp} - healthcheck\n`);
@@ -50,19 +55,56 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // Console log for all other requests (like serve does)
+  // Console log for all other requests
   console.log(`${new Date().toISOString()} ${req.method} ${url}`);
 
-  // Try to serve exact file
-  const filePath = path.join(DIST_DIR, url === '/' ? 'index.html' : url);
-  fs.stat(filePath, (err, stats) => {
-    if (!err && stats.isFile()) {
-      serveStatic(res, filePath);
-    } else {
-      // SPA fallback: serve index.html for any non-file route
-      serveStatic(res, path.join(DIST_DIR, 'index.html'));
-    }
-  });
+  // Determine the file to serve
+  const isRoot = url === '/';
+  const requestPath = isRoot ? '/index.html' : url;
+  const filePath = path.join(DIST_DIR, requestPath);
+
+  // Helper to serve a file with appropriate caching headers
+  const serveWithCache = (res, filePath, cacheType) => {
+    const ext = path.extname(filePath).toLowerCase();
+    const contentType = MIME_TYPES[ext] || 'application/octet-stream';
+
+    fs.readFile(filePath, (err, data) => {
+      if (err) {
+        res.writeHead(404, { 'Content-Type': 'text/plain' });
+        res.end('Not Found');
+        return;
+      }
+      const headers = { 'Content-Type': contentType };
+      if (cacheType === 'html') {
+        headers['Cache-Control'] = 'no-cache, no-store, must-revalidate';
+      } else if (cacheType === 'hashed') {
+        headers['Cache-Control'] = 'public, max-age=31536000, immutable';
+      } else {
+        headers['Cache-Control'] = 'public, max-age=86400';
+      }
+      res.writeHead(200, headers);
+      res.end(data);
+    });
+  };
+
+  // If the URL has a file extension, it's a static asset request
+  if (hasFileExtension(requestPath)) {
+    fs.stat(filePath, (err, stats) => {
+      if (!err && stats.isFile()) {
+        // Determine cache type: hashed assets contain a hash in the filename
+        const fileName = path.basename(filePath);
+        const isHashed = /[.-][a-f0-9]{8,}\./i.test(fileName); // e.g., index-abc123.js
+        serveWithCache(res, filePath, isHashed ? 'hashed' : 'static');
+      } else {
+        // Missing static file – return 404, do NOT fall back to index.html
+        res.writeHead(404, { 'Content-Type': 'text/plain' });
+        res.end('Not Found');
+      }
+    });
+  } else {
+    // No file extension – serve index.html (SPA fallback)
+    serveWithCache(res, path.join(DIST_DIR, 'index.html'), 'html');
+  }
 });
 
 server.listen(PORT, () => {
