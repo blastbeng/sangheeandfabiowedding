@@ -175,12 +175,22 @@ class MediaModerationSerializer(serializers.ModelSerializer):
 
 
 class AdminUserSerializer(serializers.ModelSerializer):
+    profile_picture_url = serializers.SerializerMethodField()
+
     class Meta:
         model = CustomUser
         fields = ('id', 'username', 'email', 'first_name', 'last_name',
                   'is_staff', 'is_superuser', 'is_active', 'created_at',
-                  'updated_at', 'language', 'profile_picture')
+                  'updated_at', 'language', 'profile_picture_url')
         read_only_fields = ('created_at', 'updated_at')
+
+    def get_profile_picture_url(self, obj):
+        if obj.profile_picture:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.profile_picture.url)
+            return obj.profile_picture.url
+        return None
 
 
 class SiteSettingsSerializer(serializers.ModelSerializer):

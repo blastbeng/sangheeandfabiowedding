@@ -199,7 +199,7 @@ const UserManagement = () => {
                 <tr key={user.id} className="border-b border-pink-100 hover:bg-pink-50">
                   <td className="py-3">
                     <img
-                      src={user.profile_picture ? `${API_URL}${user.profile_picture}` : 'https://i.imgur.com/V4RclNb.png'}
+                      src={user.profile_picture_url || 'https://i.imgur.com/V4RclNb.png'}
                       alt=""
                       className="w-10 h-10 object-cover rounded-full border border-pink-200"
                       onError={(e) => { e.target.src = 'https://i.imgur.com/V4RclNb.png'; }}
