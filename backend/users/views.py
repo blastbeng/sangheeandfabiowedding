@@ -32,7 +32,7 @@ from .serializers import (
     AdminUserSerializer, SiteSettingsSerializer, BulkModerationSerializer,
     PublicMediaSerializer, PublicUserSerializer, FaceTagSerializer
 )
-from .cloud_clients import get_file_from_cloud
+from .cloud_clients import get_file_from_cloud, NextcloudClient
 from .tasks import upload_media_task, delete_media_task, detect_faces_task
 
 logger = logging.getLogger(__name__)
@@ -777,9 +777,28 @@ class MediaModerateSingleView(APIView):
 
     def delete(self, request, media_id):
         media = get_object_or_404(Media, id=media_id)
-        delete_media_task.delay(media.id)
+
+        # Delete from Nextcloud
+        nc = NextcloudClient()
+        if media.nextcloud_file_id:
+            nc.delete_file(media.nextcloud_file_id)
+
+        # Delete from Redis cache
+        try:
+            redis_client = redis.Redis(
+                host=django_settings.REDIS_HOST,
+                port=django_settings.REDIS_PORT,
+                decode_responses=False
+            )
+            cache_key = f"media_cache:{media.id}"
+            redis_client.delete(cache_key)
+        except Exception as e:
+            logger.error(f"Redis cache delete error: {e}")
+
+        # Delete from database
+        media.delete()
         logger.info(f"Admin {request.user.username} deleted media {media_id}")
-        return Response({'message': 'Deletion started'}, status=status.HTTP_202_ACCEPTED)
+        return Response({'message': 'Media deleted successfully'}, status=status.HTTP_200_OK)
 
 
 class MediaFileView(APIView):
