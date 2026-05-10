@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import logger from '../../utils/logger';
 
 const Gallery = () => {
@@ -87,12 +88,13 @@ const Gallery = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {media.map((item) => (
             <div key={item.id} className="gallery-item bg-white shadow-lg">
-              <div className="relative">
+              <Link to={`/media/${item.id}`} state={{ media: item }} className="block relative">
                 {item.media_type === 'video' ? (
                   <video
                     src={`${API_URL}${item.file_url}`}
                     className="w-full h-48 object-cover"
-                    controls
+                    muted
+                    preload="metadata"
                   />
                 ) : (
                   <img
@@ -101,7 +103,7 @@ const Gallery = () => {
                     className="w-full h-48 object-cover"
                   />
                 )}
-              </div>
+              </Link>
               <div className="p-4">
                 {/* Uploader info */}
                 {item.uploader_username && (

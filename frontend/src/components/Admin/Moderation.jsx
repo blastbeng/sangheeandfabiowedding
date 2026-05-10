@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import logger from '../../utils/logger';
 import authFetch from '../../utils/authFetch';
 
@@ -193,7 +194,9 @@ const AdminModeration = () => {
                     />
                   </td>
                   <td className="py-3">
-                    <img src={`${API_URL}${item.file_url}`} alt="preview" className="w-16 h-16 object-cover rounded-lg border-2 border-pink-200" />
+                    <Link to={`/media/${item.id}`} state={{ media: item }}>
+                      <img src={`${API_URL}${item.file_url}`} alt="preview" className="w-16 h-16 object-cover rounded-lg border-2 border-pink-200 hover:opacity-80 transition" />
+                    </Link>
                   </td>
                   <td className="py-3 text-gray-700">{item.user_email || 'Anonymous'}</td>
                   <td className="py-3 text-gray-600 text-sm">{item.caption || '-'}</td>

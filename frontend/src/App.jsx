@@ -9,6 +9,7 @@ import Profile from './components/User/Profile';
 import Upload from './components/User/Upload';
 import MyUploads from './components/User/MyUploads';
 import Gallery from './components/Public/Gallery';
+import MediaView from './components/Public/MediaView';
 import UserList from './components/Public/UserList';
 import UserProfile from './components/Public/UserProfile';
 import AdminModeration from './components/Admin/Moderation';
@@ -111,6 +112,7 @@ function App() {
               <Route path="/" element={<Home isAuthenticated={isAuthenticated} />} />
               <Route path="/events" element={<Events />} />
               <Route path="/gallery" element={<Gallery />} />
+              <Route path="/media/:id" element={<MediaView />} />
               <Route path="/users" element={<UserList />} />
               <Route path="/user/:id" element={<UserProfile />} />
               <Route path="/verify-email" element={<VerifyEmail />} />
