@@ -24,14 +24,7 @@ class NextcloudClient:
                 headers={'Content-Type': 'application/octet-stream'}
             )
             if response.status_code in [200, 201, 204]:
-                propfind_url = f"{self.base_url}/remote.php/dav/files/{self.username}{self.folder}/{filename}"
-                propfind_response = requests.request(
-                    'PROPFIND', propfind_url,
-                    auth=(self.username, self.password),
-                    headers={'Depth': '0'}
-                )
-                file_id = propfind_response.headers.get('OC-FileId', filename)
-                return file_id
+                return filename
             else:
                 print(f"Nextcloud upload failed: HTTP {response.status_code} - {response.reason}")
                 print(f"Response body: {response.text[:500]}")
