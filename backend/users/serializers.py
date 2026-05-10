@@ -44,6 +44,12 @@ class CustomUserSerializer(serializers.ModelSerializer):
             except Exception as e:
                 raise serializers.ValidationError({"password": list(e.messages)})
 
+        # Check for duplicate email during registration
+        if self.instance is None and attrs.get('email'):
+            email = attrs['email']
+            if CustomUser.objects.filter(email=email).exists():
+                raise serializers.ValidationError({"email": "An account with this email already exists."})
+
         return attrs
 
     def create(self, validated_data):

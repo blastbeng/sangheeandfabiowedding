@@ -79,6 +79,49 @@ def update_env_file(settings_obj):
         logger.error(f"Failed to update .env file: {e}")
 
 
+def update_user_from_social(user, provider, extra_data):
+    """Update user's name and profile picture from social account data if missing."""
+    updated = False
+
+    if not user.first_name:
+        first = extra_data.get('given_name') or extra_data.get('first_name')
+        if first:
+            user.first_name = first
+            updated = True
+    if not user.last_name:
+        last = extra_data.get('family_name') or extra_data.get('last_name')
+        if last:
+            user.last_name = last
+            updated = True
+
+    if not user.profile_picture or user.profile_picture.name == 'profile_pics/default.png':
+        picture_url = None
+        if provider == 'google':
+            picture_url = extra_data.get('picture')
+        elif provider == 'facebook':
+            fb_id = extra_data.get('id')
+            if fb_id:
+                picture_url = f"https://graph.facebook.com/{fb_id}/picture?type=large"
+        elif provider == 'instagram':
+            picture_url = extra_data.get('profile_picture')
+
+        if picture_url:
+            try:
+                resp = requests.get(picture_url)
+                if resp.status_code == 200:
+                    user.profile_picture.save(
+                        f"{user.username}_social.jpg",
+                        ContentFile(resp.content),
+                        save=False
+                    )
+                    updated = True
+            except Exception as e:
+                logger.error(f"Failed to download profile picture for {user.email}: {e}")
+
+    if updated:
+        user.save()
+
+
 # ==================== AUTH VIEWS ====================
 
 class SocialProvidersStatusView(APIView):
@@ -325,9 +368,11 @@ class SocialLoginView(APIView):
             user_info = self.get_google_user_info(access_token)
         except Exception as e:
             return Response({'error': f'Google token verification failed: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+
         email = user_info.get('email')
         if not email:
             return Response({'error': 'Email not provided by Google'}, status=status.HTTP_400_BAD_REQUEST)
+
         user, created = User.objects.get_or_create(email=email, defaults={
             'username': self.generate_username(user_info),
             'first_name': user_info.get('given_name', ''),
@@ -335,8 +380,21 @@ class SocialLoginView(APIView):
             'is_active': True,
             'email_verified': True,
         })
-        if created:
-            self.download_profile_picture(user, user_info.get('picture'))
+
+        # Link Google social account to the user
+        google_uid = user_info.get('sub')
+        if google_uid:
+            SocialAccount.objects.get_or_create(
+                user=user,
+                provider='google',
+                uid=google_uid,
+                defaults={'extra_data': user_info}
+            )
+
+        # Update profile with Google data if user already existed
+        if not created:
+            update_user_from_social(user, 'google', user_info)
+
         refresh = RefreshToken.for_user(user)
         return Response({
             'refresh': str(refresh),
@@ -413,6 +471,31 @@ class SocialLoginCallbackView(APIView):
             return redirect(f"{os.getenv('FRONTEND_URL', 'http://localhost:5173')}/login?error=social_callback_failed")
 
         user = request.user
+        email = user.email
+
+        # Check if another user already has this email (merge accounts)
+        if email:
+            existing_user = User.objects.filter(email=email).exclude(id=user.id).first()
+            if existing_user:
+                # Transfer all social accounts from the new user to the existing user
+                for sa in SocialAccount.objects.filter(user=user):
+                    # Avoid duplicate provider+uid on the existing user
+                    if not SocialAccount.objects.filter(user=existing_user, provider=sa.provider, uid=sa.uid).exists():
+                        sa.user = existing_user
+                        sa.save()
+                    else:
+                        sa.delete()
+                # Update existing user's profile with social data
+                social_account = SocialAccount.objects.filter(user=existing_user).first()
+                if social_account:
+                    update_user_from_social(existing_user, social_account.provider, social_account.extra_data)
+                # Delete the newly created user
+                user.delete()
+                # Log in as the existing user
+                logout(request)
+                login(request, existing_user)
+                user = existing_user
+
         # Mark email as verified for social logins
         user.email_verified = True
         user.is_active = True
@@ -446,12 +529,11 @@ class SocialLoginCallbackView(APIView):
             if not user.profile_picture or user.profile_picture.name == 'profile_pics/default.png':
                 picture_url = None
                 if provider == 'facebook':
-                    # Facebook Graph API picture
                     fb_id = extra_data.get('id')
                     if fb_id:
                         picture_url = f"https://graph.facebook.com/{fb_id}/picture?type=large"
                 elif provider == 'instagram':
-                    picture_url = extra_data.get('profile_picture')  # Instagram Basic Display API
+                    picture_url = extra_data.get('profile_picture')
                 elif provider == 'google':
                     picture_url = extra_data.get('picture')
                 if picture_url:
