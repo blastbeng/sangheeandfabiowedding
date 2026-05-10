@@ -58,6 +58,50 @@ ENV_MAPPING = {
 }
 
 
+def build_verification_email(verification_url, site_name="SangHee & Fabio's Wedding"):
+    return f"""\
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"></head>
+<body style="margin:0; padding:0; background-color:#fdf2f8; font-family: 'Georgia', serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#fdf2f8; padding: 40px 0;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #f9a8d4, #f472b6); padding: 30px; text-align: center;">
+              <h1 style="color: #ffffff; margin: 0; font-size: 28px;">💕 {site_name} 💕</h1>
+            </td>
+          </tr>
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px 30px; text-align: center; color: #4b5563;">
+              <p style="font-size: 18px; margin-bottom: 20px;">Welcome to our wedding celebration!</p>
+              <p style="font-size: 16px; line-height: 1.6; margin-bottom: 30px;">
+                Please verify your email address to activate your account and start sharing beautiful memories with us.
+              </p>
+              <a href="{verification_url}" style="display: inline-block; background-color: #ec4899; color: #ffffff; text-decoration: none; padding: 14px 36px; border-radius: 30px; font-size: 16px; font-weight: bold; margin-bottom: 30px;">Verify Email Address</a>
+              <p style="font-size: 14px; color: #9ca3af;">
+                If you didn't create an account, you can safely ignore this email.
+              </p>
+            </td>
+          </tr>
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #fce7f3; padding: 20px; text-align: center; font-size: 12px; color: #9ca3af;">
+              &copy; {timezone.now().year} {site_name}. All rights reserved.
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+"""
+
+
 def reload_django_settings():
     """Reload .env into os.environ and update django.conf.settings."""
     env_path = os.path.join(django_settings.BASE_DIR, '.env')
@@ -177,12 +221,14 @@ class RegisterView(APIView):
             verification_url = f"{os.getenv('FRONTEND_URL', 'http://localhost:5173')}/verify-email?token={token}"
 
             try:
+                html_message = build_verification_email(verification_url)
                 send_mail(
-                    subject='Verify your email address',
-                    message=f'Please click the link to verify your email: {verification_url}',
+                    subject="Verify your email for SangHee & Fabio's Wedding",
+                    message='Please click the link to verify your email: ' + verification_url,
                     from_email=django_settings.DEFAULT_FROM_EMAIL,
                     recipient_list=[user.email],
                     fail_silently=False,
+                    html_message=html_message,
                 )
                 logger.info(f"Verification email sent to: {user.email}")
             except Exception as e:
