@@ -3,6 +3,7 @@ from rest_framework_simplejwt.views import TokenRefreshView
 from .views import (
     RegisterView, VerifyEmailView, LoginView, PasswordResetRequestView,
     PasswordResetConfirmView, ProfileView, LogoutView, SocialLoginView,
+    SocialProvidersStatusView,
     FacebookRedirectView, InstagramRedirectView, SocialLoginCallbackView,
     MediaListView, MediaUploadView, MediaDeleteView, MyUploadsView,
     MediaModerationView, MediaModerateSingleView, MediaFileView,
@@ -23,6 +24,7 @@ urlpatterns = [
     path('profile/', ProfileView.as_view(), name='profile'),
     path('logout/', LogoutView.as_view(), name='logout'),
     path('social/login/', SocialLoginView.as_view(), name='social-login'),
+    path('social/status/', SocialProvidersStatusView.as_view(), name='social-providers-status'),
     path('social/facebook/', FacebookRedirectView.as_view(), name='social-facebook'),
     path('social/instagram/', InstagramRedirectView.as_view(), name='social-instagram'),
     path('social/callback/', SocialLoginCallbackView.as_view(), name='social-login-callback'),

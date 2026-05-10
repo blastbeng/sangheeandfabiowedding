@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
 import { useTranslation } from 'react-i18next';
@@ -12,7 +12,15 @@ const Login = ({ setIsAuthenticated, setIsAdmin }) => {
   });
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
+  const [socialProviders, setSocialProviders] = useState({ google: false, facebook: false, instagram: false });
   const navigate = useNavigate();
+
+  useEffect(() => {
+    fetch(`${import.meta.env.VITE_API_URL}/api/auth/social/status/`)
+      .then(res => res.json())
+      .then(data => setSocialProviders(data))
+      .catch(err => logger.error('[Login] Failed to fetch social providers status:', err));
+  }, []);
 
   const handleChange = (e) => {
     setFormData({
@@ -166,34 +174,40 @@ const Login = ({ setIsAuthenticated, setIsAdmin }) => {
           <p className="text-gray-600 text-center mb-4 text-sm">{t('Or login with')}</p>
           <div className="flex flex-col gap-3 w-full">
             {/* Google */}
-            <div className="h-10 w-full">
-              <GoogleLogin
-                onSuccess={handleGoogleSuccess}
-                onError={handleGoogleError}
-                text="signin_with"
-                theme="filled_blue"
-                size="large"
-                width="100%"
-              />
-            </div>
+            {socialProviders.google && (
+              <div className="h-10 w-full">
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={handleGoogleError}
+                  text="signin_with"
+                  theme="filled_blue"
+                  size="large"
+                  width="100%"
+                />
+              </div>
+            )}
             {/* Facebook */}
-            <button
-              onClick={handleFacebookLogin}
-              className="h-10 w-full px-4 rounded-xl font-semibold text-white text-sm transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
-              style={{ background: '#1877F2' }}
-            >
-              <span className="text-lg">📘</span>
-              <span>{t('Facebook')}</span>
-            </button>
+            {socialProviders.facebook && (
+              <button
+                onClick={handleFacebookLogin}
+                className="h-10 w-full px-4 rounded-xl font-semibold text-white text-sm transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+                style={{ background: '#1877F2' }}
+              >
+                <span className="text-lg">📘</span>
+                <span>{t('Facebook')}</span>
+              </button>
+            )}
             {/* Instagram */}
-            <button
-              onClick={handleInstagramLogin}
-              className="h-10 w-full px-4 rounded-xl font-semibold text-white text-sm transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
-              style={{ background: 'linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)' }}
-            >
-              <span className="text-lg">📷</span>
-              <span>{t('Instagram')}</span>
-            </button>
+            {socialProviders.instagram && (
+              <button
+                onClick={handleInstagramLogin}
+                className="h-10 w-full px-4 rounded-xl font-semibold text-white text-sm transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+                style={{ background: 'linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)' }}
+              >
+                <span className="text-lg">📷</span>
+                <span>{t('Instagram')}</span>
+              </button>
+            )}
           </div>
         </div>
 

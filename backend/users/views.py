@@ -58,6 +58,11 @@ ENV_MAPPING = {
 }
 
 
+def is_provider_enabled(setting_value):
+    """Check if a social provider is enabled based on its environment variable value."""
+    return bool(setting_value) and setting_value.strip().lower() != 'disabled'
+
+
 def update_env_file(settings_obj):
     try:
         env_path = os.path.join(django_settings.BASE_DIR, '.env')
@@ -75,6 +80,17 @@ def update_env_file(settings_obj):
 
 
 # ==================== AUTH VIEWS ====================
+
+class SocialProvidersStatusView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        return Response({
+            'google': is_provider_enabled(django_settings.GOOGLE_CLIENT_ID),
+            'facebook': is_provider_enabled(django_settings.FACEBOOK_APP_ID),
+            'instagram': is_provider_enabled(django_settings.INSTAGRAM_APP_ID),
+        })
+
 
 class RegisterView(APIView):
     permission_classes = [AllowAny]
@@ -295,6 +311,11 @@ class SocialLoginView(APIView):
         access_token = request.data.get('access_token')
         if not provider or not access_token:
             return Response({'error': 'Provider and access_token are required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Check if provider is enabled
+        if provider == 'google' and not is_provider_enabled(django_settings.GOOGLE_CLIENT_ID):
+            return Response({'error': 'Google login is currently disabled.'}, status=status.HTTP_400_BAD_REQUEST)
+
         if provider == 'google':
             return self.handle_google(access_token, request)
         return Response({'error': 'Unsupported provider'}, status=status.HTTP_400_BAD_REQUEST)
@@ -365,9 +386,19 @@ class SocialLoginRedirectView(APIView):
 class FacebookRedirectView(SocialLoginRedirectView):
     provider = 'facebook'
 
+    def get(self, request):
+        if not is_provider_enabled(django_settings.FACEBOOK_APP_ID):
+            return Response({'error': 'Facebook login is currently disabled.'}, status=status.HTTP_400_BAD_REQUEST)
+        return redirect(f'/accounts/{self.provider}/login/')
+
 
 class InstagramRedirectView(SocialLoginRedirectView):
     provider = 'instagram'
+
+    def get(self, request):
+        if not is_provider_enabled(django_settings.INSTAGRAM_APP_ID):
+            return Response({'error': 'Instagram login is currently disabled.'}, status=status.HTTP_400_BAD_REQUEST)
+        return redirect(f'/accounts/{self.provider}/login/')
 
 
 class SocialLoginCallbackView(APIView):
