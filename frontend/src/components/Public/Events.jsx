@@ -69,7 +69,7 @@ const Events = () => {
         en: 'After the ceremony, we\'ll celebrate our love with an unforgettable party full of joy, dance, and delicious food!'
       },
       details: [
-        { label: { it: 'Luogo', ko: '장소', en: 'Venue' }, value: 'PODERE LA PIAZZA' },
+        { label: { it: 'Luogo', ko: '장소', en: 'Venue' }, value: 'Podere La Piazza' },
         { label: { it: 'Indirizzo', ko: '주소', en: 'Address' }, value: 'Strada Piazza, 4, 14055 Costigliole d\'Asti AT, Italia' },
         { label: { it: 'Data e Ora', ko: '날짜 및 시간', en: 'Date & Time' }, value: '16/05/2026, 12:00' },
       ],
