@@ -1,12 +1,6 @@
 import requests
-from io import BytesIO
-from google.oauth2.credentials import Credentials
-from googleapiclient.discovery import build
-from googleapiclient.http import MediaIoBaseDownload, MediaIoBaseUpload
-from googleapiclient.errors import HttpError
 from config.settings import (
-    NEXTCLOUD_URL, NEXTCLOUD_USERNAME, NEXTCLOUD_PASSWORD, NEXTCLOUD_FOLDER,
-    GOOGLE_DRIVE_CLIENT_ID, GOOGLE_DRIVE_CLIENT_SECRET, GOOGLE_DRIVE_TOKEN, GOOGLE_DRIVE_FOLDER_ID
+    NEXTCLOUD_URL, NEXTCLOUD_USERNAME, NEXTCLOUD_PASSWORD, NEXTCLOUD_FOLDER
 )
 
 
@@ -54,68 +48,9 @@ class NextcloudClient:
             return None
 
 
-class GoogleDriveClient:
-    def __init__(self):
-        try:
-            self.credentials = Credentials(
-                token=GOOGLE_DRIVE_TOKEN,
-                client_id=GOOGLE_DRIVE_CLIENT_ID,
-                client_secret=GOOGLE_DRIVE_CLIENT_SECRET,
-                token_uri='https://oauth2.googleapis.com/token',
-            )
-            self.service = build('drive', 'v3', credentials=self.credentials)
-            self.folder_id = GOOGLE_DRIVE_FOLDER_ID
-        except Exception as e:
-            print(f"Google Drive init error: {e}")
-            self.service = None
-
-    def upload_file(self, file_content, filename, mime_type):
-        if not self.service:
-            return None
-        try:
-            file_metadata = {'name': filename, 'parents': [self.folder_id]}
-            media = MediaIoBaseUpload(BytesIO(file_content), mimetype=mime_type, resumable=True)
-            file = self.service.files().create(body=file_metadata, media_body=media, fields='id').execute()
-            self.service.permissions().create(fileId=file['id'], body={'type': 'anyone', 'role': 'reader'}).execute()
-            return file['id']
-        except HttpError as e:
-            print(f"Google Drive upload error: {e}")
-            return None
-
-    def delete_file(self, file_id):
-        if not self.service:
-            return False
-        try:
-            self.service.files().delete(fileId=file_id).execute()
-            return True
-        except HttpError as e:
-            print(f"Google Drive delete error: {e}")
-            return False
-
-    def download_file(self, file_id):
-        if not self.service:
-            return None
-        try:
-            request = self.service.files().get_media(fileId=file_id)
-            fh = BytesIO()
-            downloader = MediaIoBaseDownload(fh, request)
-            done = False
-            while not done:
-                status, done = downloader.next_chunk()
-            return fh.getvalue()
-        except HttpError as e:
-            print(f"Google Drive download error: {e}")
-            return None
-
-
 def get_file_from_cloud(media):
     content = None
     content_type = 'video/mp4' if media.media_type == 'video' else 'image/jpeg'
-    if media.google_drive_file_id:
-        gd = GoogleDriveClient()
-        content = gd.download_file(media.google_drive_file_id)
-        if content:
-            return content, content_type
     if media.nextcloud_file_id:
         nc = NextcloudClient()
         content = nc.download_file(media.nextcloud_file_id)

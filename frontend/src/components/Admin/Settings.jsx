@@ -16,8 +16,6 @@ const Settings = () => {
     instagram_app_id: '', instagram_app_secret: '',
     // Nextcloud
     nextcloud_url: '', nextcloud_username: '', nextcloud_password: '', nextcloud_folder: '',
-    // Google Drive
-    google_drive_client_id: '', google_drive_client_secret: '', google_drive_token: '', google_drive_folder_id: '',
     // SMTP
     email_host: '', email_port: 587, email_use_tls: true, email_host_user: '', email_host_password: '', default_from_email: ''
   });
@@ -157,28 +155,6 @@ const Settings = () => {
               <div>
                 <label className="block text-sm font-medium mb-1">{t('Folder')}</label>
                 <input type="text" name="nextcloud_folder" value={settings.nextcloud_folder} onChange={handleChange} className="wedding-input w-full" />
-              </div>
-            </div>
-          </div>
-
-          <div className="mb-4">
-            <h3 className="text-lg font-semibold mb-2">{t('Google Drive')}</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">{t('Client ID')}</label>
-                <input type="text" name="google_drive_client_id" value={settings.google_drive_client_id} onChange={handleChange} className="wedding-input w-full" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">{t('Client Secret')}</label>
-                <input type="password" name="google_drive_client_secret" value={settings.google_drive_client_secret} onChange={handleChange} className="wedding-input w-full" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">{t('Token')}</label>
-                <input type="password" name="google_drive_token" value={settings.google_drive_token} onChange={handleChange} className="wedding-input w-full" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">{t('Folder ID')}</label>
-                <input type="text" name="google_drive_folder_id" value={settings.google_drive_folder_id} onChange={handleChange} className="wedding-input w-full" />
               </div>
             </div>
           </div>

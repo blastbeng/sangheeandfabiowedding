@@ -94,9 +94,8 @@ class Media(models.Model):
         related_name='reviewed_media'
     )
     rejection_reason = models.TextField(blank=True, null=True)
-    # Cloud storage fields
+    # Cloud storage field
     nextcloud_file_id = models.CharField(max_length=255, null=True, blank=True)
-    google_drive_file_id = models.CharField(max_length=255, null=True, blank=True)
     view_count = models.IntegerField(default=0)
 
     class Meta:
@@ -133,11 +132,6 @@ class SiteSettings(models.Model):
     nextcloud_username = models.CharField(max_length=255, blank=True, null=True)
     nextcloud_password = models.CharField(max_length=255, blank=True, null=True)
     nextcloud_folder = models.CharField(max_length=255, blank=True, null=True)
-    # Google Drive
-    google_drive_client_id = models.CharField(max_length=255, blank=True, null=True)
-    google_drive_client_secret = models.CharField(max_length=255, blank=True, null=True)
-    google_drive_token = models.CharField(max_length=255, blank=True, null=True)
-    google_drive_folder_id = models.CharField(max_length=255, blank=True, null=True)
     # SMTP
     email_host = models.CharField(max_length=255, blank=True, null=True)
     email_port = models.IntegerField(null=True, blank=True)
