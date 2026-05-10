@@ -161,6 +161,11 @@ CORS_ALLOWED_ORIGINS = [
 
 CORS_ALLOW_CREDENTIALS = True
 
+# CSRF Trusted Origins (comma-separated list of allowed origins)
+# Example: https://sangheehong.fabiovalentino.it,https://www.example.com
+_csrf_origins = os.environ.get('CSRF_TRUSTED_ORIGINS', '')
+CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in _csrf_origins.split(',') if origin.strip()] if _csrf_origins else []
+
 
 # JWT Settings
 SIMPLE_JWT = {
