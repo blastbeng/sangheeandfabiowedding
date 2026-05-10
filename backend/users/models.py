@@ -120,6 +120,7 @@ class SiteSettings(models.Model):
         ('ko', '한국어'),
         ('en', 'English'),
     ])
+    frontend_url = models.URLField(max_length=255, blank=True, null=True)
     # Google OAuth
     google_client_id = models.CharField(max_length=255, blank=True, null=True)
     google_client_secret = models.CharField(max_length=255, blank=True, null=True)
@@ -172,6 +173,7 @@ class SiteSettings(models.Model):
             'email_host_user': 'EMAIL_HOST_USER',
             'email_host_password': 'EMAIL_HOST_PASSWORD',
             'default_from_email': 'DEFAULT_FROM_EMAIL',
+            'frontend_url': 'FRONTEND_URL',
         }
 
         for field, setting_name in field_map.items():

@@ -8,6 +8,7 @@ const Settings = () => {
   const [settings, setSettings] = useState({
     site_name: '', maintenance_mode: false, allow_registrations: true,
     max_upload_size_mb: 50, require_approval: true, default_language: 'it',
+    frontend_url: '',
     // Google OAuth
     google_client_id: '', google_client_secret: '',
     // Facebook OAuth
@@ -63,6 +64,10 @@ const Settings = () => {
           <div className="mb-4">
             <label className="block text-gray-700 text-sm font-bold mb-2">{t('admin_settings_site_name')}</label>
             <input type="text" value={settings.site_name} onChange={(e) => setSettings({...settings, site_name: e.target.value})} className="wedding-input w-full" />
+          </div>
+          <div className="mb-4">
+            <label className="block text-gray-700 text-sm font-bold mb-2">{t('admin_settings_frontend_url')}</label>
+            <input type="url" value={settings.frontend_url} onChange={(e) => setSettings({...settings, frontend_url: e.target.value})} className="wedding-input w-full" placeholder="https://example.com" />
           </div>
           <div className="mb-4">
             <label className="flex items-center">
