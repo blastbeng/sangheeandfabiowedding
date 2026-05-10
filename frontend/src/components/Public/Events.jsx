@@ -43,7 +43,7 @@ const Events = () => {
       locationImage: ceremonyLocationImage,
       details: [
         { label: { it: 'Luogo', ko: '장소', en: 'Venue' }, value: 'Sala Consiglio, Comune di Costigliole d\'Asti' },
-        { label: { it: 'Indirizzo', ko: '주소', en: 'Address' }, value: 'Piazza Roma, Costigliole d\'Asti, AT, Italia' },
+        { label: { it: 'Indirizzo', ko: '주소', en: 'Address' }, value: 'Via Roma 5/9, Costigliole d\'Asti, AT, Italia' },
         { label: { it: 'Data', ko: '날짜', en: 'Date' }, value: '16/05/2026' },
       ],
       color: 'from-pink-400 to-rose-400',
@@ -71,8 +71,7 @@ const Events = () => {
       details: [
         { label: { it: 'Luogo', ko: '장소', en: 'Venue' }, value: 'PODERE LA PIAZZA' },
         { label: { it: 'Indirizzo', ko: '주소', en: 'Address' }, value: 'Strada Piazza, 4, 14055 Costigliole d\'Asti AT, Italia' },
-        { label: { it: 'Orario', ko: '시간', en: 'Time' }, value: '12:00 - Pranzo / Lunch' },
-        { label: { it: 'Dress Code', ko: '드레스 코드', en: 'Dress Code' }, value: 'Elegante / Elegant' },
+        { label: { it: 'Orario', ko: '시간', en: 'Time' }, value: '12:00' },
       ],
       color: 'from-yellow-400 to-amber-400',
       psdFile: 'Invito per la festa di nostro matrimonio'
