@@ -8,9 +8,6 @@ const AdminModeration = () => {
   const [media, setMedia] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({ status: 'pending', media_type: '' });
-  const [rejectionReason, setRejectionReason] = useState('');
-  const [showRejectModal, setShowRejectModal] = useState(false);
-  const [selectedId, setSelectedId] = useState(null);
   const [selectedIds, setSelectedIds] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
   const API_URL = import.meta.env.VITE_API_URL;
@@ -51,23 +48,14 @@ const AdminModeration = () => {
   };
 
   const handleReject = (id) => {
-    setSelectedId(id);
-    setShowRejectModal(true);
-  };
-
-  const confirmReject = () => {
-    authFetch(`${API_URL}/api/auth/media/moderation/${selectedId}/`, {
+    if (!window.confirm(t('admin_reject_confirm'))) return;
+    authFetch(`${API_URL}/api/auth/media/moderation/${id}/`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'rejected', rejection_reason: rejectionReason })
+      body: JSON.stringify({ status: 'rejected' })
     }).then(res => {
-      if (!res.ok) logger.error('[Moderation] Reject failed for ID:', selectedId);
-      if (res.ok) {
-        fetchMedia();
-        setRejectionReason('');
-        setShowRejectModal(false);
-        setSelectedId(null);
-      }
+      if (!res.ok) logger.error('[Moderation] Reject failed for ID:', id);
+      if (res.ok) fetchMedia();
     });
   };
 
@@ -102,22 +90,16 @@ const AdminModeration = () => {
 
   const handleBulkAction = (action) => {
     if (selectedIds.length === 0) return;
-    if (action === 'reject' && !rejectionReason) {
-      alert(t('admin_rejection_reason_required'));
-      return;
-    }
     authFetch(`${API_URL}/api/auth/media/moderation/bulk/`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         media_ids: selectedIds,
-        action: action,
-        rejection_reason: action === 'reject' ? rejectionReason : ''
+        action: action
       })
     }).then(res => {
       if (res.ok) {
         fetchMedia();
-        setRejectionReason('');
       } else {
         logger.error('[Moderation] Bulk action failed');
       }
@@ -215,19 +197,6 @@ const AdminModeration = () => {
           </table>
         </div>
       </div>
-
-      {showRejectModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="wedding-card p-6 max-w-md w-full">
-            <h3 className="text-lg font-bold mb-4 text-pink-600">{t('admin_rejection_reason_title')}</h3>
-            <textarea value={rejectionReason} onChange={(e) => setRejectionReason(e.target.value)} className="wedding-input w-full mb-4" rows="4" placeholder={t('admin_rejection_reason_placeholder')} />
-            <div className="flex gap-2">
-              <button onClick={confirmReject} className="flex-1 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">{t('admin_confirm_reject')}</button>
-              <button onClick={() => { setShowRejectModal(false); setRejectionReason(''); setSelectedId(null); }} className="flex-1 bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500">{t('admin_cancel')}</button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

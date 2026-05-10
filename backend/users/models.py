@@ -96,7 +96,6 @@ class Media(models.Model):
         blank=True, 
         related_name='reviewed_media'
     )
-    rejection_reason = models.TextField(blank=True, null=True)
     # Cloud storage field
     nextcloud_file_id = models.CharField(max_length=255, null=True, blank=True)
     view_count = models.IntegerField(default=0)

@@ -167,7 +167,7 @@ class MediaModerationSerializer(serializers.ModelSerializer):
         model = Media
         fields = ('id', 'user', 'username', 'user_email', 'file', 'media_type',
                   'caption', 'uploaded_at', 'status', 'reviewed_at',
-                  'reviewed_by', 'rejection_reason', 'view_count', 'file_url')
+                  'reviewed_by', 'view_count', 'file_url')
         read_only_fields = ('user', 'uploaded_at', 'reviewed_by', 'file_url')
 
     def get_file_url(self, obj):
@@ -194,7 +194,6 @@ class BulkModerationSerializer(serializers.Serializer):
         child=serializers.IntegerField(), min_length=1
     )
     action = serializers.ChoiceField(choices=['approve', 'reject'])
-    rejection_reason = serializers.CharField(required=False, allow_blank=True)
 
 
 class AdminDashboardSerializer(serializers.Serializer):

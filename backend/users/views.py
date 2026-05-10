@@ -944,7 +944,6 @@ class MediaBulkModerationView(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         media_ids = serializer.validated_data['media_ids']
         action = serializer.validated_data['action']
-        rejection_reason = serializer.validated_data.get('rejection_reason', '')
         media_items = Media.objects.filter(id__in=media_ids)
         updated_count = 0
         for media in media_items:
@@ -956,7 +955,6 @@ class MediaBulkModerationView(APIView):
                 updated_count += 1
             elif action == 'reject':
                 media.status = 'rejected'
-                media.rejection_reason = rejection_reason
                 media.reviewed_by = request.user
                 media.reviewed_at = timezone.now()
                 media.save()
