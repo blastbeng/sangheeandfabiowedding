@@ -169,30 +169,12 @@ const Events = () => {
                     className="w-full h-auto rounded-xl shadow-lg wedding-glow mb-4" 
                   />
                   <p className="text-sm text-gray-500 text-center italic">
-                    {currentLang === 'it' && "Informazioni su parcheggio e ubicación della cerimonia"}
+                    {currentLang === 'it' && "Informazioni su parcheggio e ubicazione della cerimonia"}
                     {currentLang === 'ko' && "주차장 및 예식장 위치 안내"}
                     {currentLang === 'en' && "Parking and Ceremony Location Info"}
                   </p>
                 </div>
               )}
-
-              {/* PSD File Reference */}
-              <div className="bg-gradient-to-r from-pink-50 to-yellow-50 rounded-xl p-6 text-center border-2 border-dashed border-pink-300">
-                <span className="text-3xl mb-2 inline-block">🎨</span>
-                <p className="text-gray-600 font-bold mb-2">
-                  {currentLang === 'it' && "Invito Ufficiale"}
-                  {currentLang === 'ko' && "공식 초대장"}
-                  {currentLang === 'en' && "Official Invitation"}
-                </p>
-                <p className="text-sm text-gray-500 italic">
-                  {event.psdFile}
-                </p>
-                <p className="text-xs text-gray-400 mt-2">
-                  {currentLang === 'it' && "Design originale disponibile su richiesta"}
-                  {currentLang === 'ko' && "원본 디자인은 요청 시 제공 가능합니다"}
-                  {currentLang === 'en' && "Original design available upon request"}
-                </p>
-              </div>
             </div>
           </div>
         ))}
