@@ -18,7 +18,10 @@ from datetime import timedelta
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-load_dotenv(dotenv_path=os.path.join(BASE_DIR, '.env'), override=True)
+env_path = os.path.join(BASE_DIR, '.env')
+if not os.path.exists(env_path):
+    env_path = os.path.join(BASE_DIR.parent, '.env')
+load_dotenv(dotenv_path=env_path, override=True)
 
 # Custom user model (must be set before first migration)
 AUTH_USER_MODEL = 'users.CustomUser'
