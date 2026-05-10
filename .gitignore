@@ -12,6 +12,7 @@ redis_data/
 /backend/*.pyc
 /backend/db.sqlite3
 /backend/staticfiles/
+/backend/media/
 .env
 
 # Frontend
