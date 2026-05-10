@@ -219,11 +219,15 @@ class RegisterView(APIView):
         if 'profile_picture' in request.FILES:
             try:
                 processed = process_profile_picture(request.FILES['profile_picture'])
-                request.FILES['profile_picture'] = processed  # replace with processed file
             except ValidationError as e:
                 return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = CustomUserSerializer(data=request.data)
+            data = request.data.copy()
+            data['profile_picture'] = processed
+        else:
+            data = request.data
+
+        serializer = CustomUserSerializer(data=data)
         if serializer.is_valid():
             user = serializer.save()
             user.set_password(request.data['password'])
@@ -421,12 +425,16 @@ class ProfileView(APIView):
         if 'profile_picture' in request.FILES:
             try:
                 processed = process_profile_picture(request.FILES['profile_picture'])
-                request.FILES['profile_picture'] = processed  # replace with processed file
             except ValidationError as e:
                 return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
+            data = request.data.copy()
+            data['profile_picture'] = processed
+        else:
+            data = request.data
+
         # Regular profile update
-        serializer = CustomUserSerializer(request.user, data=request.data, partial=True, context={'request': request})
+        serializer = CustomUserSerializer(request.user, data=data, partial=True, context={'request': request})
         if serializer.is_valid():
             serializer.save()
             # Invalidate profile picture cache
@@ -1038,11 +1046,15 @@ class AdminUserDetailView(APIView):
         if 'profile_picture' in request.FILES:
             try:
                 processed = process_profile_picture(request.FILES['profile_picture'])
-                request.FILES['profile_picture'] = processed
             except ValidationError as e:
                 return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = AdminUserSerializer(user, data=request.data, partial=True, context={'request': request})
+            data = request.data.copy()
+            data['profile_picture'] = processed
+        else:
+            data = request.data
+
+        serializer = AdminUserSerializer(user, data=data, partial=True, context={'request': request})
         if serializer.is_valid():
             user = serializer.save()
             if 'password' in request.data:
