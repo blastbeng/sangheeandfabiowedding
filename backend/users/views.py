@@ -60,7 +60,7 @@ ENV_MAPPING = {
 
 def reload_django_settings():
     """Reload .env into os.environ and update django.conf.settings."""
-    load_dotenv(override=True)
+    load_dotenv(dotenv_path=os.path.join(django_settings.BASE_DIR, '.env'), override=True)
     django_settings.GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID', '')
     django_settings.GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET', '')
     django_settings.FACEBOOK_APP_ID = os.environ.get('FACEBOOK_APP_ID', '')
