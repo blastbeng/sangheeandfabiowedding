@@ -30,7 +30,7 @@ const Home = ({ isAuthenticated }) => {
         
         {/* Tagline */}
         <p className="text-xl md:text-2xl text-pink-600 mb-8 italic font-playfair">
-          2026 — Costigliole d'Asti
+          16/05/2026 — Costigliole d'Asti
         </p>
 
         {/* Welcome Message - Using i18n */}
