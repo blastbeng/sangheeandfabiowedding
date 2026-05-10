@@ -26,11 +26,10 @@ class CustomUserSerializer(serializers.ModelSerializer):
 
     def get_profile_picture_url(self, obj):
         request = self.context.get('request')
-        if obj.profile_picture and obj.profile_picture.storage.exists(obj.profile_picture.name):
-            return request.build_absolute_uri(f'/api/auth/users/{obj.id}/profile-picture/') if request else f'/api/auth/users/{obj.id}/profile-picture/'
-        # Fallback to default
-        static_url = staticfiles_storage.url('images/default_profile_pic.png')
-        return request.build_absolute_uri(static_url) if request else static_url
+        url = f'/api/auth/users/{obj.id}/profile-picture/'
+        if request:
+            return request.build_absolute_uri(url)
+        return url
 
     def validate(self, attrs):
         password = attrs.get('password')
@@ -116,11 +115,10 @@ class PublicUserSerializer(serializers.ModelSerializer):
 
     def get_profile_picture_url(self, obj):
         request = self.context.get('request')
-        if obj.profile_picture and obj.profile_picture.storage.exists(obj.profile_picture.name):
-            return request.build_absolute_uri(f'/api/auth/users/{obj.id}/profile-picture/') if request else f'/api/auth/users/{obj.id}/profile-picture/'
-        # Fallback to default
-        static_url = staticfiles_storage.url('images/default_profile_pic.png')
-        return request.build_absolute_uri(static_url) if request else static_url
+        url = f'/api/auth/users/{obj.id}/profile-picture/'
+        if request:
+            return request.build_absolute_uri(url)
+        return url
 
 
 class MediaSerializer(serializers.ModelSerializer):
@@ -156,17 +154,13 @@ class PublicMediaSerializer(serializers.ModelSerializer):
         return f"/api/auth/media/{obj.id}/file/"
 
     def get_uploader_profile_picture(self, obj):
-        if obj.user and obj.user.profile_picture and obj.user.profile_picture.storage.exists(obj.user.profile_picture.name):
+        if obj.user:
             request = self.context.get('request')
+            url = f'/api/auth/users/{obj.user.id}/profile-picture/'
             if request:
-                return request.build_absolute_uri(f'/api/auth/users/{obj.user.id}/profile-picture/')
-            return f'/api/auth/users/{obj.user.id}/profile-picture/'
-        # Ultimate fallback (should rarely be needed)
-        request = self.context.get('request')
-        static_url = staticfiles_storage.url('images/default_profile_pic.png')
-        if request:
-            return request.build_absolute_uri(static_url)
-        return static_url
+                return request.build_absolute_uri(url)
+            return url
+        return None
 
     def get_face_tags(self, obj):
         return list(obj.face_tags.values_list('name', flat=True))
@@ -200,12 +194,11 @@ class AdminUserSerializer(serializers.ModelSerializer):
         read_only_fields = ('created_at', 'updated_at')
 
     def get_profile_picture_url(self, obj):
-        if obj.profile_picture:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.profile_picture.url)
-            return obj.profile_picture.url
-        return None
+        request = self.context.get('request')
+        url = f'/api/auth/users/{obj.id}/profile-picture/'
+        if request:
+            return request.build_absolute_uri(url)
+        return url
 
     def update(self, instance, validated_data):
         new_picture = validated_data.pop('profile_picture', None)
