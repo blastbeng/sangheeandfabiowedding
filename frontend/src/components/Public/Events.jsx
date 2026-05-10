@@ -47,7 +47,7 @@ const Events = () => {
         { label: { it: 'Data', ko: '날짜', en: 'Date' }, value: '16/05/2026' },
       ],
       color: 'from-pink-400 to-rose-400',
-      psdFile: 'Cerimonia presso in Sala Consiglio del Comune di Costigliole d\'Asti.psd'
+      psdFile: 'Cerimonia presso in Sala Consiglio del Comune di Costigliole d\'Asti'
     },
     {
       id: 2,
@@ -75,7 +75,7 @@ const Events = () => {
         { label: { it: 'Dress Code', ko: '드레스 코드', en: 'Dress Code' }, value: 'Elegante / Elegant' },
       ],
       color: 'from-yellow-400 to-amber-400',
-      psdFile: 'Invito per la festa di nostro matrimonio.psd'
+      psdFile: 'Invito per la festa di nostro matrimonio'
     },
   ];
 
