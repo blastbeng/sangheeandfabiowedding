@@ -63,7 +63,6 @@ class Migration(migrations.Migration):
                 ('reviewed_at', models.DateTimeField(blank=True, null=True)),
                 ('rejection_reason', models.TextField(blank=True, null=True)),
                 ('nextcloud_file_id', models.CharField(blank=True, max_length=255, null=True)),
-                ('google_drive_file_id', models.CharField(blank=True, max_length=255, null=True)),
                 ('view_count', models.IntegerField(default=0)),
                 ('file', models.FileField(blank=True, null=True, upload_to='wedding_uploads/')),
                 ('reviewed_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='reviewed_media', to='users.customuser')),
