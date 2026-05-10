@@ -27,8 +27,14 @@ const VerifyEmail = () => {
 
     if (success) {
       setStatus('success');
-      if (success === 'already_verified') setMessage(t('verify_already_verified'));
-      else if (success === 'verified') setMessage(t('verify_success'));
+      const msgParam = searchParams.get('message');
+      if (msgParam) {
+        setMessage(decodeURIComponent(msgParam));
+      } else if (success === 'already_verified') {
+        setMessage(t('verify_already_verified'));
+      } else if (success === 'verified') {
+        setMessage(t('verify_success'));
+      }
       return;
     }
 

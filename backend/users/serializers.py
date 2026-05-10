@@ -189,13 +189,15 @@ class AdminUserSerializer(serializers.ModelSerializer):
     profile_picture_url = serializers.SerializerMethodField()
     profile_picture = serializers.ImageField(required=False, write_only=True)
     remove_profile_picture = serializers.BooleanField(write_only=True, required=False, default=False)
+    password = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    password_confirm = serializers.CharField(write_only=True, required=False, allow_blank=True)
 
     class Meta:
         model = CustomUser
         fields = ('id', 'username', 'email', 'first_name', 'last_name',
                   'is_staff', 'is_superuser', 'is_active', 'email_verified',
                   'created_at', 'updated_at', 'language', 'profile_picture', 'profile_picture_url',
-                  'remove_profile_picture')
+                  'remove_profile_picture', 'password', 'password_confirm')
         read_only_fields = ('created_at', 'updated_at')
 
     def get_profile_picture_url(self, obj):
@@ -205,7 +207,17 @@ class AdminUserSerializer(serializers.ModelSerializer):
             return request.build_absolute_uri(url)
         return url
 
+    def validate(self, attrs):
+        password = attrs.get('password')
+        password_confirm = attrs.get('password_confirm')
+        if password:
+            if password != password_confirm:
+                raise serializers.ValidationError({"password_confirm": "Passwords don't match"})
+        return attrs
+
     def update(self, instance, validated_data):
+        validated_data.pop('password_confirm', None)
+        password = validated_data.pop('password', None)
         remove_pic = validated_data.pop('remove_profile_picture', False)
         new_picture = validated_data.pop('profile_picture', None)
 
@@ -218,6 +230,10 @@ class AdminUserSerializer(serializers.ModelSerializer):
                 instance.profile_picture.delete(save=False)
 
         instance = super().update(instance, validated_data)
+
+        if password:
+            instance.set_password(password)
+            instance.save()
 
         if remove_pic and not new_picture:
             self._set_default_profile_picture(instance)

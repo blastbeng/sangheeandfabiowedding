@@ -14,7 +14,7 @@ const UserManagement = () => {
   const fileInputRef = useRef(null);
   const [formData, setFormData] = useState({
     username: '', email: '', first_name: '', last_name: '',
-    is_staff: false, is_active: true, email_verified: false, password: ''
+    is_staff: false, is_active: true, email_verified: false, password: '', password_confirm: ''
   });
   const [filters, setFilters] = useState({
     username: '',
@@ -64,6 +64,7 @@ const UserManagement = () => {
         fd.append('is_active', formData.is_active);
         fd.append('email_verified', formData.email_verified);
         if (formData.password) fd.append('password', formData.password);
+        if (formData.password_confirm) fd.append('password_confirm', formData.password_confirm);
         fd.append('profile_picture', profilePicFile);
         res = await authFetch(url, {
           method,
@@ -91,7 +92,7 @@ const UserManagement = () => {
         setShowModal(false);
         setEditingUser(null);
         resetModalState();
-        setFormData({ username: '', email: '', first_name: '', last_name: '', is_staff: false, is_active: true, email_verified: false, password: '' });
+        setFormData({ username: '', email: '', first_name: '', last_name: '', is_staff: false, is_active: true, email_verified: false, password: '', password_confirm: '' });
       } else {
         const errorData = await res.json().catch(() => ({}));
         logger.error('[UserManagement] User save failed:', res.status, errorData);
@@ -180,7 +181,7 @@ const UserManagement = () => {
       <div className="wedding-card p-8">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-3xl wedding-title">{t('admin_users_title')}</h2>
-          <button onClick={() => { setEditingUser(null); setFormData({ username: '', email: '', first_name: '', last_name: '', is_staff: false, is_active: true, email_verified: false, password: '' }); resetModalState(); setShowModal(true); }} className="wedding-btn">{t('admin_add_user')}</button>
+          <button onClick={() => { setEditingUser(null); setFormData({ username: '', email: '', first_name: '', last_name: '', is_staff: false, is_active: true, email_verified: false, password: '', password_confirm: '' }); resetModalState(); setShowModal(true); }} className="wedding-btn">{t('admin_add_user')}</button>
         </div>
 
         <div className="overflow-x-auto">
@@ -291,7 +292,7 @@ const UserManagement = () => {
                     })()}
                   </td>
                   <td className="py-3">
-                    <button onClick={() => { setEditingUser(user); setFormData({...user, password: ''}); resetModalState(); setShowModal(true); }} className="text-blue-500 hover:text-blue-700 text-sm mr-2">{t('admin_edit')}</button>
+                    <button onClick={() => { setEditingUser(user); setFormData({...user, password: '', password_confirm: ''}); resetModalState(); setShowModal(true); }} className="text-blue-500 hover:text-blue-700 text-sm mr-2">{t('admin_edit')}</button>
                     {!user.is_superuser && (
                       <button onClick={() => handleDelete(user.id)} className="text-red-500 hover:text-red-700 text-sm">{t('admin_delete')}</button>
                     )}
@@ -312,9 +313,23 @@ const UserManagement = () => {
               <input type="email" placeholder={t('admin_form_email')} value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="wedding-input w-full mb-3" required />
               <input type="text" placeholder={t('admin_form_first_name')} value={formData.first_name} onChange={(e) => setFormData({...formData, first_name: e.target.value})} className="wedding-input w-full mb-3" />
               <input type="text" placeholder={t('admin_form_last_name')} value={formData.last_name} onChange={(e) => setFormData({...formData, last_name: e.target.value})} className="wedding-input w-full mb-3" />
-              {!editingUser && (
-                <input type="password" placeholder={t('admin_form_password')} value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} className="wedding-input w-full mb-3" required={!editingUser} />
-              )}
+              {/* Password fields – always shown for new users, optional for editing */}
+              <input
+                type="password"
+                placeholder={t('admin_form_password')}
+                value={formData.password}
+                onChange={(e) => setFormData({...formData, password: e.target.value})}
+                className="wedding-input w-full mb-3"
+                required={!editingUser}
+              />
+              <input
+                type="password"
+                placeholder={t('admin_form_password_confirm', 'Confirm Password')}
+                value={formData.password_confirm || ''}
+                onChange={(e) => setFormData({...formData, password_confirm: e.target.value})}
+                className="wedding-input w-full mb-3"
+                required={!editingUser}
+              />
               <label className="flex items-center mb-3">
                 <input type="checkbox" checked={formData.is_staff} onChange={(e) => setFormData({...formData, is_staff: e.target.checked})} className="mr-2" />
                 {t('admin_form_admin_access')}

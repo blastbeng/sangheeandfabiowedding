@@ -5,6 +5,7 @@ import requests
 import redis
 from io import BytesIO
 from datetime import timedelta
+from urllib.parse import quote
 from django.core.files.base import ContentFile
 from django.core.mail import send_mail
 from django.core.signing import TimestampSigner, BadSignature, SignatureExpired
@@ -86,6 +87,9 @@ def build_verification_email(verification_url, site_name="SangHee & Fabio's Wedd
                 Please verify your email address to activate your account and start sharing beautiful memories with us.
               </p>
               <a href="{verification_url}" style="display: inline-block; background-color: #ec4899; color: #ffffff; text-decoration: none; padding: 14px 36px; border-radius: 30px; font-size: 16px; font-weight: bold; margin-bottom: 30px;">Verify Email Address</a>
+              <p style="font-size: 14px; color: #6b7280; margin-top: 20px;">
+                After you verify your email, an administrator will activate your account. You will then be able to log in.
+              </p>
               <p style="font-size: 14px; color: #9ca3af;">
                 If you didn't create an account, you can safely ignore this email.
               </p>
@@ -324,10 +328,12 @@ class VerifyEmailView(APIView):
         except User.DoesNotExist:
             return redirect(f"{frontend_url}/verify-email?error=user_not_found")
         if user.email_verified:
-            return redirect(f"{frontend_url}/verify-email?success=already_verified")
+            return redirect(f"{frontend_url}/verify-email?success=already_verified&message=" +
+                quote("Your email is already verified. An administrator will activate your account shortly."))
         user.email_verified = True
         user.save()
-        return redirect(f"{frontend_url}/verify-email?success=verified")
+        return redirect(f"{frontend_url}/verify-email?success=verified&message=" +
+            quote("Your email has been verified. An administrator will now activate your account. You will be able to log in once activated."))
 
 
 class LoginView(APIView):
@@ -340,7 +346,7 @@ class LoginView(APIView):
         user = None
         if '@' in username_or_email:
             try:
-                user = User.objects.get(email=username_or_email)
+                user = User.objects.get(email__iexact=username_or_email)
             except User.DoesNotExist:
                 pass
         else:
@@ -1114,9 +1120,6 @@ class AdminUserDetailView(APIView):
         serializer = AdminUserSerializer(user, data=data, partial=True, context={'request': request})
         if serializer.is_valid():
             user = serializer.save()
-            if 'password' in request.data:
-                user.set_password(request.data['password'])
-                user.save()
             return Response(AdminUserSerializer(user, context={'request': request}).data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
