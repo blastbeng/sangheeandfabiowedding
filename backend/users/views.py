@@ -152,8 +152,10 @@ class SocialProvidersStatusView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
+        google_enabled = is_provider_enabled(django_settings.GOOGLE_CLIENT_ID)
         return Response({
-            'google': is_provider_enabled(django_settings.GOOGLE_CLIENT_ID),
+            'google': google_enabled,
+            'google_client_id': django_settings.GOOGLE_CLIENT_ID if google_enabled else None,
             'facebook': is_provider_enabled(django_settings.FACEBOOK_APP_ID),
             'instagram': is_provider_enabled(django_settings.INSTAGRAM_APP_ID),
         })

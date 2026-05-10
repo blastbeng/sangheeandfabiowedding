@@ -15,13 +15,23 @@ const Register = () => {
   const [profilePicture, setProfilePicture] = useState(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [socialProviders, setSocialProviders] = useState({ google: false, facebook: false, instagram: false });
+  const [socialProviders, setSocialProviders] = useState({
+    google: false,
+    googleClientId: null,
+    facebook: false,
+    instagram: false
+  });
   const navigate = useNavigate();
 
   useEffect(() => {
     fetch(`${import.meta.env.VITE_API_URL}/api/auth/social/status/`)
       .then(res => res.json())
-      .then(data => setSocialProviders(data))
+      .then(data => setSocialProviders({
+          google: data.google,
+          googleClientId: data.google_client_id || null,
+          facebook: data.facebook,
+          instagram: data.instagram,
+      }))
       .catch(err => logger.error('[Register] Failed to fetch social providers status:', err));
   }, []);
 
@@ -189,9 +199,10 @@ const Register = () => {
           <p className="text-gray-600 text-center mb-4 text-sm">{t('Or register with')}</p>
           <div className="flex flex-col gap-3 w-full">
             {/* Google */}
-            {socialProviders.google && (
+            {socialProviders.google && socialProviders.googleClientId && (
               <div className="h-10 w-full">
                 <GoogleLogin
+                  clientId={socialProviders.googleClientId}
                   onSuccess={handleGoogleSuccess}
                   onError={handleGoogleError}
                   text="signup_with"
