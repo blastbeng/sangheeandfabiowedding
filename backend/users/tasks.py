@@ -1,4 +1,5 @@
 import logging
+import redis
 
 from celery import shared_task
 from django.core.files.base import ContentFile
@@ -67,6 +68,7 @@ def upload_media_task(self, user_id, file_data_list):
                 caption=caption,
                 status='pending',
                 nextcloud_file_id=nextcloud_id,
+                original_filename=filename,
                 view_count=0
             )
             uploaded_media.append({
@@ -95,8 +97,6 @@ def delete_media_task(media_id):
     """
     Celery task for async media deletion from Nextcloud and Redis cache
     """
-    import redis
-    
     logger.info(f"Deleting media {media_id}")
 
     try:

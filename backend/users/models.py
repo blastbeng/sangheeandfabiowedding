@@ -81,6 +81,7 @@ class Media(models.Model):
         related_name='uploaded_media'
     )
     file = models.FileField(upload_to='wedding_uploads/', null=True, blank=True)
+    original_filename = models.CharField(max_length=255, null=True, blank=True)
     media_type = models.CharField(max_length=10, choices=MEDIA_TYPES)
     caption = models.TextField(blank=True, null=True)
     uploaded_at = models.DateTimeField(auto_now_add=True)
