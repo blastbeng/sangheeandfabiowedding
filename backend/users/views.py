@@ -65,7 +65,47 @@ ENV_MAPPING = {
 }
 
 
-def build_verification_email(verification_url, site_name="SangHee & Fabio's Wedding"):
+# Email translations
+_EMAIL_TRANSLATIONS = {
+    'en': {
+        'subject': "Verify your email for SangHee & Fabio's Wedding",
+        'header': "💕 SangHee & Fabio's Wedding 💕",
+        'welcome': "Welcome to our wedding celebration!",
+        'body': "Please verify your email address to activate your account and start sharing beautiful memories with us.",
+        'button': "Verify Email Address",
+        'after_button': "After you verify your email, an administrator will activate your account. You will then be able to log in.",
+        'ignore': "If you didn't create an account, you can safely ignore this email.",
+        'footer': f"&copy; {timezone.now().year} SangHee & Fabio's Wedding. All rights reserved.",
+    },
+    'it': {
+        'subject': "Verifica la tua email per il Matrimonio di SangHee & Fabio",
+        'header': "💕 Matrimonio di SangHee & Fabio 💕",
+        'welcome': "Benvenuti alla nostra celebrazione di nozze!",
+        'body': "Verifica il tuo indirizzo email per attivare il tuo account e iniziare a condividere bellissimi ricordi con noi.",
+        'button': "Verifica Indirizzo Email",
+        'after_button': "Dopo aver verificato la tua email, un amministratore attiverà il tuo account. Potrai quindi accedere.",
+        'ignore': "Se non hai creato un account, puoi ignorare questa email.",
+        'footer': f"&copy; {timezone.now().year} Matrimonio di SangHee & Fabio. Tutti i diritti riservati.",
+    },
+    'ko': {
+        'subject': "SangHee & Fabio의 결혼식을 위한 이메일 인증",
+        'header': "💕 SangHee & Fabio의 결혼식 💕",
+        'welcome': "저희 결혼식에 오신 것을 환영합니다!",
+        'body': "계정을 활성화하고 아름다운 추억을 공유하려면 이메일 주소를 인증해 주세요.",
+        'button': "이메일 인증",
+        'after_button': "이메일 인증 후 관리자가 계정을 활성화할 것입니다. 그 후에 로그인할 수 있습니다.",
+        'ignore': "계정을 생성하지 않으셨다면 이 이메일을 무시하셔도 됩니다.",
+        'footer': f"&copy; {timezone.now().year} SangHee & Fabio의 결혼식. 모든 권리 보유.",
+    }
+}
+
+
+def _get_email_subject(language):
+    return _EMAIL_TRANSLATIONS.get(language, _EMAIL_TRANSLATIONS['en'])['subject']
+
+
+def build_verification_email(verification_url, site_name="SangHee & Fabio's Wedding", language='en'):
+    t = _EMAIL_TRANSLATIONS.get(language, _EMAIL_TRANSLATIONS['en'])
     return f"""\
 <!DOCTYPE html>
 <html>
@@ -78,29 +118,29 @@ def build_verification_email(verification_url, site_name="SangHee & Fabio's Wedd
           <!-- Header -->
           <tr>
             <td style="background: linear-gradient(135deg, #f9a8d4, #f472b6); padding: 30px; text-align: center;">
-              <h1 style="color: #ffffff; margin: 0; font-size: 28px;">💕 {site_name} 💕</h1>
+              <h1 style="color: #ffffff; margin: 0; font-size: 28px;">{t['header']}</h1>
             </td>
           </tr>
           <!-- Body -->
           <tr>
             <td style="padding: 40px 30px; text-align: center; color: #4b5563;">
-              <p style="font-size: 18px; margin-bottom: 20px;">Welcome to our wedding celebration!</p>
+              <p style="font-size: 18px; margin-bottom: 20px;">{t['welcome']}</p>
               <p style="font-size: 16px; line-height: 1.6; margin-bottom: 30px;">
-                Please verify your email address to activate your account and start sharing beautiful memories with us.
+                {t['body']}
               </p>
-              <a href="{verification_url}" style="display: inline-block; background-color: #ec4899; color: #ffffff; text-decoration: none; padding: 14px 36px; border-radius: 30px; font-size: 16px; font-weight: bold; margin-bottom: 30px;">Verify Email Address</a>
+              <a href="{verification_url}" style="display: inline-block; background-color: #ec4899; color: #ffffff; text-decoration: none; padding: 14px 36px; border-radius: 30px; font-size: 16px; font-weight: bold; margin-bottom: 30px;">{t['button']}</a>
               <p style="font-size: 14px; color: #6b7280; margin-top: 20px;">
-                After you verify your email, an administrator will activate your account. You will then be able to log in.
+                {t['after_button']}
               </p>
               <p style="font-size: 14px; color: #9ca3af;">
-                If you didn't create an account, you can safely ignore this email.
+                {t['ignore']}
               </p>
             </td>
           </tr>
           <!-- Footer -->
           <tr>
             <td style="background-color: #fce7f3; padding: 20px; text-align: center; font-size: 12px; color: #9ca3af;">
-              &copy; {timezone.now().year} {site_name}. All rights reserved.
+              {t['footer']}
             </td>
           </tr>
         </table>
@@ -291,10 +331,16 @@ class RegisterView(APIView):
             token = signer.sign(user.email)
             verification_url = f"{os.getenv('FRONTEND_URL', 'http://localhost:5173')}/verify-email?token={token}"
 
+            # Get language from request (default to English)
+            language = request.data.get('language', 'en')
+            if language not in ['en', 'it', 'ko']:
+                language = 'en'
+
             try:
-                html_message = build_verification_email(verification_url)
+                html_message = build_verification_email(verification_url, language=language)
+                subject = _get_email_subject(language)
                 send_mail(
-                    subject="Verify your email for SangHee & Fabio's Wedding",
+                    subject=subject,
                     message='Please click the link to verify your email: ' + verification_url,
                     from_email=django_settings.DEFAULT_FROM_EMAIL,
                     recipient_list=[user.email],
@@ -440,7 +486,7 @@ class PasswordResetRequestView(APIView):
             )
             logger.info(f"Password reset email sent to: {user.email}")
         except Exception as e:
-            logger.error(f"Failed to send password reset email: {e}")
+            logger.error(f"Failed to send password reset email to {user.email}: {e}")
         return Response({'message': 'If the email exists, a reset link has been sent.'})
 
 

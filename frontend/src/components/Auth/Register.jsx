@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import logger from '../../utils/logger';
 
 const Register = ({ setIsAuthenticated, setIsAdmin }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -72,6 +72,7 @@ const Register = ({ setIsAuthenticated, setIsAdmin }) => {
     data.append('email', formData.email);
     data.append('password', formData.password);
     data.append('password_confirm', formData.password_confirm);
+    data.append('language', i18n.language);
     if (profilePicture) {
       data.append('profile_picture', profilePicture);
     }
