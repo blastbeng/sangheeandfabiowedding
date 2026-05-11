@@ -428,7 +428,7 @@ const UserManagement = () => {
                 {/* Profile Picture Section */}
                 <div className="mt-2 pt-4 border-t border-pink-200 mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t('admin_form_profile_picture', 'Profile Picture')}
+                    {t('admin_form_profile_picture')}
                   </label>
                   {editingUser && (
                     <div className="mb-3 flex items-center gap-3">
@@ -444,19 +444,19 @@ const UserManagement = () => {
                           onClick={handleDeletePicture}
                           className="text-red-500 hover:text-red-700 text-sm underline"
                         >
-                          {t('admin_delete_picture', 'Delete Picture')}
+                          {t('admin_delete_picture')}
                         </button>
                       ) : (
                         <div className="flex items-center gap-2">
                           <span className="text-red-500 text-sm font-medium">
-                            {t('admin_picture_will_be_deleted', 'Picture will be deleted on save')}
+                            {t('admin_picture_will_be_deleted')}
                           </span>
                           <button
                             type="button"
                             onClick={handleCancelDeletePicture}
                             className="text-gray-500 hover:text-gray-700 text-sm underline"
                           >
-                            {t('admin_cancel_delete_picture', 'Cancel')}
+                            {t('admin_cancel_delete_picture')}
                           </button>
                         </div>
                       )}

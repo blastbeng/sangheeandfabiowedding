@@ -1,3 +1,12 @@
+// Reload the page if a chunk fails to load (prevents browser error page)
+window.addEventListener('unhandledrejection', function(event) {
+  if (event.reason && event.reason.message &&
+      event.reason.message.includes('Failed to fetch dynamically imported module')) {
+    console.warn('Chunk load failed, reloading...');
+    window.location.reload();
+  }
+});
+
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { GoogleOAuthProvider } from '@react-oauth/google'
