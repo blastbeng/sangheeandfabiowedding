@@ -5,6 +5,7 @@ import Login from './components/Auth/Login';
 import Register from './components/Auth/Register';
 import VerifyEmail from './components/Auth/VerifyEmail';
 import SocialCallback from './components/Auth/SocialCallback';
+import PendingApproval from './components/Auth/PendingApproval';
 import Profile from './components/User/Profile';
 import Upload from './components/User/Upload';
 import MyUploads from './components/User/MyUploads';
@@ -128,6 +129,7 @@ function App() {
                   <SocialCallback setIsAuthenticated={setIsAuthenticated} setIsAdmin={setIsAdmin} />
                 } 
               />
+              <Route path="/pending-approval" element={<PendingApproval />} />
               <Route 
                 path="/login" 
                 element={

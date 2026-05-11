@@ -339,7 +339,10 @@ const resources = {
       "delete_account": "Elimina Account",
       "delete_account_confirm": "Sei sicuro di voler eliminare definitivamente il tuo account e tutti i media caricati? Questa azione non può essere annullata.",
       "delete_account_error": "Eliminazione dell'account fallita. Riprova.",
-      "confirm_delete_account": "Sì, elimina il mio account"
+      "confirm_delete_account": "Sì, elimina il mio account",
+      "pending_approval_title": "Account in Attesa di Approvazione",
+      "pending_approval_message": "Il tuo account è stato creato con successo! Un amministratore lo attiverà a breve. Potrai quindi effettuare il login.",
+      "go_to_home": "Vai alla Home"
     }
   },
   ko: {
@@ -679,7 +682,10 @@ const resources = {
       "delete_account": "계정 삭제",
       "delete_account_confirm": "계정과 업로드된 모든 미디어를 영구적으로 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.",
       "delete_account_error": "계정 삭제에 실패했습니다. 다시 시도해주세요.",
-      "confirm_delete_account": "네, 계정을 삭제합니다"
+      "confirm_delete_account": "네, 계정을 삭제합니다",
+      "pending_approval_title": "계정 승인 대기 중",
+      "pending_approval_message": "계정이 성공적으로 생성되었습니다! 관리자가 곧 활성화할 것입니다. 그 후에 로그인할 수 있습니다.",
+      "go_to_home": "홈으로 이동"
     }
   },
   en: {
@@ -1019,7 +1025,10 @@ const resources = {
       "delete_account": "Delete Account",
       "delete_account_confirm": "Are you sure you want to permanently delete your account and all your uploaded media? This action cannot be undone.",
       "delete_account_error": "Failed to delete account. Please try again.",
-      "confirm_delete_account": "Yes, delete my account"
+      "confirm_delete_account": "Yes, delete my account",
+      "pending_approval_title": "Account Pending Approval",
+      "pending_approval_message": "Your account has been created successfully! An administrator will activate it shortly. You will then be able to log in.",
+      "go_to_home": "Go to Home"
     }
   }
 };

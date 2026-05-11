@@ -18,8 +18,7 @@ const VerifyEmail = ({ setIsAuthenticated, setIsAdmin }) => {
 
     // Handle pending approval status (email verified but admin hasn't activated yet)
     if (statusParam === 'pending_approval') {
-      setStatus('success');
-      setMessage(t('verify_pending_approval'));
+      navigate('/pending-approval', { replace: true });
       return;
     }
 
@@ -90,7 +89,7 @@ const VerifyEmail = ({ setIsAuthenticated, setIsAdmin }) => {
             <span className="text-5xl inline-block">✅</span>
             <h2 className="text-2xl wedding-title mt-4">{t('email_verified')}</h2>
             <p className="text-gray-600 mt-2">{message}</p>
-            <button onClick={() => navigate('/login')} className="wedding-btn inline-block mt-6">{t('go_to_login')}</button>
+            <button onClick={() => navigate('/')} className="wedding-btn inline-block mt-6">{t('go_to_home')}</button>
           </>
         )}
         {status === 'error' && (
