@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import Login from './components/Auth/Login';
@@ -45,6 +45,8 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
+  const location = useLocation();
+  const isPendingApproval = location.pathname === '/pending-approval';
 
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
@@ -71,47 +73,49 @@ function App() {
   return (
     <Router>
       <div className="min-h-screen bg-gray-100 flex flex-col">
-        <header className="wedding-header text-white p-4">
-          <div className="max-w-6xl mx-auto flex flex-col items-center gap-3">
-            {/* Line 1: Language Switcher */}
-            <LanguageSwitcher />
-            
-            {/* Line 2: Navigation Links */}
-            <nav className="flex flex-wrap gap-4 items-center justify-center">
-              <Link to="/" className="hover:text-yellow-200 transition font-medium text-sm md:text-base whitespace-nowrap">{t('Home')}</Link>
-              <Link to="/events" className="hover:text-yellow-200 transition font-medium text-sm md:text-base whitespace-nowrap">
-                {t('Event')}
-              </Link>
-              <Link to="/gallery" className="hover:text-yellow-200 transition font-medium text-sm md:text-base whitespace-nowrap">{t('Gallery')}</Link>
-              <Link to="/users" className="hover:text-yellow-200 transition font-medium text-sm md:text-base whitespace-nowrap">{t('Guests')}</Link>
-            </nav>
-            
-            {/* Line 3: Auth Buttons */}
-            <div className="flex flex-wrap gap-3 items-center justify-center">
-              {isAuthenticated ? (
-                <>
-                  <Link to="/upload" className="hover:text-yellow-200 transition font-medium text-sm md:text-base whitespace-nowrap">{t('Share')}</Link>
-                  <Link to="/my-uploads" className="hover:text-yellow-200 transition font-medium text-sm md:text-base whitespace-nowrap">{t('My Uploads')}</Link>
-                  <Link to="/profile" className="hover:text-yellow-200 transition font-medium text-sm md:text-base whitespace-nowrap">{t('Profile')}</Link>
-                  {isAdmin && (
-                    <Link to="/admin" className="hover:text-yellow-200 transition font-medium text-sm md:text-base whitespace-nowrap">⭐ Admin</Link>
-                  )}
-                  <button onClick={handleLogout} className="border-2 border-white/80 text-white rounded-full px-3 md:px-4 py-2 text-xs md:text-sm font-semibold hover:bg-white/20 transition-all whitespace-nowrap">
-                    {t('Logout')}
-                  </button>
-                </>
-              ) : (
-                <>
-                  <Link to="/login" className="border-2 border-white/80 text-white rounded-full px-3 md:px-4 py-2 text-xs md:text-sm font-semibold hover:bg-white/20 transition-all whitespace-nowrap">{t('Sign In')}</Link>
-                  <Link to="/register" className="border-2 border-white/80 text-white rounded-full px-3 md:px-4 py-2 text-xs md:text-sm font-semibold hover:bg-white/20 transition-all whitespace-nowrap">{t('Join Us')}</Link>
-                </>
-              )}
+        {!isPendingApproval && (
+          <header className="wedding-header text-white p-4">
+            <div className="max-w-6xl mx-auto flex flex-col items-center gap-3">
+              {/* Line 1: Language Switcher */}
+              <LanguageSwitcher />
+              
+              {/* Line 2: Navigation Links */}
+              <nav className="flex flex-wrap gap-4 items-center justify-center">
+                <Link to="/" className="hover:text-yellow-200 transition font-medium text-sm md:text-base whitespace-nowrap">{t('Home')}</Link>
+                <Link to="/events" className="hover:text-yellow-200 transition font-medium text-sm md:text-base whitespace-nowrap">
+                  {t('Event')}
+                </Link>
+                <Link to="/gallery" className="hover:text-yellow-200 transition font-medium text-sm md:text-base whitespace-nowrap">{t('Gallery')}</Link>
+                <Link to="/users" className="hover:text-yellow-200 transition font-medium text-sm md:text-base whitespace-nowrap">{t('Guests')}</Link>
+              </nav>
+              
+              {/* Line 3: Auth Buttons */}
+              <div className="flex flex-wrap gap-3 items-center justify-center">
+                {isAuthenticated ? (
+                  <>
+                    <Link to="/upload" className="hover:text-yellow-200 transition font-medium text-sm md:text-base whitespace-nowrap">{t('Share')}</Link>
+                    <Link to="/my-uploads" className="hover:text-yellow-200 transition font-medium text-sm md:text-base whitespace-nowrap">{t('My Uploads')}</Link>
+                    <Link to="/profile" className="hover:text-yellow-200 transition font-medium text-sm md:text-base whitespace-nowrap">{t('Profile')}</Link>
+                    {isAdmin && (
+                      <Link to="/admin" className="hover:text-yellow-200 transition font-medium text-sm md:text-base whitespace-nowrap">⭐ Admin</Link>
+                    )}
+                    <button onClick={handleLogout} className="border-2 border-white/80 text-white rounded-full px-3 md:px-4 py-2 text-xs md:text-sm font-semibold hover:bg-white/20 transition-all whitespace-nowrap">
+                      {t('Logout')}
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <Link to="/login" className="border-2 border-white/80 text-white rounded-full px-3 md:px-4 py-2 text-xs md:text-sm font-semibold hover:bg-white/20 transition-all whitespace-nowrap">{t('Sign In')}</Link>
+                    <Link to="/register" className="border-2 border-white/80 text-white rounded-full px-3 md:px-4 py-2 text-xs md:text-sm font-semibold hover:bg-white/20 transition-all whitespace-nowrap">{t('Join Us')}</Link>
+                  </>
+                )}
+              </div>
             </div>
-          </div>
-        </header>
+          </header>
+        )}
 
-        <main className="flex-grow p-4">
-          <div className="max-w-6xl mx-auto">
+        <main className={`flex-grow ${!isPendingApproval ? 'p-4' : ''}`}>
+          <div className={!isPendingApproval ? 'max-w-6xl mx-auto' : ''}>
             <ErrorBoundary>
               <Routes>
                 <Route path="/" element={<Home isAuthenticated={isAuthenticated} />} />
@@ -221,15 +225,17 @@ function App() {
 
         <CookieConsent />
 
-        <footer className="bg-gradient-to-r from-wedding-navy via-wedding-azure to-wedding-navy text-white text-center p-6">
-          <p className="text-2xl mb-2 text-white" style={{ fontFamily: "'Great Vibes', cursive", textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>🌸 {t('footer_crafted')} 🌸</p>
-          <p className="text-sm opacity-80">
-            {t('footer_thank_you')}
-          </p>
-          <p className="text-xs opacity-60 mt-2">
-            © 2026 {t('footer_project')} - {t('footer_forever')}
-          </p>
-        </footer>
+        {!isPendingApproval && (
+          <footer className="bg-gradient-to-r from-wedding-navy via-wedding-azure to-wedding-navy text-white text-center p-6">
+            <p className="text-2xl mb-2 text-white" style={{ fontFamily: "'Great Vibes', cursive", textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>🌸 {t('footer_crafted')} 🌸</p>
+            <p className="text-sm opacity-80">
+              {t('footer_thank_you')}
+            </p>
+            <p className="text-xs opacity-60 mt-2">
+              © 2026 {t('footer_project')} - {t('footer_forever')}
+            </p>
+          </footer>
+        )}
       </div>
     </Router>
   );
