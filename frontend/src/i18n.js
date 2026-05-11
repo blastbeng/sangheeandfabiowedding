@@ -342,7 +342,14 @@ const resources = {
       "confirm_delete_account": "Sì, elimina il mio account",
       "pending_approval_title": "Account in Attesa di Approvazione",
       "pending_approval_message": "Il tuo account è stato creato con successo! Un amministratore lo attiverà a breve. Potrai quindi effettuare il login.",
-      "go_to_home": "Vai alla Home"
+      "go_to_home": "Vai alla Home",
+      "admin_user_saved": "Utente salvato con successo",
+      "admin_network_error": "Errore di rete. Riprova.",
+      "admin_selected_count": "{{count}} selezionati",
+      "admin_activate_selected": "Attiva",
+      "admin_deactivate_selected": "Disattiva",
+      "admin_verify_email_selected": "Verifica Email",
+      "admin_form_password_confirm": "Conferma Password"
     }
   },
   ko: {
@@ -685,7 +692,14 @@ const resources = {
       "confirm_delete_account": "네, 계정을 삭제합니다",
       "pending_approval_title": "계정 승인 대기 중",
       "pending_approval_message": "계정이 성공적으로 생성되었습니다! 관리자가 곧 활성화할 것입니다. 그 후에 로그인할 수 있습니다.",
-      "go_to_home": "홈으로 이동"
+      "go_to_home": "홈으로 이동",
+      "admin_user_saved": "사용자가 저장되었습니다",
+      "admin_network_error": "네트워크 오류. 다시 시도하세요.",
+      "admin_selected_count": "{{count}}개 선택됨",
+      "admin_activate_selected": "활성화",
+      "admin_deactivate_selected": "비활성화",
+      "admin_verify_email_selected": "이메일 인증",
+      "admin_form_password_confirm": "비밀번호 확인"
     }
   },
   en: {
@@ -1028,7 +1042,14 @@ const resources = {
       "confirm_delete_account": "Yes, delete my account",
       "pending_approval_title": "Account Pending Approval",
       "pending_approval_message": "Your account has been created successfully! An administrator will activate it shortly. You will then be able to log in.",
-      "go_to_home": "Go to Home"
+      "go_to_home": "Go to Home",
+      "admin_user_saved": "User saved successfully",
+      "admin_network_error": "Network error. Please try again.",
+      "admin_selected_count": "{{count}} selected",
+      "admin_activate_selected": "Activate",
+      "admin_deactivate_selected": "Deactivate",
+      "admin_verify_email_selected": "Verify Email",
+      "admin_form_password_confirm": "Confirm Password"
     }
   }
 };

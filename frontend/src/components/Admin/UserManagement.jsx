@@ -406,7 +406,7 @@ const UserManagement = () => {
                 />
                 <input
                   type="password"
-                  placeholder={t('admin_form_password_confirm', 'Confirm Password')}
+                  placeholder={t('admin_form_password_confirm')}
                   value={formData.password_confirm || ''}
                   onChange={(e) => setFormData({...formData, password_confirm: e.target.value})}
                   className="wedding-input w-full mb-3"

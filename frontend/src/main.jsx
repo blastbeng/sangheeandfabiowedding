@@ -11,55 +11,52 @@ if (import.meta.env.DEV) {
   console.log('[Main] API URL:', import.meta.env.VITE_API_URL);
 }
 
-// Error Boundary Component
+// Error Boundary Component – silently reloads on error to avoid flashing an error page
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false };
   }
 
-  static getDerivedStateFromError(error) {
-    return { hasError: true, error };
+  static getDerivedStateFromError() {
+    return { hasError: true };
   }
 
   componentDidCatch(error, errorInfo) {
     console.error('[ErrorBoundary] Caught error:', error, errorInfo);
+    // Prevent infinite reload loops – only reload once per session
+    const alreadyReloaded = sessionStorage.getItem('error_reload');
+    if (!alreadyReloaded) {
+      sessionStorage.setItem('error_reload', '1');
+      window.location.reload();
+    }
+    // If already reloaded, do nothing – the error will be uncaught and the app may break,
+    // but we avoid an infinite loop. The user will see a blank page.
   }
-
-  handleReset = () => {
-    this.setState({ hasError: false, error: null });
-  };
 
   render() {
     if (this.state.hasError) {
-      return (
-        <div className="min-h-[50vh] flex items-center justify-center p-4">
-          <div className="wedding-card p-8 max-w-md w-full text-center">
-            <span className="text-5xl inline-block">💔</span>
-            <h2 className="text-2xl wedding-title mt-4">Oops! Something went wrong</h2>
-            <p className="text-gray-600 mt-2">
-              An unexpected error occurred. Please try refreshing the page.
-            </p>
-            <button
-              onClick={() => window.location.reload()}
-              className="wedding-btn mt-6"
-            >
-              Refresh Page
-            </button>
-          </div>
-        </div>
-      );
+      // Render nothing while the reload is pending (or if already reloaded)
+      return null;
     }
-
     return this.props.children;
   }
 }
 
+const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+const isGoogleValid = googleClientId && googleClientId.endsWith('.apps.googleusercontent.com');
+
+const appContent = isGoogleValid ? (
+  <GoogleOAuthProvider clientId={googleClientId}>
+    <App />
+  </GoogleOAuthProvider>
+) : (
+  <App />
+);
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
-      <App />
-    </GoogleOAuthProvider>
+    {appContent}
   </React.StrictMode>,
 )
 
