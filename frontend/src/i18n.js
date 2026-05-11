@@ -233,7 +233,7 @@ const resources = {
       "admin_status_unverified": "Non Verificato",
       "admin_edit": "✏️ Modifica",
       "admin_delete": "🗑️ Elimina",
-      "admin_delete_user_confirm": "Eliminare questo utente?",
+      "admin_delete_user_confirm": "Sei sicuro di voler eliminare definitivamente questo utente e tutti i suoi media caricati? Questa azione non può essere annullata.",
       "admin_delete_confirm": "Eliminare questo media?",
       "admin_edit_user": "Modifica Utente",
       "admin_add_new_user": "Aggiungi Nuovo Utente",
@@ -338,7 +338,8 @@ const resources = {
       "cookie_necessary_only": "Solo necessari",
       "delete_account": "Elimina Account",
       "delete_account_confirm": "Sei sicuro di voler eliminare definitivamente il tuo account e tutti i media caricati? Questa azione non può essere annullata.",
-      "delete_account_error": "Eliminazione dell'account fallita. Riprova."
+      "delete_account_error": "Eliminazione dell'account fallita. Riprova.",
+      "confirm_delete_account": "Sì, elimina il mio account"
     }
   },
   ko: {
@@ -572,7 +573,7 @@ const resources = {
       "admin_status_unverified": "미인증",
       "admin_edit": "✏️ 수정",
       "admin_delete": "🗑️ 삭제",
-      "admin_delete_user_confirm": "이 사용자를 삭제하시겠습니까?",
+      "admin_delete_user_confirm": "이 사용자와 업로드된 모든 미디어를 영구적으로 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.",
       "admin_delete_confirm": "이 미디어를 삭제하시겠습니까?",
       "admin_edit_user": "사용자 수정",
       "admin_add_new_user": "새 사용자 추가",
@@ -677,7 +678,8 @@ const resources = {
       "cookie_necessary_only": "필수만",
       "delete_account": "계정 삭제",
       "delete_account_confirm": "계정과 업로드된 모든 미디어를 영구적으로 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.",
-      "delete_account_error": "계정 삭제에 실패했습니다. 다시 시도해주세요."
+      "delete_account_error": "계정 삭제에 실패했습니다. 다시 시도해주세요.",
+      "confirm_delete_account": "네, 계정을 삭제합니다"
     }
   },
   en: {
@@ -911,7 +913,7 @@ const resources = {
       "admin_status_unverified": "Unverified",
       "admin_edit": "✏️ Edit",
       "admin_delete": "🗑️ Delete",
-      "admin_delete_user_confirm": "Delete this user?",
+      "admin_delete_user_confirm": "Are you sure you want to permanently delete this user and all their uploaded media? This action cannot be undone.",
       "admin_delete_confirm": "Delete this media?",
       "admin_edit_user": "Edit User",
       "admin_add_new_user": "Add New User",
@@ -991,7 +993,7 @@ const resources = {
       "email_already_exists": "An account with this email already exists.",
       "username_already_taken": "This username is already taken.",
       "password_too_short": "Password must be at least 8 characters.",
-      "password_requirements": "Password must contain at least one lowercase letter, one uppercase letter, and one number.",
+      "password_requirements": "Password must contain at least one lowercase letter, one uppercase letter, and a number.",
       "registration_failed": "Registration failed. Please try again.",
       "error_during_registration": "An error occurred during registration.",
       "register_username_placeholder": "Something special just for you",
@@ -1016,7 +1018,8 @@ const resources = {
       "cookie_necessary_only": "Necessary Only",
       "delete_account": "Delete Account",
       "delete_account_confirm": "Are you sure you want to permanently delete your account and all your uploaded media? This action cannot be undone.",
-      "delete_account_error": "Failed to delete account. Please try again."
+      "delete_account_error": "Failed to delete account. Please try again.",
+      "confirm_delete_account": "Yes, delete my account"
     }
   }
 };

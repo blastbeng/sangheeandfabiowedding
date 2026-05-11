@@ -23,6 +23,7 @@ const Profile = ({ setIsAuthenticated, setIsAdmin }) => {
   const [hasPassword, setHasPassword] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const navigate = useNavigate();
   const API_URL = import.meta.env.VITE_API_URL;
 
@@ -140,9 +141,12 @@ const Profile = ({ setIsAuthenticated, setIsAdmin }) => {
     }
   };
 
-  const handleDeleteAccount = async () => {
-    if (!window.confirm(t('delete_account_confirm'))) return;
+  const handleDeleteAccount = () => {
+    setShowDeleteModal(true);
+  };
 
+  const confirmDeleteAccount = async () => {
+    setShowDeleteModal(false);
     try {
       const res = await authFetch(`${API_URL}/api/auth/profile/`, {
         method: 'DELETE'
@@ -334,6 +338,35 @@ const Profile = ({ setIsAuthenticated, setIsAdmin }) => {
             🗑️ {t('delete_account')}
           </button>
         </div>
+
+        {/* Delete Account Confirmation Modal */}
+        {showDeleteModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 border-2 border-pink-200">
+              <div className="text-center">
+                <span className="text-5xl">⚠️</span>
+                <h3 className="text-2xl font-bold text-pink-600 mt-4">{t('delete_account')}</h3>
+                <p className="text-gray-700 mt-4 text-sm md:text-base">
+                  {t('delete_account_confirm')}
+                </p>
+                <div className="flex gap-3 mt-6 justify-center">
+                  <button
+                    onClick={() => setShowDeleteModal(false)}
+                    className="px-6 py-2 border-2 border-gray-300 rounded-full text-gray-600 hover:bg-gray-100 transition"
+                  >
+                    {t('admin_cancel')}
+                  </button>
+                  <button
+                    onClick={confirmDeleteAccount}
+                    className="px-6 py-2 bg-red-500 hover:bg-red-600 text-white font-bold rounded-full transition shadow-md"
+                  >
+                    {t('confirm_delete_account')}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
