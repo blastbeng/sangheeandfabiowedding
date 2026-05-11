@@ -1227,6 +1227,7 @@ class MediaBulkModerationView(APIView):
                 media.reviewed_by = request.user
                 media.reviewed_at = timezone.now()
                 media.save()
+                detect_faces_task.delay(media.id)
                 updated_count += 1
             elif action == 'reject':
                 media.status = 'rejected'
