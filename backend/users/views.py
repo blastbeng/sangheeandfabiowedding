@@ -279,6 +279,7 @@ class RegisterView(APIView):
         serializer = CustomUserSerializer(data=data)
         if serializer.is_valid():
             user = serializer.save()
+            user.is_active = False
             user.set_password(request.data['password'])
             user.save()
 
@@ -328,13 +329,29 @@ class VerifyEmailView(APIView):
             user = User.objects.get(email=email)
         except User.DoesNotExist:
             return redirect(f"{frontend_url}/verify-email?error=user_not_found")
-        if user.email_verified:
-            return redirect(f"{frontend_url}/verify-email?success=already_verified&message=" +
-                quote("Your email is already verified. An administrator will activate your account shortly."))
+
+        if user.email_verified and user.is_active:
+            # Already verified and active – still log them in automatically
+            refresh = RefreshToken.for_user(user)
+            access = str(refresh.access_token)
+            refresh_token = str(refresh)
+            return redirect(
+                f"{frontend_url}/verify-email?access={access}&refresh={refresh_token}"
+            )
+
+        # Activate user and mark email as verified
         user.email_verified = True
+        user.is_active = True
         user.save()
-        return redirect(f"{frontend_url}/verify-email?success=verified&message=" +
-            quote("Your email has been verified. An administrator will now activate your account. You will be able to log in once activated."))
+
+        # Generate JWT tokens for automatic login
+        refresh = RefreshToken.for_user(user)
+        access = str(refresh.access_token)
+        refresh_token = str(refresh)
+
+        return redirect(
+            f"{frontend_url}/verify-email?access={access}&refresh={refresh_token}"
+        )
 
 
 class LoginView(APIView):

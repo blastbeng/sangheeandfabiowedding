@@ -116,7 +116,12 @@ function App() {
               <Route path="/media/:id" element={<MediaView />} />
               <Route path="/users" element={<UserList />} />
               <Route path="/user/:id" element={<UserProfile />} />
-              <Route path="/verify-email" element={<VerifyEmail />} />
+              <Route 
+                path="/verify-email" 
+                element={
+                  <VerifyEmail setIsAuthenticated={setIsAuthenticated} setIsAdmin={setIsAdmin} />
+                } 
+              />
               <Route 
                 path="/social-callback" 
                 element={

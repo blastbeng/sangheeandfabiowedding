@@ -1,18 +1,44 @@
 import { useEffect, useState } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
-const VerifyEmail = () => {
+const VerifyEmail = ({ setIsAuthenticated, setIsAdmin }) => {
   const { t } = useTranslation();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [status, setStatus] = useState('loading');
   const [message, setMessage] = useState('');
 
   useEffect(() => {
-    const token = searchParams.get('token');
+    const access = searchParams.get('access');
+    const refresh = searchParams.get('refresh');
     const error = searchParams.get('error');
     const success = searchParams.get('success');
 
+    // If tokens are present, log the user in automatically
+    if (access && refresh) {
+      localStorage.setItem('accessToken', access);
+      localStorage.setItem('refreshToken', refresh);
+      // Fetch user profile to determine admin status
+      fetch(`${import.meta.env.VITE_API_URL}/api/auth/profile/`, {
+        headers: { 'Authorization': `Bearer ${access}` }
+      })
+        .then(res => res.json())
+        .then(data => {
+          setIsAdmin(data.is_staff || false);
+          localStorage.setItem('isAdmin', data.is_staff ? 'true' : 'false');
+          setIsAuthenticated(true);
+          navigate('/', { replace: true });
+        })
+        .catch(() => {
+          // If profile fetch fails, still set authenticated and redirect
+          setIsAuthenticated(true);
+          navigate('/', { replace: true });
+        });
+      return;
+    }
+
+    // Handle error messages
     if (error) {
       setStatus('error');
       switch (error) {
@@ -38,28 +64,9 @@ const VerifyEmail = () => {
       return;
     }
 
-    if (token) {
-      // The backend will redirect, but we can also call the API directly
-      fetch(`${import.meta.env.VITE_API_URL}/api/auth/verify-email/?token=${token}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.message) {
-            setStatus('success');
-            setMessage(data.message);
-          } else if (data.error) {
-            setStatus('error');
-            setMessage(data.error);
-          }
-        })
-        .catch(() => {
-          setStatus('error');
-          setMessage(t('verify_network_error'));
-        });
-    } else {
-      setStatus('error');
-      setMessage(t('verify_no_token'));
-    }
-  }, [searchParams, t]);
+    // Fallback: if no tokens and no error/success, show loading
+    setStatus('loading');
+  }, [searchParams, t, navigate, setIsAuthenticated, setIsAdmin]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -75,7 +82,7 @@ const VerifyEmail = () => {
             <span className="text-5xl inline-block">✅</span>
             <h2 className="text-2xl wedding-title mt-4">{t('email_verified')}</h2>
             <p className="text-gray-600 mt-2">{message}</p>
-            <Link to="/login" className="wedding-btn inline-block mt-6">{t('go_to_login')}</Link>
+            <button onClick={() => navigate('/login')} className="wedding-btn inline-block mt-6">{t('go_to_login')}</button>
           </>
         )}
         {status === 'error' && (
@@ -83,7 +90,7 @@ const VerifyEmail = () => {
             <span className="text-5xl inline-block">❌</span>
             <h2 className="text-2xl wedding-title mt-4">{t('verification_failed')}</h2>
             <p className="text-gray-600 mt-2">{message}</p>
-            <Link to="/" className="wedding-btn inline-block mt-6">{t('back_to_home')}</Link>
+            <button onClick={() => navigate('/')} className="wedding-btn inline-block mt-6">{t('back_to_home')}</button>
           </>
         )}
       </div>
