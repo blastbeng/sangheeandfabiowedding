@@ -8,7 +8,7 @@ const PendingApproval = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="wedding-card p-8 max-w-md w-full text-center">
-        <span className="text-5xl inline-block">⏳</span>
+        <span className="text-5xl inline-block">💔</span>
         <h2 className="text-2xl wedding-title mt-4">{t('pending_approval_title')}</h2>
         <p className="text-gray-600 mt-2">{t('pending_approval_message')}</p>
         <button
