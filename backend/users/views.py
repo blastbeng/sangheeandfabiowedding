@@ -337,7 +337,7 @@ class VerifyEmailView(APIView):
             return redirect(f"{frontend_url}/verify-email?error=user_not_found")
 
         if user.email_verified and user.is_active:
-            # Already verified and active – still log them in automatically
+            # Already verified and active – log them in automatically
             refresh = RefreshToken.for_user(user)
             access = str(refresh.access_token)
             refresh_token = str(refresh)
@@ -345,19 +345,13 @@ class VerifyEmailView(APIView):
                 f"{frontend_url}/verify-email?access={access}&refresh={refresh_token}"
             )
 
-        # Activate user and mark email as verified
+        # Mark email as verified but do NOT activate – admin must approve
         user.email_verified = True
-        user.is_active = True
+        # user.is_active remains False
         user.save()
 
-        # Generate JWT tokens for automatic login
-        refresh = RefreshToken.for_user(user)
-        access = str(refresh.access_token)
-        refresh_token = str(refresh)
-
-        return redirect(
-            f"{frontend_url}/verify-email?access={access}&refresh={refresh_token}"
-        )
+        # Redirect to frontend with a pending-approval status
+        return redirect(f"{frontend_url}/verify-email?status=pending_approval")
 
 
 class LoginView(APIView):
@@ -596,7 +590,7 @@ class SocialLoginView(APIView):
             'username': self.generate_username(user_info),
             'first_name': user_info.get('given_name', ''),
             'last_name': user_info.get('family_name', ''),
-            'is_active': True,
+            'is_active': False,
             'email_verified': True,
         })
 
@@ -613,6 +607,13 @@ class SocialLoginView(APIView):
         # Update profile with Google data if user already existed
         if not created:
             update_user_from_social(user, 'google', user_info)
+
+        # If user is not active, they need admin approval
+        if not user.is_active:
+            return Response(
+                {'error': 'Your account is pending admin approval. You will be able to log in once an administrator activates your account.'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
 
         refresh = RefreshToken.for_user(user)
         return Response({
@@ -715,9 +716,8 @@ class SocialLoginCallbackView(APIView):
                 login(request, existing_user)
                 user = existing_user
 
-        # Mark email as verified for social logins
+        # Mark email as verified for social logins (but do NOT activate – admin must approve)
         user.email_verified = True
-        user.is_active = True
 
         # Ensure username is set properly from social account
         social_account = SocialAccount.objects.filter(user=user).first()
@@ -778,7 +778,12 @@ class SocialLoginCallbackView(APIView):
 
         user.save()
 
-        # Generate JWT tokens
+        if not user.is_active:
+            # Account is not yet approved – redirect with pending status
+            frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:5173')
+            return redirect(f"{frontend_url}/social-callback?status=pending_approval")
+
+        # Generate JWT tokens only for active users
         refresh = RefreshToken.for_user(user)
         access = str(refresh.access_token)
         refresh_token = str(refresh)

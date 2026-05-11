@@ -14,6 +14,14 @@ const VerifyEmail = ({ setIsAuthenticated, setIsAdmin }) => {
     const refresh = searchParams.get('refresh');
     const error = searchParams.get('error');
     const success = searchParams.get('success');
+    const statusParam = searchParams.get('status');
+
+    // Handle pending approval status (email verified but admin hasn't activated yet)
+    if (statusParam === 'pending_approval') {
+      setStatus('success');
+      setMessage(t('verify_pending_approval'));
+      return;
+    }
 
     // If tokens are present, log the user in automatically
     if (access && refresh) {

@@ -8,6 +8,13 @@ const SocialCallback = ({ setIsAuthenticated, setIsAdmin }) => {
   useEffect(() => {
     const access = searchParams.get('access');
     const refresh = searchParams.get('refresh');
+    const statusParam = searchParams.get('status');
+
+    // Handle pending approval status (social login succeeded but admin hasn't activated yet)
+    if (statusParam === 'pending_approval') {
+      navigate('/login?message=pending_approval', { replace: true });
+      return;
+    }
 
     if (access && refresh) {
       localStorage.setItem('accessToken', access);
