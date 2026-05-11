@@ -20,7 +20,7 @@ if (import.meta.env.DEV) {
   console.log('[Main] API URL:', import.meta.env.VITE_API_URL);
 }
 
-// Error Boundary Component – silently reloads on error to avoid flashing an error page
+// Error Boundary Component – shows a loading spinner on error, then reloads
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
@@ -37,16 +37,28 @@ class ErrorBoundary extends React.Component {
     const alreadyReloaded = sessionStorage.getItem('error_reload');
     if (!alreadyReloaded) {
       sessionStorage.setItem('error_reload', '1');
-      window.location.reload();
+      // Reload after a tiny delay so the spinner is painted
+      setTimeout(() => window.location.reload(), 100);
     }
-    // If already reloaded, do nothing – the error will be uncaught and the app may break,
-    // but we avoid an infinite loop. The user will see a blank page.
   }
 
   render() {
     if (this.state.hasError) {
-      // Render nothing while the reload is pending (or if already reloaded)
-      return null;
+      // Full-page loading spinner – identical to the initial loader
+      return (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+          background: '#fdf2f8', display: 'flex', alignItems: 'center',
+          justifyContent: 'center', zIndex: 9999
+        }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '3rem' }}>💕</div>
+            <p style={{ color: '#ec4899', fontFamily: 'Georgia,serif', fontSize: '1.2rem' }}>
+              Loading...
+            </p>
+          </div>
+        </div>
+      );
     }
     return this.props.children;
   }

@@ -349,7 +349,9 @@ const resources = {
       "admin_activate_selected": "Attiva",
       "admin_deactivate_selected": "Disattiva",
       "admin_verify_email_selected": "Verifica Email",
-      "admin_form_password_confirm": "Conferma Password"
+      "admin_form_password_confirm": "Conferma Password",
+      "registration_success_title": "Registrazione Completata!",
+      "registration_success_message": "Il tuo account è stato creato con successo. Controlla la tua email per verificare l'indirizzo. Dopo la verifica, un amministratore attiverà il tuo account."
     }
   },
   ko: {
@@ -699,7 +701,9 @@ const resources = {
       "admin_activate_selected": "활성화",
       "admin_deactivate_selected": "비활성화",
       "admin_verify_email_selected": "이메일 인증",
-      "admin_form_password_confirm": "비밀번호 확인"
+      "admin_form_password_confirm": "비밀번호 확인",
+      "registration_success_title": "등록 완료!",
+      "registration_success_message": "계정이 성공적으로 생성되었습니다. 이메일을 확인하여 주소를 인증하세요. 인증 후 관리자가 계정을 활성화할 것입니다."
     }
   },
   en: {
@@ -1049,7 +1053,9 @@ const resources = {
       "admin_activate_selected": "Activate",
       "admin_deactivate_selected": "Deactivate",
       "admin_verify_email_selected": "Verify Email",
-      "admin_form_password_confirm": "Confirm Password"
+      "admin_form_password_confirm": "Confirm Password",
+      "registration_success_title": "Registration Complete!",
+      "registration_success_message": "Your account has been created successfully. Please check your email to verify your address. After verification, an administrator will activate your account."
     }
   }
 };

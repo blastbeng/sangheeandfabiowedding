@@ -6,6 +6,7 @@ import Register from './components/Auth/Register';
 import VerifyEmail from './components/Auth/VerifyEmail';
 import SocialCallback from './components/Auth/SocialCallback';
 import PendingApproval from './components/Auth/PendingApproval';
+import RegistrationSuccess from './components/Auth/RegistrationSuccess';
 import Profile from './components/User/Profile';
 import Upload from './components/User/Upload';
 import MyUploads from './components/User/MyUploads';
@@ -132,6 +133,7 @@ function App() {
                   } 
                 />
                 <Route path="/pending-approval" element={<PendingApproval />} />
+                <Route path="/registration-success" element={<RegistrationSuccess />} />
                 <Route 
                   path="/login" 
                   element={

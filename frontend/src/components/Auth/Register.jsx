@@ -89,7 +89,8 @@ const Register = ({ setIsAuthenticated, setIsAdmin }) => {
       }
 
       if (response.ok) {
-        setSuccess(t('verify_success'));
+        navigate('/registration-success', { replace: true });
+        return;
       } else {
         // Handle specific known errors with translations
         if (result.email) {
