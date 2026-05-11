@@ -63,6 +63,12 @@ const Login = ({ setIsAuthenticated, setIsAdmin }) => {
         return;
       }
 
+      // Redirect to pending-approval page when account is inactive (pending admin approval)
+      if (response.status === 401 && data.error && data.error.includes('pending admin approval')) {
+        navigate('/pending-approval');
+        return;
+      }
+
       if (response.ok) {
         localStorage.setItem('accessToken', data.access);
         localStorage.setItem('refreshToken', data.refresh);
