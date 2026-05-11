@@ -207,6 +207,8 @@ function App() {
           </div>
         </main>
 
+        <CookieConsent />
+
         <footer className="bg-gradient-to-r from-wedding-navy via-wedding-azure to-wedding-navy text-white text-center p-6">
           <p className="text-2xl mb-2 text-white" style={{ fontFamily: "'Great Vibes', cursive", textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>🌸 {t('footer_crafted')} 🌸</p>
           <p className="text-sm opacity-80">
@@ -216,8 +218,6 @@ function App() {
             © 2026 {t('footer_project')} - {t('footer_forever')}
           </p>
         </footer>
-
-        <CookieConsent />
       </div>
     </Router>
   );

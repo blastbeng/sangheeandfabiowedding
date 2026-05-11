@@ -332,7 +332,10 @@ const resources = {
       "cookie_analytics_desc": "Questi cookie ci aiutano a capire come utilizzi il sito per migliorare la tua esperienza.",
       "cookie_marketing": "Marketing",
       "cookie_marketing_desc": "Questi cookie vengono utilizzati per mostrarti contenuti pertinenti e personalizzare la tua esperienza.",
-      "cookie_save_preferences": "Salva Preferenze"
+      "cookie_save_preferences": "Salva Preferenze",
+      "cookie_bar_message": "Questo sito utilizza i cookie. Puoi modificare le tue preferenze in qualsiasi momento.",
+      "cookie_manage_preferences": "Gestisci preferenze",
+      "cookie_necessary_only": "Solo necessari"
     }
   },
   ko: {
@@ -665,7 +668,10 @@ const resources = {
       "cookie_analytics_desc": "이 쿠키는 사이트 사용 방식을 이해하여 경험을 개선하는 데 도움이 됩니다.",
       "cookie_marketing": "마케팅",
       "cookie_marketing_desc": "이 쿠키는 관련 콘텐츠를 표시하고 경험을 맞춤화하는 데 사용됩니다.",
-      "cookie_save_preferences": "환경설정 저장"
+      "cookie_save_preferences": "환경설정 저장",
+      "cookie_bar_message": "이 사이트는 쿠키를 사용합니다. 언제든지 환경설정을 변경할 수 있습니다.",
+      "cookie_manage_preferences": "환경설정 관리",
+      "cookie_necessary_only": "필수만"
     }
   },
   en: {
@@ -998,7 +1004,10 @@ const resources = {
       "cookie_analytics_desc": "These cookies help us understand how you use the site to improve your experience.",
       "cookie_marketing": "Marketing",
       "cookie_marketing_desc": "These cookies are used to show you relevant content and personalize your experience.",
-      "cookie_save_preferences": "Save Preferences"
+      "cookie_save_preferences": "Save Preferences",
+      "cookie_bar_message": "This site uses cookies. You can change your preferences at any time.",
+      "cookie_manage_preferences": "Manage preferences",
+      "cookie_necessary_only": "Necessary Only"
     }
   }
 };
