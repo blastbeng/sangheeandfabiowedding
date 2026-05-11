@@ -15,39 +15,52 @@ if (import.meta.env.DEV) {
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { hasError: false };
+    this.state = { hasError: false, error: null };
   }
 
   static getDerivedStateFromError(error) {
-    console.error('[ErrorBoundary] Caught error:', error);
-    // Immediately redirect to /login – do not show fallback UI
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-    localStorage.removeItem('isAdmin');
-    window.location.href = '/login';
-    return { hasError: true };
+    return { hasError: true, error };
   }
 
   componentDidCatch(error, errorInfo) {
-    console.error('[ErrorBoundary] Error info:', errorInfo);
+    console.error('[ErrorBoundary] Caught error:', error, errorInfo);
   }
 
+  handleReset = () => {
+    this.setState({ hasError: false, error: null });
+  };
+
   render() {
-    // If an error occurred, the redirect has already been triggered.
-    // Return null to avoid flashing the fallback UI.
     if (this.state.hasError) {
-      return null;
+      return (
+        <div className="min-h-[50vh] flex items-center justify-center p-4">
+          <div className="wedding-card p-8 max-w-md w-full text-center">
+            <span className="text-5xl inline-block">💔</span>
+            <h2 className="text-2xl wedding-title mt-4">Oops! Something went wrong</h2>
+            <p className="text-gray-600 mt-2">
+              An unexpected error occurred. Please try refreshing the page.
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="wedding-btn mt-6"
+            >
+              Refresh Page
+            </button>
+          </div>
+        </div>
+      );
     }
+
     return this.props.children;
   }
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <ErrorBoundary>
-      <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
-        <App />
-      </GoogleOAuthProvider>
-    </ErrorBoundary>
+    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
+      <App />
+    </GoogleOAuthProvider>
   </React.StrictMode>,
 )
+
+export { ErrorBoundary };

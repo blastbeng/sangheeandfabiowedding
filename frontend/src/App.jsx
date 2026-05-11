@@ -22,6 +22,7 @@ import Events from './components/Public/Events';
 import LanguageSwitcher from './components/Common/LanguageSwitcher';
 import CookieConsent from './components/Common/CookieConsent';
 import PasswordReset from './components/Auth/PasswordReset';
+import { ErrorBoundary } from '../main';
 import logger from './utils/logger';
 
 // Protected Route Component
@@ -110,107 +111,109 @@ function App() {
 
         <main className="flex-grow p-4">
           <div className="max-w-6xl mx-auto">
-            <Routes>
-              <Route path="/" element={<Home isAuthenticated={isAuthenticated} />} />
-              <Route path="/events" element={<Events />} />
-              <Route path="/gallery" element={<Gallery />} />
-              <Route path="/media/:id" element={<MediaView />} />
-              <Route path="/users" element={<UserList />} />
-              <Route path="/user/:id" element={<UserProfile />} />
-              <Route 
-                path="/verify-email" 
-                element={
-                  <VerifyEmail setIsAuthenticated={setIsAuthenticated} setIsAdmin={setIsAdmin} />
-                } 
-              />
-              <Route 
-                path="/social-callback" 
-                element={
-                  <SocialCallback setIsAuthenticated={setIsAuthenticated} setIsAdmin={setIsAdmin} />
-                } 
-              />
-              <Route path="/pending-approval" element={<PendingApproval />} />
-              <Route 
-                path="/login" 
-                element={
-                  isAuthenticated 
-                    ? <Navigate to="/" replace /> 
-                    : <Login setIsAuthenticated={setIsAuthenticated} setIsAdmin={setIsAdmin} />
-                } 
-              />
-              <Route 
-                path="/register" 
-                element={
-                  isAuthenticated 
-                    ? <Navigate to="/" replace /> 
-                    : <Register setIsAuthenticated={setIsAuthenticated} setIsAdmin={setIsAdmin} />
-                } 
-              />
-              <Route 
-                path="/password-reset" 
-                element={<PasswordReset />} 
-              />
-              <Route 
-                path="/password-reset-confirm/:uidb64/:token" 
-                element={<PasswordReset />} 
-              />
-              <Route 
-                path="/profile" 
-                element={
-                  <ProtectedRoute isAuthenticated={isAuthenticated}>
-                    <Profile setIsAuthenticated={setIsAuthenticated} setIsAdmin={setIsAdmin} />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/upload" 
-                element={
-                  <ProtectedRoute isAuthenticated={isAuthenticated}>
-                    <Upload />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/my-uploads" 
-                element={
-                  <ProtectedRoute isAuthenticated={isAuthenticated}>
-                    <MyUploads />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/admin" 
-                element={
-                  <ProtectedRoute isAuthenticated={isAuthenticated} isAdminOnly={true} isAdmin={isAdmin}>
-                    <AdminDashboard />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/admin/users" 
-                element={
-                  <ProtectedRoute isAuthenticated={isAuthenticated} isAdminOnly={true} isAdmin={isAdmin}>
-                    <UserManagement />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/admin/settings" 
-                element={
-                  <ProtectedRoute isAuthenticated={isAuthenticated} isAdminOnly={true} isAdmin={isAdmin}>
-                    <Settings />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/admin/moderation" 
-                element={
-                  <ProtectedRoute isAuthenticated={isAuthenticated} isAdminOnly={true} isAdmin={isAdmin}>
-                    <AdminModeration />
-                  </ProtectedRoute>
-                } 
-              />
-            </Routes>
+            <ErrorBoundary>
+              <Routes>
+                <Route path="/" element={<Home isAuthenticated={isAuthenticated} />} />
+                <Route path="/events" element={<Events />} />
+                <Route path="/gallery" element={<Gallery />} />
+                <Route path="/media/:id" element={<MediaView />} />
+                <Route path="/users" element={<UserList />} />
+                <Route path="/user/:id" element={<UserProfile />} />
+                <Route 
+                  path="/verify-email" 
+                  element={
+                    <VerifyEmail setIsAuthenticated={setIsAuthenticated} setIsAdmin={setIsAdmin} />
+                  } 
+                />
+                <Route 
+                  path="/social-callback" 
+                  element={
+                    <SocialCallback setIsAuthenticated={setIsAuthenticated} setIsAdmin={setIsAdmin} />
+                  } 
+                />
+                <Route path="/pending-approval" element={<PendingApproval />} />
+                <Route 
+                  path="/login" 
+                  element={
+                    isAuthenticated 
+                      ? <Navigate to="/" replace /> 
+                      : <Login setIsAuthenticated={setIsAuthenticated} setIsAdmin={setIsAdmin} />
+                  } 
+                />
+                <Route 
+                  path="/register" 
+                  element={
+                    isAuthenticated 
+                      ? <Navigate to="/" replace /> 
+                      : <Register setIsAuthenticated={setIsAuthenticated} setIsAdmin={setIsAdmin} />
+                  } 
+                />
+                <Route 
+                  path="/password-reset" 
+                  element={<PasswordReset />} 
+                />
+                <Route 
+                  path="/password-reset-confirm/:uidb64/:token" 
+                  element={<PasswordReset />} 
+                />
+                <Route 
+                  path="/profile" 
+                  element={
+                    <ProtectedRoute isAuthenticated={isAuthenticated}>
+                      <Profile setIsAuthenticated={setIsAuthenticated} setIsAdmin={setIsAdmin} />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/upload" 
+                  element={
+                    <ProtectedRoute isAuthenticated={isAuthenticated}>
+                      <Upload />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/my-uploads" 
+                  element={
+                    <ProtectedRoute isAuthenticated={isAuthenticated}>
+                      <MyUploads />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/admin" 
+                  element={
+                    <ProtectedRoute isAuthenticated={isAuthenticated} isAdminOnly={true} isAdmin={isAdmin}>
+                      <AdminDashboard />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/admin/users" 
+                  element={
+                    <ProtectedRoute isAuthenticated={isAuthenticated} isAdminOnly={true} isAdmin={isAdmin}>
+                      <UserManagement />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/admin/settings" 
+                  element={
+                    <ProtectedRoute isAuthenticated={isAuthenticated} isAdminOnly={true} isAdmin={isAdmin}>
+                      <Settings />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/admin/moderation" 
+                  element={
+                    <ProtectedRoute isAuthenticated={isAuthenticated} isAdminOnly={true} isAdmin={isAdmin}>
+                      <AdminModeration />
+                    </ProtectedRoute>
+                  } 
+                />
+              </Routes>
+            </ErrorBoundary>
           </div>
         </main>
 
