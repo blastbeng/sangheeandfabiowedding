@@ -22,7 +22,7 @@ import Events from './components/Public/Events';
 import LanguageSwitcher from './components/Common/LanguageSwitcher';
 import CookieConsent from './components/Common/CookieConsent';
 import PasswordReset from './components/Auth/PasswordReset';
-import { ErrorBoundary } from '../main';
+import { ErrorBoundary } from './main';
 import logger from './utils/logger';
 
 // Protected Route Component
