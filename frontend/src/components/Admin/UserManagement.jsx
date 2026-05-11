@@ -305,109 +305,111 @@ const UserManagement = () => {
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="wedding-card p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
-            <h3 className="text-xl font-bold mb-4 text-pink-600">{editingUser ? t('admin_edit_user') : t('admin_add_new_user')}</h3>
-            <form onSubmit={handleSubmit}>
-              <input type="text" placeholder={t('admin_form_username')} value={formData.username} onChange={(e) => setFormData({...formData, username: e.target.value})} className="wedding-input w-full mb-3" required />
-              <input type="email" placeholder={t('admin_form_email')} value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="wedding-input w-full mb-3" required />
-              <input type="text" placeholder={t('admin_form_first_name')} value={formData.first_name} onChange={(e) => setFormData({...formData, first_name: e.target.value})} className="wedding-input w-full mb-3" />
-              <input type="text" placeholder={t('admin_form_last_name')} value={formData.last_name} onChange={(e) => setFormData({...formData, last_name: e.target.value})} className="wedding-input w-full mb-3" />
-              {/* Password fields – always shown for new users, optional for editing */}
-              <input
-                type="password"
-                placeholder={t('admin_form_password')}
-                value={formData.password}
-                onChange={(e) => setFormData({...formData, password: e.target.value})}
-                className="wedding-input w-full mb-3"
-                required={!editingUser}
-              />
-              <input
-                type="password"
-                placeholder={t('admin_form_password_confirm', 'Confirm Password')}
-                value={formData.password_confirm || ''}
-                onChange={(e) => setFormData({...formData, password_confirm: e.target.value})}
-                className="wedding-input w-full mb-3"
-                required={!editingUser}
-              />
-              <label className="flex items-center mb-3">
-                <input type="checkbox" checked={formData.is_staff} onChange={(e) => setFormData({...formData, is_staff: e.target.checked})} className="mr-2" />
-                {t('admin_form_admin_access')}
-              </label>
-              <label className="flex items-center mb-3">
-                <input type="checkbox" checked={formData.is_active} onChange={(e) => setFormData({...formData, is_active: e.target.checked})} className="mr-2" />
-                {t('admin_form_active')}
-              </label>
-              <label className="flex items-center mb-4">
-                <input type="checkbox" checked={formData.email_verified} onChange={(e) => setFormData({...formData, email_verified: e.target.checked})} className="mr-2" />
-                {t('admin_form_email_verified')}
-              </label>
-
-              {/* Profile Picture Section */}
-              <div className="mt-2 pt-4 border-t border-pink-200 mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('admin_form_profile_picture', 'Profile Picture')}
+        <div className="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto z-50">
+          <div className="flex items-center justify-center min-h-screen p-4">
+            <div className="wedding-card p-6 max-w-md w-full">
+              <h3 className="text-xl font-bold mb-4 text-pink-600">{editingUser ? t('admin_edit_user') : t('admin_add_new_user')}</h3>
+              <form onSubmit={handleSubmit}>
+                <input type="text" placeholder={t('admin_form_username')} value={formData.username} onChange={(e) => setFormData({...formData, username: e.target.value})} className="wedding-input w-full mb-3" required />
+                <input type="email" placeholder={t('admin_form_email')} value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="wedding-input w-full mb-3" required />
+                <input type="text" placeholder={t('admin_form_first_name')} value={formData.first_name} onChange={(e) => setFormData({...formData, first_name: e.target.value})} className="wedding-input w-full mb-3" />
+                <input type="text" placeholder={t('admin_form_last_name')} value={formData.last_name} onChange={(e) => setFormData({...formData, last_name: e.target.value})} className="wedding-input w-full mb-3" />
+                {/* Password fields – always shown for new users, optional for editing */}
+                <input
+                  type="password"
+                  placeholder={t('admin_form_password')}
+                  value={formData.password}
+                  onChange={(e) => setFormData({...formData, password: e.target.value})}
+                  className="wedding-input w-full mb-3"
+                  required={!editingUser}
+                />
+                <input
+                  type="password"
+                  placeholder={t('admin_form_password_confirm', 'Confirm Password')}
+                  value={formData.password_confirm || ''}
+                  onChange={(e) => setFormData({...formData, password_confirm: e.target.value})}
+                  className="wedding-input w-full mb-3"
+                  required={!editingUser}
+                />
+                <label className="flex items-center mb-3">
+                  <input type="checkbox" checked={formData.is_staff} onChange={(e) => setFormData({...formData, is_staff: e.target.checked})} className="mr-2" />
+                  {t('admin_form_admin_access')}
                 </label>
-                {editingUser && (
-                  <div className="mb-3 flex items-center gap-3">
-                    <img
-                      src={editingUser.profile_picture_url || 'https://i.imgur.com/V4RclNb.png'}
-                      alt=""
-                      className={`w-16 h-16 object-cover rounded-full border border-pink-200${deletePicture ? ' opacity-40' : ''}`}
-                      onError={(e) => { e.target.src = 'https://i.imgur.com/V4RclNb.png'; }}
-                    />
-                    {!deletePicture ? (
-                      <button
-                        type="button"
-                        onClick={handleDeletePicture}
-                        className="text-red-500 hover:text-red-700 text-sm underline"
-                      >
-                        {t('admin_delete_picture', 'Delete Picture')}
-                      </button>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <span className="text-red-500 text-sm font-medium">
-                          {t('admin_picture_will_be_deleted', 'Picture will be deleted on save')}
-                        </span>
+                <label className="flex items-center mb-3">
+                  <input type="checkbox" checked={formData.is_active} onChange={(e) => setFormData({...formData, is_active: e.target.checked})} className="mr-2" />
+                  {t('admin_form_active')}
+                </label>
+                <label className="flex items-center mb-4">
+                  <input type="checkbox" checked={formData.email_verified} onChange={(e) => setFormData({...formData, email_verified: e.target.checked})} className="mr-2" />
+                  {t('admin_form_email_verified')}
+                </label>
+
+                {/* Profile Picture Section */}
+                <div className="mt-2 pt-4 border-t border-pink-200 mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {t('admin_form_profile_picture', 'Profile Picture')}
+                  </label>
+                  {editingUser && (
+                    <div className="mb-3 flex items-center gap-3">
+                      <img
+                        src={editingUser.profile_picture_url || 'https://i.imgur.com/V4RclNb.png'}
+                        alt=""
+                        className={`w-16 h-16 object-cover rounded-full border border-pink-200${deletePicture ? ' opacity-40' : ''}`}
+                        onError={(e) => { e.target.src = 'https://i.imgur.com/V4RclNb.png'; }}
+                      />
+                      {!deletePicture ? (
                         <button
                           type="button"
-                          onClick={handleCancelDeletePicture}
-                          className="text-gray-500 hover:text-gray-700 text-sm underline"
+                          onClick={handleDeletePicture}
+                          className="text-red-500 hover:text-red-700 text-sm underline"
                         >
-                          {t('admin_cancel_delete_picture', 'Cancel')}
+                          {t('admin_delete_picture', 'Delete Picture')}
+                        </button>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <span className="text-red-500 text-sm font-medium">
+                            {t('admin_picture_will_be_deleted', 'Picture will be deleted on save')}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={handleCancelDeletePicture}
+                            className="text-gray-500 hover:text-gray-700 text-sm underline"
+                          >
+                            {t('admin_cancel_delete_picture', 'Cancel')}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  <div className="relative">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileChange}
+                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-pink-50 file:text-pink-700 hover:file:bg-pink-100"
+                    />
+                    {profilePicFile && (
+                      <div className="mt-1 flex items-center gap-2">
+                        <span className="text-sm text-gray-500">{profilePicFile.name}</span>
+                        <button
+                          type="button"
+                          onClick={handleClearFile}
+                          className="text-red-400 hover:text-red-600 text-sm"
+                        >
+                          ✕
                         </button>
                       </div>
                     )}
                   </div>
-                )}
-                <div className="relative">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileChange}
-                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-pink-50 file:text-pink-700 hover:file:bg-pink-100"
-                  />
-                  {profilePicFile && (
-                    <div className="mt-1 flex items-center gap-2">
-                      <span className="text-sm text-gray-500">{profilePicFile.name}</span>
-                      <button
-                        type="button"
-                        onClick={handleClearFile}
-                        className="text-red-400 hover:text-red-600 text-sm"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  )}
                 </div>
-              </div>
 
-              <div className="flex gap-2">
-                <button type="submit" className="flex-1 wedding-btn">{t('admin_save')}</button>
-                <button type="button" onClick={() => { setShowModal(false); setEditingUser(null); resetModalState(); }} className="flex-1 bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500">{t('admin_cancel')}</button>
-              </div>
-            </form>
+                <div className="flex gap-2">
+                  <button type="submit" className="flex-1 wedding-btn">{t('admin_save')}</button>
+                  <button type="button" onClick={() => { setShowModal(false); setEditingUser(null); resetModalState(); }} className="flex-1 bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500">{t('admin_cancel')}</button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}
