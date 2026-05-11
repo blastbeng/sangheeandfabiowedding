@@ -11,6 +11,9 @@ const UserManagement = () => {
   const [editingUser, setEditingUser] = useState(null);
   const [profilePicFile, setProfilePicFile] = useState(null);
   const [deletePicture, setDeletePicture] = useState(false);
+  const [message, setMessage] = useState(null); // { type: 'success'|'error', text: '' }
+  const [selectedUserIds, setSelectedUserIds] = useState([]);
+  const [selectAll, setSelectAll] = useState(false);
   const fileInputRef = useRef(null);
   const [formData, setFormData] = useState({
     username: '', email: '', first_name: '', last_name: '',
@@ -41,11 +44,13 @@ const UserManagement = () => {
   const resetModalState = () => {
     setProfilePicFile(null);
     setDeletePicture(false);
+    setMessage(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setMessage(null); // clear previous messages
     const url = editingUser 
       ? `${API_URL}/api/auth/admin/users/${editingUser.id}/`
       : `${API_URL}/api/auth/admin/users/`;
@@ -88,16 +93,24 @@ const UserManagement = () => {
         });
       }
       if (res.ok) {
+        setMessage({ type: 'success', text: t('admin_user_saved') });
         fetchUsers();
-        setShowModal(false);
-        setEditingUser(null);
-        resetModalState();
-        setFormData({ username: '', email: '', first_name: '', last_name: '', is_staff: false, is_active: true, email_verified: false, password: '', password_confirm: '' });
+        // Close modal after a short delay so the admin sees the success message
+        setTimeout(() => {
+          setShowModal(false);
+          setEditingUser(null);
+          resetModalState();
+          setFormData({ username: '', email: '', first_name: '', last_name: '', is_staff: false, is_active: true, email_verified: false, password: '', password_confirm: '' });
+          setMessage(null);
+        }, 1500);
       } else {
         const errorData = await res.json().catch(() => ({}));
+        const errorText = errorData.detail || errorData.error || JSON.stringify(errorData);
+        setMessage({ type: 'error', text: errorText });
         logger.error('[UserManagement] User save failed:', res.status, errorData);
       }
     } catch (err) {
+      setMessage({ type: 'error', text: t('admin_network_error') });
       logger.error('[UserManagement] User save error:', err);
     }
   };
@@ -124,6 +137,41 @@ const UserManagement = () => {
       if (res.ok) fetchUsers();
     } catch (err) {
       logger.error('[UserManagement] Toggle staff error for user:', userId, err);
+    }
+  };
+
+  const toggleSelectAll = () => {
+    if (selectAll) {
+      setSelectedUserIds([]);
+    } else {
+      setSelectedUserIds(filteredUsers.map(u => u.id));
+    }
+    setSelectAll(!selectAll);
+  };
+
+  const toggleSelectItem = (id) => {
+    setSelectedUserIds(prev =>
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const handleBulkAction = async (action) => {
+    try {
+      const res = await authFetch(`${API_URL}/api/auth/admin/users/bulk/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_ids: selectedUserIds, action })
+      });
+      if (res.ok) {
+        fetchUsers();
+        setSelectedUserIds([]);
+        setSelectAll(false);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        logger.error('[UserManagement] Bulk action failed:', err);
+      }
+    } catch (err) {
+      logger.error('[UserManagement] Bulk action error:', err);
     }
   };
 
@@ -184,10 +232,27 @@ const UserManagement = () => {
           <button onClick={() => { setEditingUser(null); setFormData({ username: '', email: '', first_name: '', last_name: '', is_staff: false, is_active: true, email_verified: false, password: '', password_confirm: '' }); resetModalState(); setShowModal(true); }} className="wedding-btn">{t('admin_add_user')}</button>
         </div>
 
+        {selectedUserIds.length > 0 && (
+          <div className="flex items-center gap-2 mb-4 p-3 bg-pink-50 rounded">
+            <span className="text-sm text-pink-700">{t('admin_selected_count', { count: selectedUserIds.length })}</span>
+            <button onClick={() => handleBulkAction('activate')} className="wedding-btn text-xs py-1 px-3">{t('admin_activate_selected')}</button>
+            <button onClick={() => handleBulkAction('deactivate')} className="wedding-btn text-xs py-1 px-3 bg-gray-400 hover:bg-gray-500">{t('admin_deactivate_selected')}</button>
+            <button onClick={() => handleBulkAction('verify_email')} className="wedding-btn text-xs py-1 px-3">{t('admin_verify_email_selected')}</button>
+          </div>
+        )}
+
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b-2 border-pink-200">
+                <th className="py-3">
+                  <input
+                    type="checkbox"
+                    checked={selectAll}
+                    onChange={toggleSelectAll}
+                    className="mr-2"
+                  />
+                </th>
                 <th className="text-left py-3 text-pink-600">{t('admin_users_col_picture')}</th>
                 <th className="text-left py-3 text-pink-600">{t('admin_users_col_username')}</th>
                 <th className="text-left py-3 text-pink-600">{t('admin_users_col_email')}</th>
@@ -198,6 +263,7 @@ const UserManagement = () => {
                 <th className="text-left py-3 text-pink-600">{t('admin_users_col_actions')}</th>
               </tr>
               <tr className="border-b border-pink-100">
+                <th></th>
                 <th></th>
                 <th className="py-2">
                   <input
@@ -266,6 +332,14 @@ const UserManagement = () => {
               {filteredUsers.map((user) => (
                 <tr key={user.id} className="border-b border-pink-100 hover:bg-pink-50">
                   <td className="py-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedUserIds.includes(user.id)}
+                      onChange={() => toggleSelectItem(user.id)}
+                      className="mr-2"
+                    />
+                  </td>
+                  <td className="py-3">
                     <img
                       src={user.profile_picture_url || 'https://i.imgur.com/V4RclNb.png'}
                       alt=""
@@ -309,6 +383,13 @@ const UserManagement = () => {
           <div className="flex items-center justify-center min-h-screen p-4">
             <div className="wedding-card p-6 max-w-md w-full">
               <h3 className="text-xl font-bold mb-4 text-pink-600">{editingUser ? t('admin_edit_user') : t('admin_add_new_user')}</h3>
+              {message && (
+                <div className={`mb-4 p-3 rounded text-sm ${
+                  message.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                }`}>
+                  {message.text}
+                </div>
+              )}
               <form onSubmit={handleSubmit}>
                 <input type="text" placeholder={t('admin_form_username')} value={formData.username} onChange={(e) => setFormData({...formData, username: e.target.value})} className="wedding-input w-full mb-3" required />
                 <input type="email" placeholder={t('admin_form_email')} value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="wedding-input w-full mb-3" required />

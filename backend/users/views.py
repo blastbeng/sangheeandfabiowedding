@@ -1210,6 +1210,37 @@ class AdminUserToggleStaffView(APIView):
         return Response(AdminUserSerializer(user, context={'request': request}).data)
 
 
+class AdminUserBulkUpdateView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def post(self, request):
+        user_ids = request.data.get('user_ids', [])
+        action = request.data.get('action')
+        if not user_ids or not action:
+            return Response({'error': 'user_ids and action are required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        valid_actions = ['activate', 'deactivate', 'verify_email']
+        if action not in valid_actions:
+            return Response({'error': f'Invalid action. Must be one of {valid_actions}.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        users = User.objects.filter(id__in=user_ids)
+        updated_count = 0
+        for user in users:
+            if action == 'activate':
+                user.is_active = True
+                user.email_verified = True  # activating also verifies email
+                updated_count += 1
+            elif action == 'deactivate':
+                user.is_active = False
+                updated_count += 1
+            elif action == 'verify_email':
+                user.email_verified = True
+                updated_count += 1
+            user.save()
+
+        return Response({'message': f'{updated_count} users updated.', 'updated_count': updated_count})
+
+
 class MediaBulkModerationView(APIView):
     permission_classes = [IsAdminUser]
 
