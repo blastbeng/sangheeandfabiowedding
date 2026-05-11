@@ -195,6 +195,7 @@ class AdminUserSerializer(serializers.ModelSerializer):
     remove_profile_picture = serializers.BooleanField(write_only=True, required=False, default=False)
     password = serializers.CharField(write_only=True, required=False, allow_blank=True)
     password_confirm = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    username = serializers.CharField(max_length=150, required=True)
 
     class Meta:
         model = CustomUser
