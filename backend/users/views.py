@@ -520,6 +520,26 @@ class ProfileView(APIView):
         logger.error(f"Profile update failed: {serializer.errors}")
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    def delete(self, request):
+        user = request.user
+
+        # Protect the default superuser created from environment variables
+        default_admin_username = os.getenv('ADMIN_USERNAME')
+        if user.is_superuser and user.username == default_admin_username:
+            return Response(
+                {'error': 'Cannot delete the default superuser account'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # Delete all media owned by this user from cloud storage and DB
+        for media in user.uploaded_media.all():
+            delete_media_task.delay(media.id)
+
+        # Delete the user (media objects will be cleaned up by the tasks)
+        user.delete()
+        logger.info(f"User self-deleted: {user.username}")
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 class SocialLoginView(APIView):
     permission_classes = [AllowAny]

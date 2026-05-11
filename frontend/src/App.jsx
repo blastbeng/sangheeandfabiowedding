@@ -156,7 +156,7 @@ function App() {
                 path="/profile" 
                 element={
                   <ProtectedRoute isAuthenticated={isAuthenticated}>
-                    <Profile />
+                    <Profile setIsAuthenticated={setIsAuthenticated} setIsAdmin={setIsAdmin} />
                   </ProtectedRoute>
                 } 
               />

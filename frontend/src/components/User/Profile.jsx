@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import logger from '../../utils/logger';
 import authFetch from '../../utils/authFetch';
 
-const Profile = () => {
+const Profile = ({ setIsAuthenticated, setIsAdmin }) => {
   const { t, i18n } = useTranslation();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -137,6 +137,31 @@ const Profile = () => {
     } catch (err) {
       logger.error('[Profile] Password update error:', err);
       setError(t('password_update_generic_error'));
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!window.confirm(t('delete_account_confirm'))) return;
+
+    try {
+      const res = await authFetch(`${API_URL}/api/auth/profile/`, {
+        method: 'DELETE'
+      });
+      if (res.ok || res.status === 204) {
+        // Clear auth state and redirect to home
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('isAdmin');
+        setIsAuthenticated(false);
+        setIsAdmin(false);
+        navigate('/', { replace: true });
+      } else {
+        const data = await res.json();
+        setError(data.error || t('delete_account_error'));
+      }
+    } catch (err) {
+      logger.error('[Profile] Delete account error:', err);
+      setError(t('delete_account_error'));
     }
   };
 
@@ -297,6 +322,17 @@ const Profile = () => {
             <option value="ko">🇰🇷 {t('한국어')}</option>
             <option value="en">🇬🇧 {t('English')}</option>
           </select>
+        </div>
+
+        <div className="floral-divider">✿ ─────── ✿ ─────── ✿</div>
+
+        <div className="mt-8 text-center">
+          <button
+            onClick={handleDeleteAccount}
+            className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-6 rounded-full transition shadow-md"
+          >
+            🗑️ {t('delete_account')}
+          </button>
         </div>
       </div>
     </div>

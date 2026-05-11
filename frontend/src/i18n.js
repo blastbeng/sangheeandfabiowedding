@@ -335,7 +335,10 @@ const resources = {
       "cookie_save_preferences": "Salva Preferenze",
       "cookie_bar_message": "Questo sito utilizza i cookie. Puoi modificare le tue preferenze in qualsiasi momento.",
       "cookie_manage_preferences": "Gestisci preferenze",
-      "cookie_necessary_only": "Solo necessari"
+      "cookie_necessary_only": "Solo necessari",
+      "delete_account": "Elimina Account",
+      "delete_account_confirm": "Sei sicuro di voler eliminare definitivamente il tuo account e tutti i media caricati? Questa azione non può essere annullata.",
+      "delete_account_error": "Eliminazione dell'account fallita. Riprova."
     }
   },
   ko: {
@@ -671,7 +674,10 @@ const resources = {
       "cookie_save_preferences": "환경설정 저장",
       "cookie_bar_message": "이 사이트는 쿠키를 사용합니다. 언제든지 환경설정을 변경할 수 있습니다.",
       "cookie_manage_preferences": "환경설정 관리",
-      "cookie_necessary_only": "필수만"
+      "cookie_necessary_only": "필수만",
+      "delete_account": "계정 삭제",
+      "delete_account_confirm": "계정과 업로드된 모든 미디어를 영구적으로 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.",
+      "delete_account_error": "계정 삭제에 실패했습니다. 다시 시도해주세요."
     }
   },
   en: {
@@ -1007,7 +1013,10 @@ const resources = {
       "cookie_save_preferences": "Save Preferences",
       "cookie_bar_message": "This site uses cookies. You can change your preferences at any time.",
       "cookie_manage_preferences": "Manage preferences",
-      "cookie_necessary_only": "Necessary Only"
+      "cookie_necessary_only": "Necessary Only",
+      "delete_account": "Delete Account",
+      "delete_account_confirm": "Are you sure you want to permanently delete your account and all your uploaded media? This action cannot be undone.",
+      "delete_account_error": "Failed to delete account. Please try again."
     }
   }
 };
