@@ -82,6 +82,12 @@ const Register = ({ setIsAuthenticated, setIsAdmin }) => {
         body: data,
       });
       const result = await response.json();
+
+      if (response.status === 403) {
+        setError(result.detail || t('too_many_attempts'));
+        return;
+      }
+
       if (response.ok) {
         setSuccess(t('verify_success'));
       } else {

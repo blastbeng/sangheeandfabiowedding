@@ -40,6 +40,7 @@ from .serializers import (
 from .cloud_clients import get_file_from_cloud, NextcloudClient
 from .tasks import upload_media_task, delete_media_task, detect_faces_task
 from .utils import process_profile_picture
+from .rate_limit import check_rate_limit, record_failed_attempt
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
@@ -264,6 +265,9 @@ class RegisterView(APIView):
     parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def post(self, request):
+        # Rate limit check
+        check_rate_limit(request, 'register')
+
         # Process profile picture if provided
         if 'profile_picture' in request.FILES:
             try:
@@ -306,6 +310,8 @@ class RegisterView(APIView):
                 {'message': 'User registered successfully. Please check your email to verify your account.'},
                 status=status.HTTP_201_CREATED
             )
+        # Record failed attempt before returning error
+        record_failed_attempt(request, 'register')
         logger.error(f"Registration failed: {serializer.errors}")
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -359,6 +365,9 @@ class LoginView(APIView):
     authentication_classes = []  # Disable authentication to avoid CSRF check on login
 
     def post(self, request):
+        # Rate limit check
+        check_rate_limit(request, 'login')
+
         username_or_email = request.data.get('username_or_email', '')
         password = request.data.get('password', '')
         user = None
@@ -397,6 +406,8 @@ class LoginView(APIView):
                 'access': str(refresh.access_token),
                 'user': CustomUserSerializer(user, context={'request': request}).data
             })
+        # Record failed attempt
+        record_failed_attempt(request, 'login')
         logger.warning(f"Login failed for: {username_or_email}")
         return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 

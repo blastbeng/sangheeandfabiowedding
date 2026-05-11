@@ -233,3 +233,17 @@ class CookieConsent(models.Model):
 
     def __str__(self):
         return f"Cookie consent for {self.user.username}"
+
+
+class FailedAttempt(models.Model):
+    ip_address = models.GenericIPAddressField()
+    endpoint = models.CharField(max_length=50)  # e.g., 'login', 'register'
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['ip_address', 'endpoint', '-timestamp']),
+        ]
+
+    def __str__(self):
+        return f"{self.ip_address} - {self.endpoint} at {self.timestamp}"

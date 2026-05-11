@@ -58,6 +58,11 @@ const Login = ({ setIsAuthenticated, setIsAdmin }) => {
 
       const data = await response.json();
 
+      if (response.status === 403) {
+        setError(data.detail || t('too_many_attempts'));
+        return;
+      }
+
       if (response.ok) {
         localStorage.setItem('accessToken', data.access);
         localStorage.setItem('refreshToken', data.refresh);
