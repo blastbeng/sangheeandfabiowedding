@@ -126,6 +126,11 @@ const Register = ({ setIsAuthenticated, setIsAdmin }) => {
         if (setIsAdmin) setIsAdmin(data.user.is_staff);
         navigate('/gallery');
       } else {
+        // If account is pending admin approval, redirect to dedicated page
+        if (data.error && data.error.includes('pending admin approval')) {
+          navigate('/pending-approval');
+          return;
+        }
         setError(data.error || 'Google registration failed');
       }
     } catch (err) {
