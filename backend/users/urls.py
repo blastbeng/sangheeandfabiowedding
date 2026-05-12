@@ -14,7 +14,8 @@ from .views import (
     AdminUserListView, AdminUserDetailView, AdminUserToggleStaffView,
     AdminUserBulkUpdateView,
     MediaBulkModerationView, TaskStatusView, FaceTagListView, FaceTagDetailView,
-    CookieConsentView
+    CookieConsentView,
+    CustomTokenRefreshView
 )
 
 urlpatterns = [
@@ -24,7 +25,7 @@ urlpatterns = [
     path('login/', LoginView.as_view(), name='login'),
     path('password-reset/', PasswordResetRequestView.as_view(), name='password-reset'),
     path('password-reset-confirm/<str:uidb64>/<str:token>/', PasswordResetConfirmView.as_view(), name='password-reset-confirm'),
-    path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('token/refresh/', CustomTokenRefreshView.as_view(), name='token_refresh'),
     path('profile/', ProfileView.as_view(), name='profile'),
     path('logout/', LogoutView.as_view(), name='logout'),
     path('social/login/', SocialLoginView.as_view(), name='social-login'),

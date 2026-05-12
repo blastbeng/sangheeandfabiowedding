@@ -28,6 +28,7 @@ from rest_framework import status
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.views import TokenRefreshView
 from allauth.socialaccount.models import SocialAccount
 from celery.result import AsyncResult
 from .models import Media, SiteSettings, FaceTag, CookieConsent
@@ -581,6 +582,37 @@ class LogoutView(APIView):
         logout(request)
         logger.info(f"User logged out: {username}")
         return Response({'message': 'Logged out successfully'})
+
+
+class CustomTokenRefreshView(TokenRefreshView):
+    """
+    Override the default token refresh to reject tokens belonging to
+    inactive or deleted users.
+    """
+    def post(self, request, *args, **kwargs):
+        # First, try to decode the refresh token to get the user
+        refresh_token = request.data.get('refresh')
+        if refresh_token:
+            try:
+                token = RefreshToken(refresh_token)
+                user_id = token.payload.get('user_id')
+                if user_id:
+                    user = User.objects.filter(id=user_id).first()
+                    if not user:
+                        return Response(
+                            {'code': 'user_deleted', 'detail': 'User account no longer exists.'},
+                            status=status.HTTP_401_UNAUTHORIZED
+                        )
+                    if not user.is_active:
+                        return Response(
+                            {'code': 'user_deactivated', 'detail': 'User account is deactivated.'},
+                            status=status.HTTP_401_UNAUTHORIZED
+                        )
+            except Exception:
+                # If the token is invalid, let the parent class handle it
+                pass
+
+        return super().post(request, *args, **kwargs)
 
 
 class PasswordResetRequestView(APIView):

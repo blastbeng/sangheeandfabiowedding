@@ -32,6 +32,22 @@ const authFetch = async (url, options = {}) => {
   let response = await fetch(url, { ...options, headers });
 
   if (response.status === 401) {
+    // Check if the response contains a specific error code (user deactivated/deleted)
+    let errorData = null;
+    try {
+      errorData = await response.clone().json();
+    } catch (_) { /* ignore parse errors */ }
+
+    if (errorData && (errorData.code === 'user_deactivated' || errorData.code === 'user_deleted')) {
+      // Clear auth and redirect to login with reason
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('isAdmin');
+      const reason = errorData.code === 'user_deactivated' ? 'deactivated' : 'deleted';
+      window.location.href = `/login?reason=${reason}`;
+      throw new Error('User account is no longer valid');
+    }
+
     const refreshToken = localStorage.getItem('refreshToken');
     if (!refreshToken) {
       // No refresh token, force logout
@@ -65,12 +81,23 @@ const authFetch = async (url, options = {}) => {
           response = await fetch(url, { ...options, headers: newHeaders });
           processQueue(null, data.access);
         } else {
-          // Refresh failed, clear auth and redirect
+          // Refresh failed – check if it's because the user was deactivated/deleted
+          let refreshErrorData = null;
+          try {
+            refreshErrorData = await refreshResponse.json();
+          } catch (_) { /* ignore parse errors */ }
+
           localStorage.removeItem('accessToken');
           localStorage.removeItem('refreshToken');
           localStorage.removeItem('isAdmin');
+
+          if (refreshErrorData && (refreshErrorData.code === 'user_deactivated' || refreshErrorData.code === 'user_deleted')) {
+            const reason = refreshErrorData.code === 'user_deactivated' ? 'deactivated' : 'deleted';
+            window.location.href = `/login?reason=${reason}`;
+          } else {
+            window.location.href = '/login';
+          }
           processQueue(new Error('Refresh failed'));
-          window.location.href = '/login';
           throw new Error('Token refresh failed');
         }
       } catch (error) {

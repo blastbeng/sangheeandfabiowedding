@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
 import { useTranslation } from 'react-i18next';
 import logger from '../../utils/logger';
@@ -15,6 +15,7 @@ const Login = ({ setIsAuthenticated, setIsAdmin }) => {
   const [resendMessage, setResendMessage] = useState('');
   const [canResend, setCanResend] = useState(false);
   const [resendEmail, setResendEmail] = useState('');
+  const [deactivationMessage, setDeactivationMessage] = useState('');
   const [socialProviders, setSocialProviders] = useState({
     google: false,
     googleClientId: null,
@@ -22,6 +23,16 @@ const Login = ({ setIsAuthenticated, setIsAdmin }) => {
     instagram: false
   });
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const reason = searchParams.get('reason');
+
+  useEffect(() => {
+    if (reason === 'deactivated') {
+      setDeactivationMessage(t('Your account has been deactivated. Please contact the administrator.'));
+    } else if (reason === 'deleted') {
+      setDeactivationMessage(t('Your account has been deleted.'));
+    }
+  }, [reason, t]);
 
   useEffect(() => {
     fetch(`${import.meta.env.VITE_API_URL}/api/auth/social/status/`)
@@ -166,6 +177,11 @@ const Login = ({ setIsAuthenticated, setIsAdmin }) => {
         <p className="text-center text-gray-600 mb-6 italic">
           {t('login_subtitle')}
         </p>
+        {deactivationMessage && (
+          <div className="bg-yellow-50 border-2 border-yellow-300 text-yellow-800 px-4 py-3 rounded-xl mb-4 text-center">
+            ⚠️ {deactivationMessage}
+          </div>
+        )}
         {error && (
           <div className="bg-red-50 border-2 border-red-300 text-red-700 px-4 py-3 rounded-xl mb-4 text-center">
             💔 {error}
