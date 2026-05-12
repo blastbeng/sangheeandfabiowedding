@@ -7,6 +7,7 @@ import hashlib
 import os
 import requests
 import face_recognition
+import mediapipe as mp
 import numpy as np
 import pickle
 from PIL import Image
@@ -151,22 +152,61 @@ def detect_faces_task(self, media_id):
     if content is None:
         return
 
+    # Load image with PIL and convert to RGB numpy array
     try:
-        img_array = face_recognition.load_image_file(BytesIO(content))
+        pil_image = Image.open(BytesIO(content)).convert('RGB')
+        img_array = np.array(pil_image)
     except Exception as e:
         logger.error(f"Cannot load image for media {media_id}: {e}")
         return
 
-    # Detect face locations and encodings
+    # Use MediaPipe for fast face detection
     try:
-        face_locations = face_recognition.face_locations(img_array, model='hog')
-        face_encodings = face_recognition.face_encodings(img_array, face_locations)
+        with mp.solutions.face_detection.FaceDetection(
+            model_selection=1, min_detection_confidence=0.5
+        ) as face_detection:
+            results = face_detection.process(img_array)
     except Exception as e:
-        logger.error(f"Face detection failed for media {media_id}: {e}")
+        logger.error(f"MediaPipe face detection failed for media {media_id}: {e}")
         return
 
-    if not face_encodings:
+    if not results.detections:
         return
+
+    # Extract face locations and cropped face images for dlib encoding
+    face_locations = []
+    face_crops = []
+    h, w, _ = img_array.shape
+    for detection in results.detections:
+        bbox = detection.location_data.relative_bounding_box
+        xmin = int(bbox.xmin * w)
+        ymin = int(bbox.ymin * h)
+        width = int(bbox.width * w)
+        height = int(bbox.height * h)
+        # Ensure coordinates are within image bounds
+        xmin = max(0, xmin)
+        ymin = max(0, ymin)
+        xmax = min(w, xmin + width)
+        ymax = min(h, ymin + height)
+        face_locations.append((ymin, xmax, ymax, xmin))  # dlib order: top, right, bottom, left
+        face_crops.append(img_array[ymin:ymax, xmin:xmax])
+
+    # Compute face encodings using dlib on the cropped faces
+    face_encodings = []
+    for crop in face_crops:
+        # face_recognition expects an image with a single face; we pass the crop directly
+        encodings = face_recognition.face_encodings(crop)
+        if encodings:
+            face_encodings.append(encodings[0])
+        else:
+            # If dlib couldn't encode the crop, skip it
+            face_encodings.append(None)
+
+    # Filter out any None encodings (failed crops)
+    valid_pairs = [(loc, enc) for loc, enc in zip(face_locations, face_encodings) if enc is not None]
+    if not valid_pairs:
+        return
+    face_locations, face_encodings = zip(*valid_pairs)
 
     # Load existing groups and their centroids
     existing_groups = FaceGroup.objects.prefetch_related('face_tags').all()
