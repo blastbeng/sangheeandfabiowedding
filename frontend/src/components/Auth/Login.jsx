@@ -12,6 +12,9 @@ const Login = ({ setIsAuthenticated, setIsAdmin }) => {
   });
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
+  const [resendMessage, setResendMessage] = useState('');
+  const [canResend, setCanResend] = useState(false);
+  const [resendEmail, setResendEmail] = useState('');
   const [socialProviders, setSocialProviders] = useState({
     google: false,
     googleClientId: null,
@@ -42,6 +45,8 @@ const Login = ({ setIsAuthenticated, setIsAdmin }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setResendMessage('');
+    setCanResend(false);
 
     try {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/login/`, {
@@ -60,6 +65,14 @@ const Login = ({ setIsAuthenticated, setIsAdmin }) => {
 
       if (response.status === 403) {
         setError(data.detail || t('too_many_attempts'));
+        return;
+      }
+
+      // Handle unverified account – show resend option
+      if (response.status === 401 && data.can_resend) {
+        setError(data.error);
+        setCanResend(true);
+        setResendEmail(data.email);
         return;
       }
 
@@ -83,6 +96,27 @@ const Login = ({ setIsAuthenticated, setIsAdmin }) => {
       logger.error('[Login] Login error:', err);
       logger.error('[Login] API URL:', import.meta.env.VITE_API_URL);
       setError(t('An error occurred during login'));
+    }
+  };
+
+  const handleResendVerification = async () => {
+    setResendMessage('');
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/resend-verification/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: resendEmail })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setResendMessage(data.message || 'Verification email resent.');
+        setCanResend(false);
+      } else {
+        setResendMessage(data.error || 'Failed to resend verification email.');
+      }
+    } catch (err) {
+      logger.error('[Login] Resend verification error:', err);
+      setResendMessage('An error occurred. Please try again.');
     }
   };
 
@@ -135,6 +169,21 @@ const Login = ({ setIsAuthenticated, setIsAdmin }) => {
         {error && (
           <div className="bg-red-50 border-2 border-red-300 text-red-700 px-4 py-3 rounded-xl mb-4 text-center">
             💔 {error}
+          </div>
+        )}
+        {canResend && (
+          <div className="mb-4 text-center">
+            <button
+              onClick={handleResendVerification}
+              className="text-wedding-azure underline hover:text-wedding-navy font-semibold"
+            >
+              {t('Resend verification email')}
+            </button>
+          </div>
+        )}
+        {resendMessage && (
+          <div className={`mb-4 text-center px-4 py-2 rounded-xl ${resendMessage.includes('error') || resendMessage.includes('Failed') ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
+            {resendMessage}
           </div>
         )}
         <form onSubmit={handleSubmit}>

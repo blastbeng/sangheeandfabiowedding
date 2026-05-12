@@ -314,12 +314,66 @@ class RegisterView(APIView):
                 processed = process_profile_picture(request.FILES['profile_picture'])
             except ValidationError as e:
                 return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
             data = request.data.copy()
             data['profile_picture'] = processed
         else:
             data = request.data
 
+        email = data.get('email')
+        existing_user = None
+        if email:
+            existing_user = User.objects.filter(email=email).first()
+
+        # If an unverified, inactive account already exists, update it instead of creating a new one
+        if existing_user and not existing_user.is_active and not existing_user.email_verified:
+            # Ensure the new username (if changed) isn't already taken by another user
+            new_username = data.get('username')
+            if new_username and new_username != existing_user.username:
+                if User.objects.filter(username=new_username).exclude(id=existing_user.id).exists():
+                    record_failed_attempt(request, 'register')
+                    return Response({'username': 'This username is already taken.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            serializer = CustomUserSerializer(existing_user, data=data, partial=True)
+            if serializer.is_valid():
+                user = serializer.save()
+                # Update password if a new one was provided
+                password = data.get('password')
+                if password:
+                    user.set_password(password)
+                    user.save()
+
+                # Resend verification email
+                signer = TimestampSigner()
+                token = signer.sign(user.email)
+                verification_url = request.build_absolute_uri(f'/api/auth/verify-email/?token={token}')
+                language = data.get('language', user.language or 'en')
+                if language not in ['en', 'it', 'ko']:
+                    language = 'en'
+
+                try:
+                    html_message = build_verification_email(verification_url, language=language)
+                    subject = _get_email_subject(language)
+                    send_mail(
+                        subject=subject,
+                        message='Please click the link to verify your email: ' + verification_url,
+                        from_email=django_settings.DEFAULT_FROM_EMAIL,
+                        recipient_list=[user.email],
+                        fail_silently=False,
+                        html_message=html_message,
+                    )
+                    logger.info(f"Verification email resent (re-registration) to: {user.email}")
+                except Exception as e:
+                    logger.error(f"Failed to resend verification email to {user.email}: {e}")
+
+                return Response(
+                    {'message': 'A new verification email has been sent. Please check your inbox.'},
+                    status=status.HTTP_200_OK
+                )
+            else:
+                record_failed_attempt(request, 'register')
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        # Normal registration flow (new user)
         serializer = CustomUserSerializer(data=data)
         if serializer.is_valid():
             user = serializer.save()
@@ -330,8 +384,6 @@ class RegisterView(APIView):
             signer = TimestampSigner()
             token = signer.sign(user.email)
             verification_url = request.build_absolute_uri(f'/api/auth/verify-email/?token={token}')
-
-            # Get language from request (default to English)
             language = request.data.get('language', 'en')
             if language not in ['en', 'it', 'ko']:
                 language = 'en'
@@ -356,7 +408,7 @@ class RegisterView(APIView):
                 {'message': 'User registered successfully. Please check your email to verify your account.'},
                 status=status.HTTP_201_CREATED
             )
-        # Record failed attempt before returning error
+
         record_failed_attempt(request, 'register')
         logger.error(f"Registration failed: {serializer.errors}")
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -419,6 +471,51 @@ class VerifyEmailView(APIView):
         return redirect(f"{frontend_url}/verify-email?status=pending_approval")
 
 
+class ResendVerificationView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        email = request.data.get('email')
+        if not email:
+            return Response({'error': 'Email is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            # Don't reveal whether the email exists
+            return Response({'message': 'If the email exists and is not verified, a new verification email has been sent.'})
+
+        if user.email_verified:
+            return Response({'message': 'This account is already verified. You can log in once an administrator activates it.'})
+
+        # Rate limit the resend action
+        check_rate_limit(request, 'resend_verification')
+
+        # Generate a new token and send the email
+        signer = TimestampSigner()
+        token = signer.sign(user.email)
+        verification_url = request.build_absolute_uri(f'/api/auth/verify-email/?token={token}')
+
+        language = user.language or 'en'
+        try:
+            html_message = build_verification_email(verification_url, language=language)
+            subject = _get_email_subject(language)
+            send_mail(
+                subject=subject,
+                message='Please click the link to verify your email: ' + verification_url,
+                from_email=django_settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[user.email],
+                fail_silently=False,
+                html_message=html_message,
+            )
+            logger.info(f"Verification email resent to: {user.email}")
+        except Exception as e:
+            logger.error(f"Failed to resend verification email to {user.email}: {e}")
+            return Response({'error': 'Failed to send email. Please try again later.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response({'message': 'A new verification email has been sent. Please check your inbox.'})
+
+
 class LoginView(APIView):
     permission_classes = [AllowAny]
     authentication_classes = []  # Disable authentication to avoid CSRF check on login
@@ -444,9 +541,14 @@ class LoginView(APIView):
             if not user.is_active:
                 if not user.email_verified:
                     msg = 'Account is not verified. Please check your email for the verification link.'
+                    return Response({
+                        'error': msg,
+                        'can_resend': True,
+                        'email': user.email
+                    }, status=status.HTTP_401_UNAUTHORIZED)
                 else:
                     msg = 'Your account is pending admin approval.'
-                return Response({'error': msg}, status=status.HTTP_401_UNAUTHORIZED)
+                    return Response({'error': msg}, status=status.HTTP_401_UNAUTHORIZED)
             login(request, user)
 
             remember_me = request.data.get('remember_me', False)
