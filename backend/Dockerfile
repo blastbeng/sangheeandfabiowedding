@@ -1,10 +1,11 @@
 FROM python:3.11-slim
-
+77
 RUN apt-get update && apt-get install -y --no-install-recommends \
     cmake \
     build-essential \
     libboost-all-dev \
     libopenblas-dev \
+    libgl1 \
     && rm -rf /var/lib/apt/lists/*
 
 ENV PYTHONDONTWRITEBYTECODE=1
