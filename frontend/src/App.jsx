@@ -94,11 +94,11 @@ function App() {
 function AppContent({ isAuthenticated, setIsAuthenticated, isAdmin, setIsAdmin, handleLogout }) {
   const { t } = useTranslation();
   const location = useLocation();
-  const isPendingApproval = location.pathname === '/pending-approval';
+  const isFullscreenPage = location.pathname === '/pending-approval' || location.pathname === '/registration-success';
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
-      {!isPendingApproval && (
+      {!isFullscreenPage && (
         <header className="wedding-header text-white p-4">
           <div className="max-w-6xl mx-auto flex flex-col items-center gap-3">
             {/* Line 1: Language Switcher */}
@@ -139,8 +139,8 @@ function AppContent({ isAuthenticated, setIsAuthenticated, isAdmin, setIsAdmin, 
         </header>
       )}
 
-      <main className={`flex-grow ${!isPendingApproval ? 'p-4' : ''}`}>
-        <div className={!isPendingApproval ? 'max-w-6xl mx-auto' : ''}>
+      <main className={`flex-grow ${!isFullscreenPage ? 'p-4' : ''}`}>
+        <div className={!isFullscreenPage ? 'max-w-6xl mx-auto' : ''}>
           <ErrorBoundary>
             <Routes>
               <Route path="/" element={<Home isAuthenticated={isAuthenticated} />} />
@@ -250,7 +250,7 @@ function AppContent({ isAuthenticated, setIsAuthenticated, isAdmin, setIsAdmin, 
 
       <CookieConsent />
 
-      {!isPendingApproval && (
+      {!isFullscreenPage && (
         <footer className="bg-gradient-to-r from-wedding-navy via-wedding-azure to-wedding-navy text-white text-center p-6">
           <p className="text-2xl mb-2 text-white" style={{ fontFamily: "'Great Vibes', cursive", textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>🌸 {t('footer_crafted')} 🌸</p>
           <p className="text-sm opacity-80">
