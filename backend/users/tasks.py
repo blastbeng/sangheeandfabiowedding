@@ -6,11 +6,13 @@ from django.core.files.base import ContentFile
 import hashlib
 import os
 import requests
-import cv2
-import tempfile
+import face_recognition
+import numpy as np
+import pickle
+from PIL import Image
 from io import BytesIO
 
-from .models import Media, CustomUser, FaceTag
+from .models import Media, CustomUser, FaceTag, FaceGroup
 from .cloud_clients import NextcloudClient, get_file_from_cloud
 from config.settings import (
     NEXTCLOUD_URL, NEXTCLOUD_USERNAME, NEXTCLOUD_PASSWORD, NEXTCLOUD_FOLDER
@@ -144,47 +146,86 @@ def detect_faces_task(self, media_id):
     if media.status != 'approved':
         return
 
-    face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
-
     # Download file content from cloud
     content, _ = get_file_from_cloud(media)
     if content is None:
         return
 
-    suffix = os.path.splitext(media.file.name)[1] if media.file and media.file.name else '.jpg'
-    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
-        tmp.write(content)
-        tmp_path = tmp.name
-
-    detected_names = set()
-
     try:
-        if media.media_type == 'image':
-            img = cv2.imread(tmp_path)
-            if img is None:
-                return
-            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-            faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
-            if len(faces) > 0:
-                detected_names.add('Unknown')
-        elif media.media_type == 'video':
-            cap = cv2.VideoCapture(tmp_path)
-            fps = cap.get(cv2.CAP_PROP_FPS)
-            frame_interval = int(fps) if fps and fps > 0 else 25
-            frame_count = 0
-            while True:
-                ret, frame = cap.read()
-                if not ret:
-                    break
-                if frame_count % frame_interval == 0:
-                    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-                    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
-                    if len(faces) > 0:
-                        detected_names.add('Unknown')
-                frame_count += 1
-            cap.release()
-    finally:
-        os.unlink(tmp_path)
+        img_array = face_recognition.load_image_file(BytesIO(content))
+    except Exception as e:
+        logger.error(f"Cannot load image for media {media_id}: {e}")
+        return
 
-    for name in detected_names:
-        FaceTag.objects.get_or_create(media=media, name=name)
+    # Detect face locations and encodings
+    try:
+        face_locations = face_recognition.face_locations(img_array, model='hog')
+        face_encodings = face_recognition.face_encodings(img_array, face_locations)
+    except Exception as e:
+        logger.error(f"Face detection failed for media {media_id}: {e}")
+        return
+
+    if not face_encodings:
+        return
+
+    # Load existing groups and their centroids
+    existing_groups = FaceGroup.objects.prefetch_related('face_tags').all()
+    group_centroids = {}
+    for group in existing_groups:
+        encodings = []
+        for tag in group.face_tags.all():
+            if tag.encoding:
+                try:
+                    enc = pickle.loads(tag.encoding)
+                    encodings.append(enc)
+                except Exception:
+                    pass
+        if encodings:
+            group_centroids[group.id] = np.mean(encodings, axis=0)
+
+    # Process each detected face
+    for (top, right, bottom, left), encoding in zip(face_locations, face_encodings):
+        # Extract face image
+        face_image = img_array[top:bottom, left:right]
+        pil_image = Image.fromarray(face_image)
+        thumb_io = BytesIO()
+        pil_image.save(thumb_io, format='JPEG', quality=85)
+        thumb_content = thumb_io.getvalue()
+
+        # Find closest existing group
+        best_group_id = None
+        min_distance = 0.6
+        for group_id, centroid in group_centroids.items():
+            distance = np.linalg.norm(encoding - centroid)
+            if distance < min_distance:
+                min_distance = distance
+                best_group_id = group_id
+
+        if best_group_id is None:
+            # Create new group
+            new_group = FaceGroup.objects.create()
+            new_group.thumbnail.save(f'group_{new_group.id}.jpg', ContentFile(thumb_content), save=True)
+            best_group_id = new_group.id
+            group_centroids[best_group_id] = encoding
+        else:
+            # Update centroid (moving average)
+            group = FaceGroup.objects.get(id=best_group_id)
+            old_centroid = group_centroids[best_group_id]
+            count = group.face_tags.count()
+            new_centroid = (old_centroid * count + encoding) / (count + 1)
+            group_centroids[best_group_id] = new_centroid
+
+        # Create FaceTag
+        face_tag = FaceTag.objects.create(
+            media=media,
+            face_group_id=best_group_id,
+            encoding=pickle.dumps(encoding),
+        )
+        face_tag.thumbnail.save(f'face_{face_tag.id}.jpg', ContentFile(thumb_content), save=True)
+
+    # Ensure every group has a thumbnail
+    for group in FaceGroup.objects.filter(thumbnail=''):
+        first_tag = group.face_tags.first()
+        if first_tag and first_tag.thumbnail:
+            group.thumbnail = first_tag.thumbnail
+            group.save()

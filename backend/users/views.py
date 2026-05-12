@@ -13,7 +13,7 @@ from django.contrib.auth import get_user_model, login, logout, authenticate
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.staticfiles.storage import staticfiles_storage
 from django.core.exceptions import ValidationError
-from django.db.models import Q
+from django.db.models import Q, Count
 from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
 from django.utils.decorators import method_decorator
@@ -31,11 +31,12 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenRefreshView
 from allauth.socialaccount.models import SocialAccount
 from celery.result import AsyncResult
-from .models import Media, SiteSettings, FaceTag, CookieConsent
+from .models import Media, SiteSettings, FaceGroup, FaceTag, CookieConsent
 from .serializers import (
     CustomUserSerializer, MediaSerializer, MediaModerationSerializer,
     AdminUserSerializer, SiteSettingsSerializer, BulkModerationSerializer,
-    PublicMediaSerializer, PublicUserSerializer, FaceTagSerializer,
+    PublicMediaSerializer, PublicUserSerializer, FaceGroupSerializer,
+    FaceTagSerializer,
     CookieConsentSerializer
 )
 from .cloud_clients import get_file_from_cloud, NextcloudClient
@@ -1256,9 +1257,9 @@ class PublicMediaListView(APIView):
                 Q(user__first_name__icontains=user_search) |
                 Q(user__last_name__icontains=user_search)
             )
-        facetag = request.query_params.get('facetag')
-        if facetag:
-            media_ids = FaceTag.objects.filter(name__iexact=facetag).values_list('media_id', flat=True)
+        face_group_id = request.query_params.get('face_group_id')
+        if face_group_id:
+            media_ids = FaceTag.objects.filter(face_group_id=face_group_id).values_list('media_id', flat=True)
             queryset = queryset.filter(id__in=media_ids)
         serializer = PublicMediaSerializer(queryset.order_by('-uploaded_at'), many=True, context={'request': request})
         return Response(serializer.data)
@@ -1471,6 +1472,17 @@ class MediaBulkModerationView(APIView):
                 updated_count += 1
         action_past = {'approve': 'approved', 'reject': 'rejected', 'delete': 'deleted'}.get(action, action)
         return Response({'message': f'{updated_count} media items {action_past} successfully.', 'updated_count': updated_count})
+
+
+class FaceGroupListView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        groups = FaceGroup.objects.annotate(
+            face_count=Count('face_tags')
+        ).order_by('-face_count')
+        serializer = FaceGroupSerializer(groups, many=True, context={'request': request})
+        return Response(serializer.data)
 
 
 class FaceTagListView(APIView):

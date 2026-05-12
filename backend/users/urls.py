@@ -13,7 +13,7 @@ from .views import (
     AdminDashboardView, AdminSettingsView,
     AdminUserListView, AdminUserDetailView, AdminUserToggleStaffView,
     AdminUserBulkUpdateView,
-    MediaBulkModerationView, TaskStatusView, FaceTagListView, FaceTagDetailView,
+    MediaBulkModerationView, TaskStatusView, FaceGroupListView, FaceTagListView, FaceTagDetailView,
     CookieConsentView,
     CustomTokenRefreshView
 )
@@ -55,5 +55,6 @@ urlpatterns = [
     path('admin/users/<int:user_id>/toggle-staff/', AdminUserToggleStaffView.as_view(), name='admin-user-toggle-staff'),
     path('admin/facetags/', FaceTagListView.as_view(), name='facetag-list'),
     path('admin/facetags/<int:tag_id>/', FaceTagDetailView.as_view(), name='facetag-detail'),
+    path('face-groups/', FaceGroupListView.as_view(), name='face-group-list'),
     path('cookie-consent/', CookieConsentView.as_view(), name='cookie-consent'),
 ]

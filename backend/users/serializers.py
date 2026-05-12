@@ -3,7 +3,7 @@ import os
 from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.staticfiles.storage import staticfiles_storage
-from .models import CustomUser, Media, SiteSettings, FaceTag, CookieConsent
+from .models import CustomUser, Media, SiteSettings, FaceGroup, FaceTag, CookieConsent
 
 logger = logging.getLogger(__name__)
 
@@ -179,7 +179,24 @@ class PublicMediaSerializer(serializers.ModelSerializer):
         return None
 
     def get_face_tags(self, obj):
-        return list(obj.face_tags.values_list('name', flat=True))
+        tags = obj.face_tags.select_related('face_group').all()
+        result = []
+        for tag in tags:
+            if tag.face_group:
+                result.append({
+                    'group_id': tag.face_group.id,
+                    'thumbnail_url': self._get_group_thumbnail(tag.face_group),
+                })
+        return result
+
+    def _get_group_thumbnail(self, group):
+        if group.thumbnail:
+            request = self.context.get('request')
+            url = group.thumbnail.url
+            if request:
+                return request.build_absolute_uri(url)
+            return url
+        return None
 
 
 class MediaModerationSerializer(serializers.ModelSerializer):
@@ -290,11 +307,44 @@ class AdminDashboardSerializer(serializers.Serializer):
     recent_uploads = MediaSerializer(many=True, read_only=True)
 
 
+class FaceGroupSerializer(serializers.ModelSerializer):
+    thumbnail_url = serializers.SerializerMethodField()
+    face_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = FaceGroup
+        fields = ('id', 'name', 'thumbnail', 'thumbnail_url', 'face_count')
+
+    def get_thumbnail_url(self, obj):
+        if obj.thumbnail:
+            request = self.context.get('request')
+            url = obj.thumbnail.url
+            if request:
+                return request.build_absolute_uri(url)
+            return url
+        return None
+
+    def get_face_count(self, obj):
+        return obj.face_tags.count()
+
+
 class FaceTagSerializer(serializers.ModelSerializer):
+    face_group_id = serializers.IntegerField(source='face_group.id', read_only=True)
+    thumbnail_url = serializers.SerializerMethodField()
+
     class Meta:
         model = FaceTag
-        fields = ('id', 'media', 'name', 'created_at')
+        fields = ('id', 'media', 'face_group_id', 'name', 'thumbnail', 'thumbnail_url', 'created_at')
         read_only_fields = ('id', 'media', 'created_at')
+
+    def get_thumbnail_url(self, obj):
+        if obj.thumbnail:
+            request = self.context.get('request')
+            url = obj.thumbnail.url
+            if request:
+                return request.build_absolute_uri(url)
+            return url
+        return None
 
 
 class CookieConsentSerializer(serializers.ModelSerializer):

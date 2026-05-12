@@ -207,16 +207,39 @@ class SiteSettings(models.Model):
         return obj
 
 
-class FaceTag(models.Model):
-    media = models.ForeignKey(Media, on_delete=models.CASCADE, related_name='face_tags')
-    name = models.CharField(max_length=100, default='Unknown')
+class FaceGroup(models.Model):
+    name = models.CharField(max_length=100, default='')
+    thumbnail = models.ImageField(upload_to='facetags/', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ('media', 'name')
+        db_table = 'users_facegroup'
 
     def __str__(self):
-        return f"{self.name} in {self.media}"
+        return self.name or f"Group {self.id}"
+
+
+class FaceTag(models.Model):
+    media = models.ForeignKey(Media, on_delete=models.CASCADE, related_name='face_tags')
+    face_group = models.ForeignKey(FaceGroup, on_delete=models.SET_NULL, null=True, blank=True, related_name='face_tags')
+    thumbnail = models.ImageField(upload_to='facetags/', null=True, blank=True)
+    encoding = models.BinaryField(null=True, blank=True)  # pickle of face_recognition encoding
+    name = models.CharField(max_length=100, default='')   # kept for backward compat, synced from group
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        # Remove unique_together – multiple faces per media are allowed
+        indexes = [
+            models.Index(fields=['face_group']),
+        ]
+
+    def save(self, *args, **kwargs):
+        if self.face_group and self.face_group.name:
+            self.name = self.face_group.name
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Face {self.id} in {self.media}"
 
 
 class CookieConsent(models.Model):

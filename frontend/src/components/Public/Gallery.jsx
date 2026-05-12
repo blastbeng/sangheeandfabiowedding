@@ -10,14 +10,15 @@ const Gallery = () => {
   const [filters, setFilters] = useState({
     user_search: ''
   });
-  const [selectedFaceTag, setSelectedFaceTag] = useState('');
+  const [faceGroups, setFaceGroups] = useState([]);
+  const [selectedGroupId, setSelectedGroupId] = useState(null);
   const [captionFilter, setCaptionFilter] = useState('');
   const API_URL = import.meta.env.VITE_API_URL;
 
   const fetchMedia = () => {
     const params = new URLSearchParams();
     if (filters.user_search) params.append('user_search', filters.user_search);
-    if (selectedFaceTag) params.append('facetag', selectedFaceTag);
+    if (selectedGroupId) params.append('face_group_id', selectedGroupId);
     if (captionFilter) params.append('caption', captionFilter);
 
     fetch(`${API_URL}/api/auth/media/public/?${params}`)
@@ -34,7 +35,14 @@ const Gallery = () => {
 
   useEffect(() => {
     fetchMedia();
-  }, [filters, selectedFaceTag, captionFilter]);
+  }, [filters, selectedGroupId, captionFilter]);
+
+  useEffect(() => {
+    fetch(`${API_URL}/api/auth/face-groups/`)
+      .then(res => res.json())
+      .then(data => setFaceGroups(data))
+      .catch(err => logger.error('[Gallery] Failed to fetch face groups:', err));
+  }, []);
 
   if (loading) {
     return (
@@ -51,6 +59,29 @@ const Gallery = () => {
         <h2 className="text-4xl wedding-title mb-2">{t('gallery_title')}</h2>
         <p className="text-gray-600 italic">{t('gallery_subtitle')}</p>
       </div>
+
+      {/* Face group row */}
+      {faceGroups.length > 0 && (
+        <div className="flex flex-wrap gap-4 mb-6 justify-center">
+          {faceGroups.map(group => (
+            <button
+              key={group.id}
+              onClick={() => setSelectedGroupId(prev => prev === group.id ? null : group.id)}
+              className={`flex flex-col items-center gap-1 transition-transform hover:scale-105 ${
+                selectedGroupId === group.id ? 'ring-4 ring-pink-500 rounded-full' : ''
+              }`}
+            >
+              <img
+                src={group.thumbnail_url || 'https://i.imgur.com/V4RclNb.png'}
+                alt={group.name || `Person ${group.id}`}
+                className="w-16 h-16 rounded-full object-cover border-2 border-white shadow-md"
+                onError={(e) => { e.target.src = 'https://i.imgur.com/V4RclNb.png'; }}
+              />
+              <span className="text-xs text-gray-600">{group.name || `#${group.id}`}</span>
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Filter controls */}
       <div className="mb-6 flex flex-wrap gap-4 items-end">
@@ -76,13 +107,13 @@ const Gallery = () => {
         </div>
       </div>
 
-      {selectedFaceTag && (
+      {selectedGroupId && (
         <div className="mb-4 flex items-center gap-2">
           <span className="text-sm text-gray-600">
-            {t('Filtering by')}: <strong>{selectedFaceTag}</strong>
+            {t('Filtering by')}: <strong>{faceGroups.find(g => g.id === selectedGroupId)?.name || `#${selectedGroupId}`}</strong>
           </span>
           <button
-            onClick={() => setSelectedFaceTag('')}
+            onClick={() => setSelectedGroupId(null)}
             className="text-xs text-pink-600 underline hover:text-pink-800"
           >
             {t('Clear filter')}
@@ -136,18 +167,21 @@ const Gallery = () => {
                   <div className="flex flex-wrap gap-1 mt-2">
                     {item.face_tags.map(tag => (
                       <button
-                        key={tag}
+                        key={tag.group_id}
                         onClick={(e) => {
                           e.stopPropagation();
-                          setSelectedFaceTag(prev => prev === tag ? '' : tag);
+                          setSelectedGroupId(prev => prev === tag.group_id ? null : tag.group_id);
                         }}
-                        className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${
-                          selectedFaceTag === tag
-                            ? 'bg-pink-500 text-white border-pink-500'
-                            : 'bg-pink-50 text-pink-700 border-pink-200 hover:bg-pink-100'
+                        className={`w-8 h-8 rounded-full overflow-hidden border-2 transition-colors ${
+                          selectedGroupId === tag.group_id ? 'border-pink-500' : 'border-white'
                         }`}
                       >
-                        {tag}
+                        <img
+                          src={tag.thumbnail_url || 'https://i.imgur.com/V4RclNb.png'}
+                          alt=""
+                          className="w-full h-full object-cover"
+                          onError={(e) => { e.target.src = 'https://i.imgur.com/V4RclNb.png'; }}
+                        />
                       </button>
                     ))}
                   </div>
