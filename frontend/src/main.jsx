@@ -12,6 +12,7 @@ import ReactDOM from 'react-dom/client'
 import { GoogleOAuthProvider } from '@react-oauth/google'
 import App from './App.jsx'
 import './i18n'
+import i18n from './i18n'
 import './index.css'
 
 if (import.meta.env.DEV) {
@@ -71,7 +72,7 @@ class ErrorBoundary extends React.Component {
               onMouseEnter={(e) => e.target.style.backgroundColor = '#2b6cb0'}
               onMouseLeave={(e) => e.target.style.backgroundColor = '#1e3a5f'}
             >
-              Refresh
+              {i18n.t('Refresh')}
             </button>
           </div>
         </div>

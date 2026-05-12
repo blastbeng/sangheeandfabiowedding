@@ -41,6 +41,7 @@ const API_URL = import.meta.env.VITE_API_URL;
 logger.info('[App] Initializing with API URL:', API_URL);
 
 function App() {
+  const { t } = useTranslation();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -72,7 +73,7 @@ function App() {
         onClick={() => window.location.reload()}
         className="px-4 py-2 bg-wedding-navy text-white rounded-full text-sm font-semibold hover:bg-wedding-azure transition"
       >
-        Refresh
+        {t('Refresh')}
       </button>
     </div>
   );
