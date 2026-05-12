@@ -144,12 +144,14 @@ const UserManagement = () => {
     if (selectAll) {
       setSelectedUserIds([]);
     } else {
-      setSelectedUserIds(filteredUsers.map(u => u.id));
+      setSelectedUserIds(filteredUsers.filter(u => !u.is_default_admin).map(u => u.id));
     }
     setSelectAll(!selectAll);
   };
 
   const toggleSelectItem = (id) => {
+    const user = users.find(u => u.id === id);
+    if (user?.is_default_admin) return;
     setSelectedUserIds(prev =>
       prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
     );
@@ -336,6 +338,7 @@ const UserManagement = () => {
                       type="checkbox"
                       checked={selectedUserIds.includes(user.id)}
                       onChange={() => toggleSelectItem(user.id)}
+                      disabled={user.is_default_admin}
                       className="mr-2"
                     />
                   </td>
@@ -367,7 +370,7 @@ const UserManagement = () => {
                   </td>
                   <td className="py-3">
                     <button onClick={() => { setEditingUser(user); setFormData({...user, password: '', password_confirm: ''}); resetModalState(); setShowModal(true); }} className="text-blue-500 hover:text-blue-700 text-sm mr-2">{t('admin_edit')}</button>
-                    {!user.is_superuser && (
+                    {!user.is_default_admin && (
                       <button onClick={() => handleDelete(user.id)} className="text-red-500 hover:text-red-700 text-sm">{t('admin_delete')}</button>
                     )}
                   </td>
@@ -413,15 +416,33 @@ const UserManagement = () => {
                   required={!editingUser}
                 />
                 <label className="flex items-center mb-3">
-                  <input type="checkbox" checked={formData.is_staff} onChange={(e) => setFormData({...formData, is_staff: e.target.checked})} className="mr-2" />
+                  <input
+                    type="checkbox"
+                    checked={formData.is_staff}
+                    onChange={(e) => setFormData({...formData, is_staff: e.target.checked})}
+                    disabled={editingUser?.is_default_admin}
+                    className="mr-2"
+                  />
                   {t('admin_form_admin_access')}
                 </label>
                 <label className="flex items-center mb-3">
-                  <input type="checkbox" checked={formData.is_active} onChange={(e) => setFormData({...formData, is_active: e.target.checked})} className="mr-2" />
+                  <input
+                    type="checkbox"
+                    checked={formData.is_active}
+                    onChange={(e) => setFormData({...formData, is_active: e.target.checked})}
+                    disabled={editingUser?.is_default_admin}
+                    className="mr-2"
+                  />
                   {t('admin_form_active')}
                 </label>
                 <label className="flex items-center mb-4">
-                  <input type="checkbox" checked={formData.email_verified} onChange={(e) => setFormData({...formData, email_verified: e.target.checked})} className="mr-2" />
+                  <input
+                    type="checkbox"
+                    checked={formData.email_verified}
+                    onChange={(e) => setFormData({...formData, email_verified: e.target.checked})}
+                    disabled={editingUser?.is_default_admin}
+                    className="mr-2"
+                  />
                   {t('admin_form_email_verified')}
                 </label>
 

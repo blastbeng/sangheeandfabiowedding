@@ -205,13 +205,14 @@ class AdminUserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=False, allow_blank=True)
     password_confirm = serializers.CharField(write_only=True, required=False, allow_blank=True)
     username = serializers.CharField(max_length=150, required=True)
+    is_default_admin = serializers.SerializerMethodField()
 
     class Meta:
         model = CustomUser
         fields = ('id', 'username', 'email', 'first_name', 'last_name',
                   'is_staff', 'is_superuser', 'is_active', 'email_verified',
                   'created_at', 'updated_at', 'language', 'profile_picture', 'profile_picture_url',
-                  'remove_profile_picture', 'password', 'password_confirm')
+                  'remove_profile_picture', 'password', 'password_confirm', 'is_default_admin')
         read_only_fields = ('created_at', 'updated_at')
 
     def get_profile_picture_url(self, obj):
@@ -220,6 +221,9 @@ class AdminUserSerializer(serializers.ModelSerializer):
         if request:
             return request.build_absolute_uri(url)
         return url
+
+    def get_is_default_admin(self, obj):
+        return obj.username == os.getenv('ADMIN_USERNAME') and obj.is_superuser
 
     def validate(self, attrs):
         password = attrs.get('password')
