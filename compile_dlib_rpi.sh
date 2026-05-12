@@ -54,6 +54,7 @@ cd ../..
 
 # Create output directory and copy the shared library
 mkdir -p "$OUTPUT_DIR"
+rm -rf "$OUTPUT_DIR/libdlib.so"
 cp "$BUILD_DIR/dlib/libdlib.so" "$OUTPUT_DIR/"
 
 # Build a pip wheel from the dlib source with the same optimizations
