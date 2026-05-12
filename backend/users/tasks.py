@@ -180,9 +180,8 @@ def detect_faces_task(self, media_id):
         media.save(update_fields=['face_detection_attempted'])
         return
 
-    # Extract face locations and cropped face images for dlib encoding
+    # Extract face locations in dlib format (top, right, bottom, left)
     face_locations = []
-    face_crops = []
     h, w, _ = img_array.shape
     for detection in results.detections:
         bbox = detection.location_data.relative_bounding_box
@@ -196,26 +195,15 @@ def detect_faces_task(self, media_id):
         xmax = min(w, xmin + width)
         ymax = min(h, ymin + height)
         face_locations.append((ymin, xmax, ymax, xmin))  # dlib order: top, right, bottom, left
-        face_crops.append(img_array[ymin:ymax, xmin:xmax])
 
-    # Compute face encodings using dlib on the cropped faces
-    face_encodings = []
-    for crop in face_crops:
-        # face_recognition expects an image with a single face; we pass the crop directly
-        encodings = face_recognition.face_encodings(crop)
-        if encodings:
-            face_encodings.append(encodings[0])
-        else:
-            # If dlib couldn't encode the crop, skip it
-            face_encodings.append(None)
+    # Compute face encodings using dlib on the full image with known locations
+    face_encodings = face_recognition.face_encodings(img_array, known_face_locations=face_locations)
 
-    # Filter out any None encodings (failed crops)
-    valid_pairs = [(loc, enc) for loc, enc in zip(face_locations, face_encodings) if enc is not None]
-    if not valid_pairs:
+    if not face_encodings:
+        # No encodings could be computed (should not happen if MediaPipe found faces)
         media.face_detection_attempted = True
         media.save(update_fields=['face_detection_attempted'])
         return
-    face_locations, face_encodings = zip(*valid_pairs)
 
     # Load existing groups and their centroids
     existing_groups = FaceGroup.objects.prefetch_related('face_tags').all()
