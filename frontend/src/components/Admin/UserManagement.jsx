@@ -257,9 +257,6 @@ const UserManagement = () => {
                 </th>
                 <th className="text-left py-3 text-pink-600">{t('admin_users_col_picture')}</th>
                 <th className="text-left py-3 text-pink-600">{t('admin_users_col_username')}</th>
-                <th className="text-left py-3 text-pink-600">{t('admin_users_col_email')}</th>
-                <th className="text-left py-3 text-pink-600">{t('First Name')}</th>
-                <th className="text-left py-3 text-pink-600">{t('Last Name')}</th>
                 <th className="text-left py-3 text-pink-600">{t('admin_users_col_role')}</th>
                 <th className="text-left py-3 text-pink-600">{t('admin_users_col_status')}</th>
                 <th className="text-left py-3 text-pink-600">{t('admin_users_col_actions')}</th>
@@ -273,33 +270,6 @@ const UserManagement = () => {
                     placeholder={t('filter_username')}
                     value={filters.username}
                     onChange={(e) => setFilters({...filters, username: e.target.value})}
-                    className="wedding-input w-full text-xs py-1"
-                  />
-                </th>
-                <th className="py-2">
-                  <input
-                    type="text"
-                    placeholder={t('filter_email')}
-                    value={filters.email}
-                    onChange={(e) => setFilters({...filters, email: e.target.value})}
-                    className="wedding-input w-full text-xs py-1"
-                  />
-                </th>
-                <th className="py-2">
-                  <input
-                    type="text"
-                    placeholder={t('filter_first_name')}
-                    value={filters.first_name}
-                    onChange={(e) => setFilters({...filters, first_name: e.target.value})}
-                    className="wedding-input w-full text-xs py-1"
-                  />
-                </th>
-                <th className="py-2">
-                  <input
-                    type="text"
-                    placeholder={t('filter_last_name')}
-                    value={filters.last_name}
-                    onChange={(e) => setFilters({...filters, last_name: e.target.value})}
                     className="wedding-input w-full text-xs py-1"
                   />
                 </th>
@@ -351,13 +321,10 @@ const UserManagement = () => {
                     />
                   </td>
                   <td className="py-3">{user.username}</td>
-                  <td className="py-3">{user.email}</td>
-                  <td className="py-3">{user.first_name}</td>
-                  <td className="py-3">{user.last_name}</td>
                   <td className="py-3">
                     {user.is_superuser ? t('admin_role_superadmin') : user.is_staff ? t('admin_role_admin') : t('admin_role_user')}
                   </td>
-                  <td className="py-3">
+                  <td className="py-3 whitespace-nowrap">
                     {(() => {
                       if (!user.email_verified) {
                         return <span className="status-badge status-pending">{t('admin_status_unverified')}</span>;
