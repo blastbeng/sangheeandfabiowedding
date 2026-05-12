@@ -368,18 +368,30 @@ class VerifyEmailView(APIView):
     def get(self, request):
         token = request.query_params.get('token')
         frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:5173')
+        wants_json = 'application/json' in request.accepted_media_type
+
         if not token:
+            if wants_json:
+                return Response({'error': 'missing_token'}, status=status.HTTP_400_BAD_REQUEST)
             return redirect(f"{frontend_url}/verify-email?error=missing_token")
+
         signer = TimestampSigner()
         try:
             email = signer.unsign(token, max_age=86400)  # 24 hours
         except SignatureExpired:
+            if wants_json:
+                return Response({'error': 'expired'}, status=status.HTTP_400_BAD_REQUEST)
             return redirect(f"{frontend_url}/verify-email?error=expired")
         except BadSignature:
+            if wants_json:
+                return Response({'error': 'invalid'}, status=status.HTTP_400_BAD_REQUEST)
             return redirect(f"{frontend_url}/verify-email?error=invalid")
+
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
+            if wants_json:
+                return Response({'error': 'user_not_found'}, status=status.HTTP_404_NOT_FOUND)
             return redirect(f"{frontend_url}/verify-email?error=user_not_found")
 
         if user.email_verified and user.is_active:
@@ -387,6 +399,12 @@ class VerifyEmailView(APIView):
             refresh = RefreshToken.for_user(user)
             access = str(refresh.access_token)
             refresh_token = str(refresh)
+            if wants_json:
+                return Response({
+                    'status': 'active',
+                    'access': access,
+                    'refresh': refresh_token
+                })
             return redirect(
                 f"{frontend_url}/verify-email?access={access}&refresh={refresh_token}"
             )
@@ -396,7 +414,8 @@ class VerifyEmailView(APIView):
         # user.is_active remains False
         user.save()
 
-        # Redirect to frontend with a pending-approval status
+        if wants_json:
+            return Response({'status': 'pending_approval'})
         return redirect(f"{frontend_url}/verify-email?status=pending_approval")
 
 

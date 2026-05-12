@@ -15,6 +15,59 @@ const VerifyEmail = ({ setIsAuthenticated, setIsAdmin }) => {
     const error = searchParams.get('error');
     const success = searchParams.get('success');
     const statusParam = searchParams.get('status');
+    const token = searchParams.get('token');
+
+    // If a token is present, verify it via the backend API
+    if (token) {
+      setStatus('loading');
+      fetch(`${import.meta.env.VITE_API_URL}/api/auth/verify-email/?token=${encodeURIComponent(token)}`, {
+        headers: { 'Accept': 'application/json' }
+      })
+        .then(res => res.json().then(data => ({ status: res.status, data })))
+        .then(({ status: httpStatus, data }) => {
+          if (httpStatus === 200) {
+            if (data.status === 'pending_approval') {
+              navigate('/pending-approval', { replace: true });
+            } else if (data.status === 'active') {
+              // Auto-login
+              localStorage.setItem('accessToken', data.access);
+              localStorage.setItem('refreshToken', data.refresh);
+              setIsAuthenticated(true);
+              // Fetch user profile to get admin status
+              fetch(`${import.meta.env.VITE_API_URL}/api/auth/profile/`, {
+                headers: { 'Authorization': `Bearer ${data.access}` }
+              })
+                .then(res => res.json())
+                .then(profile => {
+                  setIsAdmin(profile.is_staff || false);
+                  localStorage.setItem('isAdmin', profile.is_staff ? 'true' : 'false');
+                  navigate('/', { replace: true });
+                })
+                .catch(() => {
+                  navigate('/', { replace: true });
+                });
+            } else {
+              // Unknown status – go home
+              navigate('/', { replace: true });
+            }
+          } else {
+            // Error from backend
+            setStatus('error');
+            switch (data.error) {
+              case 'missing_token': setMessage(t('verify_missing_token')); break;
+              case 'expired': setMessage(t('verify_expired')); break;
+              case 'invalid': setMessage(t('verify_invalid')); break;
+              case 'user_not_found': setMessage(t('verify_user_not_found')); break;
+              default: setMessage(t('verify_unknown_error'));
+            }
+          }
+        })
+        .catch(() => {
+          setStatus('error');
+          setMessage(t('verify_network_error'));
+        });
+      return;
+    }
 
     // Handle pending approval status (email verified but admin hasn't activated yet)
     if (statusParam === 'pending_approval') {
