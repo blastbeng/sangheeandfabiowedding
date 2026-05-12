@@ -1,6 +1,8 @@
 import os
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 from django.conf import settings as django_settings
 
 
@@ -105,6 +107,7 @@ class Media(models.Model):
     # Cloud storage field
     nextcloud_file_id = models.CharField(max_length=255, null=True, blank=True)
     view_count = models.IntegerField(default=0)
+    face_detection_attempted = models.BooleanField(default=False)
 
     class Meta:
         db_table = 'users_media'
@@ -270,3 +273,11 @@ class FailedAttempt(models.Model):
 
     def __str__(self):
         return f"{self.ip_address} - {self.endpoint} at {self.timestamp}"
+
+
+@receiver(post_save, sender=Media)
+def trigger_face_detection(sender, instance, created, **kwargs):
+    if instance.status == 'approved' and instance.media_type == 'image':
+        from .tasks import detect_faces_task
+        if not instance.face_detection_attempted and not instance.face_tags.exists():
+            detect_faces_task.delay(instance.id)

@@ -144,13 +144,11 @@ def detect_faces_task(self, media_id):
     except Media.DoesNotExist:
         return
 
-    if media.status != 'approved':
+    if media.status != 'approved' or media.media_type != 'image':
         return
 
-    # Skip non-images and media that already have face tags
-    if media.media_type != 'image':
-        return
-    if FaceTag.objects.filter(media=media).exists():
+    # Skip if already attempted (safety net)
+    if media.face_detection_attempted:
         return
 
     # Download file content from cloud
@@ -177,6 +175,9 @@ def detect_faces_task(self, media_id):
         return
 
     if not results.detections:
+        # No faces found – mark as attempted and exit
+        media.face_detection_attempted = True
+        media.save(update_fields=['face_detection_attempted'])
         return
 
     # Extract face locations and cropped face images for dlib encoding
@@ -211,6 +212,8 @@ def detect_faces_task(self, media_id):
     # Filter out any None encodings (failed crops)
     valid_pairs = [(loc, enc) for loc, enc in zip(face_locations, face_encodings) if enc is not None]
     if not valid_pairs:
+        media.face_detection_attempted = True
+        media.save(update_fields=['face_detection_attempted'])
         return
     face_locations, face_encodings = zip(*valid_pairs)
 
@@ -270,8 +273,13 @@ def detect_faces_task(self, media_id):
         face_tag.thumbnail.save(f'face_{face_tag.id}.jpg', ContentFile(thumb_content), save=True)
 
     # Ensure every group has a thumbnail
-    for group in FaceGroup.objects.filter(thumbnail=''):
+    from django.db.models import Q
+    for group in FaceGroup.objects.filter(Q(thumbnail__isnull=True) | Q(thumbnail='')):
         first_tag = group.face_tags.first()
         if first_tag and first_tag.thumbnail:
             group.thumbnail = first_tag.thumbnail
             group.save()
+
+    # Mark media as attempted
+    media.face_detection_attempted = True
+    media.save(update_fields=['face_detection_attempted'])
