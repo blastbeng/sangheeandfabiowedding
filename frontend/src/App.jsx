@@ -65,7 +65,17 @@ function App() {
     setIsAdmin(false);
   };
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  if (loading) return (
+    <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+      <p className="text-gray-600">Loading...</p>
+      <button
+        onClick={() => window.location.reload()}
+        className="px-4 py-2 bg-wedding-navy text-white rounded-full text-sm font-semibold hover:bg-wedding-azure transition"
+      >
+        Refresh
+      </button>
+    </div>
+  );
 
   return (
     <Router>

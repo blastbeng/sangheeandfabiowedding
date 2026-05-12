@@ -44,7 +44,6 @@ class ErrorBoundary extends React.Component {
 
   render() {
     if (this.state.hasError) {
-      // Full-page loading spinner – identical to the initial loader
       return (
         <div style={{
           position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
@@ -53,9 +52,27 @@ class ErrorBoundary extends React.Component {
         }}>
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: '3rem' }}>💕</div>
-            <p style={{ color: '#ec4899', fontFamily: 'Georgia,serif', fontSize: '1.2rem' }}>
+            <p style={{ color: '#ec4899', fontFamily: 'Georgia,serif', fontSize: '1.2rem', marginBottom: '1rem' }}>
               Loading...
             </p>
+            <button
+              onClick={() => window.location.reload()}
+              style={{
+                padding: '0.5rem 1.5rem',
+                backgroundColor: '#1e3a5f',
+                color: 'white',
+                border: 'none',
+                borderRadius: '9999px',
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'background-color 0.2s'
+              }}
+              onMouseEnter={(e) => e.target.style.backgroundColor = '#2b6cb0'}
+              onMouseLeave={(e) => e.target.style.backgroundColor = '#1e3a5f'}
+            >
+              Refresh
+            </button>
           </div>
         </div>
       );
