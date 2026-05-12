@@ -15,7 +15,8 @@ from .views import (
     AdminUserBulkUpdateView,
     MediaBulkModerationView, TaskStatusView, FaceGroupListView, FaceTagListView, FaceTagDetailView,
     CookieConsentView,
-    CustomTokenRefreshView
+    CustomTokenRefreshView,
+    MediaDetectFacesView,
 )
 
 urlpatterns = [
@@ -42,6 +43,7 @@ urlpatterns = [
     path('media/moderation/', MediaModerationView.as_view(), name='media-moderation'),
     path('media/moderation/<int:media_id>/', MediaModerateSingleView.as_view(), name='media-moderate-single'),
     path('media/moderation/bulk/', MediaBulkModerationView.as_view(), name='media-moderation-bulk'),
+    path('media/moderation/detect-faces/', MediaDetectFacesView.as_view(), name='media-detect-faces'),
     path('media/<int:media_id>/file/', MediaFileView.as_view(), name='media-file'),
     path('media/public/', PublicMediaListView.as_view(), name='media-public'),
     path('users/public/', PublicUserListView.as_view(), name='public-user-list'),

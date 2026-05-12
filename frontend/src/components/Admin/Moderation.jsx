@@ -121,6 +121,42 @@ const AdminModeration = () => {
     });
   };
 
+  const handleDetectFaces = () => {
+    if (selectedIds.length === 0) return;
+
+    // Filter selected media to only approved images
+    const approvedMedia = media.filter(
+      item => selectedIds.includes(item.id) && item.status === 'approved' && item.media_type === 'image'
+    );
+    const skippedCount = selectedIds.length - approvedMedia.length;
+
+    if (approvedMedia.length === 0) {
+      alert(t('admin_detect_faces_no_approved'));
+      return;
+    }
+
+    const confirmMsg = skippedCount > 0
+      ? t('admin_detect_faces_confirm_with_skipped', { approved: approvedMedia.length, skipped: skippedCount })
+      : t('admin_detect_faces_confirm', { count: approvedMedia.length });
+
+    if (!window.confirm(confirmMsg)) return;
+
+    authFetch(`${API_URL}/api/auth/media/moderation/detect-faces/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ media_ids: approvedMedia.map(m => m.id) })
+    })
+      .then(res => res.json())
+      .then(data => {
+        alert(data.message || t('admin_detect_faces_success'));
+        fetchMedia();
+      })
+      .catch(err => {
+        logger.error('[Moderation] Detect faces failed:', err);
+        alert(t('admin_detect_faces_error'));
+      });
+  };
+
   const getStatusBadge = (status) => {
     const badges = { pending: 'status-pending', approved: 'status-approved', rejected: 'status-rejected' };
     const icons = { pending: '⏳', approved: '✅', rejected: '❌' };
@@ -193,6 +229,12 @@ const AdminModeration = () => {
               </button>
               <button onClick={() => handleBulkAction('delete')} className="bg-gray-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-600">
                 {t('admin_bulk_delete', { count: selectedIds.length })}
+              </button>
+              <button
+                onClick={handleDetectFaces}
+                className="bg-purple-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-purple-600"
+              >
+                {t('admin_detect_faces')} ({selectedIds.length})
               </button>
             </div>
           )}

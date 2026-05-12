@@ -147,6 +147,12 @@ def detect_faces_task(self, media_id):
     if media.status != 'approved':
         return
 
+    # Skip non-images and media that already have face tags
+    if media.media_type != 'image':
+        return
+    if FaceTag.objects.filter(media=media).exists():
+        return
+
     # Download file content from cloud
     content, _ = get_file_from_cloud(media)
     if content is None:

@@ -1474,6 +1474,36 @@ class MediaBulkModerationView(APIView):
         return Response({'message': f'{updated_count} media items {action_past} successfully.', 'updated_count': updated_count})
 
 
+class MediaDetectFacesView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def post(self, request):
+        media_ids = request.data.get('media_ids', [])
+        if not media_ids:
+            return Response({'error': 'No media IDs provided.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Only approved images that have NO existing face tags
+        eligible = Media.objects.filter(
+            id__in=media_ids,
+            status='approved',
+            media_type='image'
+        ).exclude(
+            face_tags__isnull=False
+        )
+
+        processed = 0
+        for media in eligible:
+            detect_faces_task.delay(media.id)
+            processed += 1
+
+        skipped = len(media_ids) - processed
+        return Response({
+            'message': f'Face detection started for {processed} media items.',
+            'processed': processed,
+            'skipped': skipped,
+        })
+
+
 class FaceGroupListView(APIView):
     permission_classes = [AllowAny]
 
