@@ -4,6 +4,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     cmake \
     build-essential \
     libboost-all-dev \
+    libopenblas-dev \
     && rm -rf /var/lib/apt/lists/*
 
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -12,6 +13,12 @@ ENV PYTHONUNBUFFERED=1
 WORKDIR /app
 
 COPY requirements.txt .
+
+# Compile dlib from source with Raspberry Pi 5 optimizations
+ENV CMAKE_ARGS="-DUSE_NEON=ON -DUSE_AVX=OFF -DCMAKE_BUILD_TYPE=Release"
+RUN pip install --no-cache-dir dlib
+
+# Install remaining Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .

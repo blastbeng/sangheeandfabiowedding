@@ -29,5 +29,4 @@ django-celery-beat>=2.5.0,<3
 
 # Face recognition
 face_recognition
-dlib
 mediapipe>=0.10.0,<0.11
