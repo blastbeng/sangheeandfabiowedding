@@ -22,9 +22,10 @@ fi
 mkdir -p "$BUILD_DIR"
 cd "$BUILD_DIR"
 
-# Configure with RPi optimizations
+# Configure with RPi optimizations + shared library
 cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
+    -DBUILD_SHARED_LIBS=ON \
     -DUSE_NEON=ON \
     -DUSE_AVX=OFF \
     -DUSE_SSE2=OFF \
@@ -43,8 +44,9 @@ cd ../..
 mkdir -p "$OUTPUT_DIR"
 cp "$BUILD_DIR/dlib/libdlib.so" "$OUTPUT_DIR/"
 
-# Build a pip wheel from the dlib source
+# Build a pip wheel from the dlib source with the same optimizations
 echo "Building dlib wheel..."
+export CMAKE_ARGS="-DUSE_NEON=ON -DUSE_AVX=OFF -DUSE_SSE2=OFF -DUSE_SSE4=OFF -DUSE_AVX2=OFF -DDLIB_USE_BLAS=ON -DDLIB_USE_LAPACK=ON -DBUILD_SHARED_LIBS=ON"
 cd "$DLIB_DIR"
 python setup.py bdist_wheel --dist-dir "../$OUTPUT_DIR"
 cd ..
