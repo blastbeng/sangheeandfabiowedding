@@ -729,7 +729,8 @@ class ProfileView(APIView):
 
         # Protect the default superuser created from environment variables
         default_admin_username = os.getenv('ADMIN_USERNAME')
-        if user.is_superuser and user.username == default_admin_username:
+        default_admin_email = os.getenv('ADMIN_EMAIL')
+        if user.is_superuser and (user.username == default_admin_username or user.email == default_admin_email):
             return Response(
                 {'error': 'Cannot delete the default superuser account'},
                 status=status.HTTP_403_FORBIDDEN

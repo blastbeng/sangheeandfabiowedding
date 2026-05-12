@@ -21,6 +21,7 @@ const Profile = ({ setIsAuthenticated, setIsAdmin }) => {
     new_password_confirm: ''
   });
   const [hasPassword, setHasPassword] = useState(false);
+  const [isDefaultAdmin, setIsDefaultAdmin] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -35,6 +36,7 @@ const Profile = ({ setIsAuthenticated, setIsAdmin }) => {
           const data = await res.json();
           setUser(data);
           setHasPassword(data.has_password);
+          setIsDefaultAdmin(data.is_default_admin || false);
           setFormData({
             username: data.username || '',
             first_name: data.first_name || '',
@@ -333,7 +335,9 @@ const Profile = ({ setIsAuthenticated, setIsAdmin }) => {
         <div className="mt-8 text-center">
           <button
             onClick={handleDeleteAccount}
-            className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-6 rounded-full transition shadow-md"
+            disabled={isDefaultAdmin}
+            title={isDefaultAdmin ? t('Cannot delete default admin account') : ''}
+            className={`bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-6 rounded-full transition shadow-md ${isDefaultAdmin ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             🗑️ {t('delete_account')}
           </button>
