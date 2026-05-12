@@ -1,6 +1,17 @@
 #!/bin/bash
 set -e
 
+# Install required build dependencies
+sudo apt-get update
+sudo apt-get install -y --no-install-recommends \
+    cmake \
+    build-essential \
+    libopenblas-dev \
+    liblapack-dev \
+    python3 \
+    python3-pip \
+    python3-dev
+
 # Script to compile dlib from GitHub with optimizations for Raspberry Pi
 # and produce:
 #   - libdlib.so (shared library)
@@ -26,6 +37,7 @@ cd "$BUILD_DIR"
 cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
     -DBUILD_SHARED_LIBS=ON \
+    -DDLIB_NO_GUI_SUPPORT=ON \
     -DUSE_NEON=ON \
     -DUSE_AVX=OFF \
     -DUSE_SSE2=OFF \
@@ -46,9 +58,9 @@ cp "$BUILD_DIR/dlib/libdlib.so" "$OUTPUT_DIR/"
 
 # Build a pip wheel from the dlib source with the same optimizations
 echo "Building dlib wheel..."
-export CMAKE_ARGS="-DUSE_NEON=ON -DUSE_AVX=OFF -DUSE_SSE2=OFF -DUSE_SSE4=OFF -DUSE_AVX2=OFF -DDLIB_USE_BLAS=ON -DDLIB_USE_LAPACK=ON -DBUILD_SHARED_LIBS=ON"
+export CMAKE_ARGS="-DDLIB_NO_GUI_SUPPORT=ON -DUSE_NEON=ON -DUSE_AVX=OFF -DUSE_SSE2=OFF -DUSE_SSE4=OFF -DUSE_AVX2=OFF -DDLIB_USE_BLAS=ON -DDLIB_USE_LAPACK=ON -DBUILD_SHARED_LIBS=ON"
 cd "$DLIB_DIR"
-python setup.py bdist_wheel --dist-dir "../$OUTPUT_DIR"
+python3 setup.py bdist_wheel --dist-dir "../$OUTPUT_DIR"
 cd ..
 
 echo "dlib compiled successfully."

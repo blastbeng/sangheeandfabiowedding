@@ -5,6 +5,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libboost-all-dev \
     libopenblas-dev \
+    liblapack-dev \
     libgl1 \
     && rm -rf /var/lib/apt/lists/*
 
