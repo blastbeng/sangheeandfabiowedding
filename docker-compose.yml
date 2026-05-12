@@ -48,6 +48,7 @@ services:
       - /dev/dri:/dev/dri
     volumes:
       - ./backend/media:/app/media
+      - ./backend/build:/app/build
     environment:
       - PUID=1000
       - PGID=1000
@@ -100,6 +101,8 @@ services:
   celery:
     build: ./backend
     command: celery -A config worker --loglevel=info
+    volumes:
+      - ./backend/build:/app/build
     environment:
       - PUID=1000
       - PGID=1000

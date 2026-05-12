@@ -1,5 +1,5 @@
 FROM python:3.11-slim
-77
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
     cmake \
     build-essential \
@@ -15,9 +15,11 @@ WORKDIR /app
 
 COPY requirements.txt .
 
-# Compile dlib from source with Raspberry Pi 5 optimizations
-ENV CMAKE_ARGS="-DDLIB_USE_NEON=ON -DUSE_NEON=ON -DUSE_AVX=OFF -DCMAKE_BUILD_TYPE=Release"
-RUN pip install --no-cache-dir dlib
+# Copy the prebuilt dlib wheel from the build context
+COPY build/dlib-*.whl /tmp/dlib/
+
+# Install the prebuilt dlib wheel
+RUN pip install --no-cache-dir /tmp/dlib/dlib-*.whl
 
 # Install remaining Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt

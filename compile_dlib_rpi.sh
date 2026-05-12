@@ -2,7 +2,10 @@
 set -e
 
 # Script to compile dlib from GitHub with optimizations for Raspberry Pi
-# and place the resulting shared library into backend/build/
+# and produce:
+#   - libdlib.so (shared library)
+#   - a pip-installable wheel
+# Both are placed into backend/build/
 
 DLIB_REPO="https://github.com/davisking/dlib.git"
 DLIB_DIR="dlib_source"
@@ -40,4 +43,12 @@ cd ../..
 mkdir -p "$OUTPUT_DIR"
 cp "$BUILD_DIR/dlib/libdlib.so" "$OUTPUT_DIR/"
 
-echo "dlib compiled successfully and placed in $OUTPUT_DIR/"
+# Build a pip wheel from the dlib source
+echo "Building dlib wheel..."
+cd "$DLIB_DIR"
+python setup.py bdist_wheel --dist-dir "../$OUTPUT_DIR"
+cd ..
+
+echo "dlib compiled successfully."
+echo "Shared library: $OUTPUT_DIR/libdlib.so"
+echo "Wheel: $(ls $OUTPUT_DIR/dlib-*.whl)"
