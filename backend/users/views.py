@@ -329,7 +329,7 @@ class RegisterView(APIView):
 
             signer = TimestampSigner()
             token = signer.sign(user.email)
-            verification_url = f"{os.getenv('FRONTEND_URL', 'http://localhost:5173')}/verify-email?token={token}"
+            verification_url = request.build_absolute_uri(f'/api/auth/verify-email/?token={token}')
 
             # Get language from request (default to English)
             language = request.data.get('language', 'en')
