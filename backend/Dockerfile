@@ -15,7 +15,7 @@ WORKDIR /app
 COPY requirements.txt .
 
 # Compile dlib from source with Raspberry Pi 5 optimizations
-ENV CMAKE_ARGS="-DUSE_NEON=ON -DUSE_AVX=OFF -DCMAKE_BUILD_TYPE=Release"
+ENV CMAKE_ARGS="-DDLIB_USE_NEON=ON -DUSE_NEON=ON -DUSE_AVX=OFF -DCMAKE_BUILD_TYPE=Release"
 RUN pip install --no-cache-dir dlib
 
 # Install remaining Python dependencies
