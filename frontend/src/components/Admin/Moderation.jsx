@@ -187,7 +187,7 @@ const AdminModeration = () => {
               onClick={() => setViewMode('gallery')}
               className={`px-4 py-2 text-sm font-medium rounded-l-lg border ${
                 viewMode === 'gallery'
-                  ? 'bg-wedding-600 text-white border-wedding-600'
+                  ? 'bg-wedding-600 text-gray-900 border-wedding-600'
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
               }`}
             >
@@ -198,7 +198,7 @@ const AdminModeration = () => {
               onClick={() => setViewMode('table')}
               className={`px-4 py-2 text-sm font-medium rounded-r-lg border-t border-b border-r ${
                 viewMode === 'table'
-                  ? 'bg-wedding-600 text-white border-wedding-600'
+                  ? 'bg-wedding-600 text-gray-900 border-wedding-600'
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
               }`}
             >
