@@ -90,7 +90,7 @@ const Register = ({ setIsAuthenticated, setIsAdmin }) => {
       }
 
       if (response.ok) {
-        navigate('/pending-approval', { replace: true });
+        navigate('/registration-success', { replace: true });
         return;
       } else {
         // Handle specific known errors with translations
