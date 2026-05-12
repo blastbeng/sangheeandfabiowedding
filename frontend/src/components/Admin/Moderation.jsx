@@ -264,13 +264,18 @@ const AdminModeration = () => {
             {/* Gallery grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {media.map(item => (
-                <div key={item.id} className="bg-white rounded-lg shadow overflow-hidden relative">
+                <div
+                  key={item.id}
+                  className="bg-white rounded-lg shadow overflow-hidden relative cursor-pointer"
+                  onClick={() => toggleSelectItem(item.id)}
+                >
                   {/* Checkbox for bulk selection */}
                   <div className="absolute top-2 left-2 z-10">
                     <input
                       type="checkbox"
                       checked={selectedIds.includes(item.id)}
                       onChange={() => toggleSelectItem(item.id)}
+                      onClick={(e) => e.stopPropagation()}
                       className="w-4 h-4 text-wedding-600 border-gray-300 rounded focus:ring-wedding-500"
                     />
                   </div>
@@ -302,7 +307,10 @@ const AdminModeration = () => {
                       <div className="flex space-x-1">
                         {item.status !== 'approved' && (
                           <button
-                            onClick={() => handleApprove(item.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleApprove(item.id);
+                            }}
                             className="text-green-600 hover:text-green-800 text-xs px-2 py-1 rounded border border-green-300"
                             title={t('approve')}
                           >
@@ -311,7 +319,10 @@ const AdminModeration = () => {
                         )}
                         {item.status !== 'rejected' && (
                           <button
-                            onClick={() => handleReject(item.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleReject(item.id);
+                            }}
                             className="text-yellow-600 hover:text-yellow-800 text-xs px-2 py-1 rounded border border-yellow-300"
                             title={t('reject')}
                           >
@@ -319,7 +330,10 @@ const AdminModeration = () => {
                           </button>
                         )}
                         <button
-                          onClick={() => handleDelete(item.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(item.id);
+                          }}
                           className="text-red-600 hover:text-red-800 text-xs px-2 py-1 rounded border border-red-300"
                           title={t('delete')}
                         >
