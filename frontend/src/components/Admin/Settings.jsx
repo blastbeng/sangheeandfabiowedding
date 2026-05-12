@@ -67,7 +67,7 @@ const Settings = () => {
           </div>
           <div className="mb-4">
             <label className="block text-gray-700 text-sm font-bold mb-2">{t('admin_settings_frontend_url')}</label>
-            <input type="url" value={settings.frontend_url} onChange={(e) => setSettings({...settings, frontend_url: e.target.value})} className="wedding-input w-full" placeholder="https://example.com" />
+            <input type="url" value={settings.frontend_url} onChange={(e) => setSettings({...settings, frontend_url: e.target.value})} className="wedding-input w-full" placeholder={t('admin_settings_frontend_url_placeholder')} />
           </div>
           <div className="mb-4">
             <label className="flex items-center">
