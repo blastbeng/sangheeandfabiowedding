@@ -13,6 +13,10 @@ app.conf.beat_schedule = {
         'task': 'users.tasks.cleanup_empty_face_groups',
         'schedule': 3600.0,  # every hour
     },
+    'backfill-content-hashes-daily': {
+        'task': 'users.tasks.backfill_content_hashes',
+        'schedule': 86400.0,  # every 24 hours
+    },
 }
 
 app.autodiscover_tasks()

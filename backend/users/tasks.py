@@ -3,7 +3,7 @@ import redis
 
 from celery import shared_task
 from django.core.files.base import ContentFile
-from django.db.models import Count
+from django.db.models import Count, Q
 import hashlib
 import os
 import requests
@@ -56,6 +56,9 @@ def upload_media_task(self, user_id, file_paths):
             with open(tmp_path, 'rb') as f:
                 file_content = f.read()
 
+            # Compute content hash for deduplication
+            content_hash = hashlib.sha256(file_content).hexdigest()
+
             logger.info(f"Uploading file {original_filename} for user {user_id}")
 
             # Generate unique filename for Nextcloud
@@ -77,7 +80,8 @@ def upload_media_task(self, user_id, file_paths):
                 status=media_status,
                 nextcloud_file_id=nextcloud_id,
                 original_filename=original_filename,
-                view_count=0
+                view_count=0,
+                content_hash=content_hash,
             )
 
             # If auto-approved, trigger face detection immediately
@@ -391,6 +395,45 @@ def cleanup_empty_face_groups():
         count += 1
     if count:
         logger.info(f"Cleaned up {count} empty FaceGroups")
+    return count
+
+
+@shared_task
+def backfill_content_hashes():
+    """
+    Backfill content_hash for all Media objects that don't have one.
+    Computes SHA-256 hash of the file content and stores it in the
+    content_hash field for deduplication purposes.
+    """
+    media_without_hash = Media.objects.filter(
+        Q(content_hash__isnull=True) | Q(content_hash='')
+    )
+
+    count = 0
+    for media in media_without_hash:
+        content, _ = get_file_from_cloud(media)
+        if content is None:
+            # Fallback to local file storage
+            if media.file and media.file.storage.exists(media.file.name):
+                try:
+                    with media.file.open('rb') as f:
+                        content = f.read()
+                except Exception as e:
+                    logger.error(f"[backfill_content_hashes] Cannot read file for media {media.id}: {e}")
+                    continue
+            else:
+                logger.warning(f"[backfill_content_hashes] No content available for media {media.id}")
+                continue
+
+        content_hash = hashlib.sha256(content).hexdigest()
+        media.content_hash = content_hash
+        media.save(update_fields=['content_hash'])
+        count += 1
+
+    if count > 0:
+        logger.info(f"[backfill_content_hashes] Backfilled {count} media items with content hashes")
+    else:
+        logger.debug("[backfill_content_hashes] No media items needed content hash backfill")
     return count
 
 
