@@ -39,9 +39,28 @@ PROFANITY_WORDS_IT = [
     "vaffanculo",
 ]
 
+# Korean profanity words (Hangul)
+PROFANITY_WORDS_KO = [
+    "씨발",
+    "개새끼",
+    "병신",
+    "좆",
+    "보지",
+    "자지",
+    "염병",
+    "지랄",
+    "미친놈",
+    "미친년",
+    "쌍놈",
+    "쌍년",
+    "또라이",
+    "걸레",
+    "창녀",
+]
+
 # Combined set for all languages (lowercased for case-insensitive matching)
 PROFANITY_WORDS = set(
-    word.lower() for word in PROFANITY_WORDS_EN + PROFANITY_WORDS_IT
+    word.lower() for word in PROFANITY_WORDS_EN + PROFANITY_WORDS_IT + PROFANITY_WORDS_KO
 )
 
 
@@ -49,8 +68,8 @@ def contains_profanity(text):
     """
     Check if the given text contains any profanity words.
 
-    Uses word-boundary matching to reduce false positives
-    (e.g., "classic" won't match "ass").
+    Uses word-boundary matching for Latin scripts and simple substring
+    matching for non-Latin scripts (e.g., Korean) to avoid false positives.
 
     Args:
         text: The text to check. Can be None or empty.
@@ -63,7 +82,13 @@ def contains_profanity(text):
 
     text_lower = text.lower()
     for profanity in PROFANITY_WORDS:
-        pattern = r'\b' + re.escape(profanity) + r'\b'
-        if re.search(pattern, text_lower):
-            return True
+        # For Latin-based words, use word boundaries to reduce false positives
+        if profanity.isascii():
+            pattern = r'\b' + re.escape(profanity) + r'\b'
+            if re.search(pattern, text_lower):
+                return True
+        else:
+            # For non-Latin scripts (Korean, etc.), use simple substring match
+            if profanity in text_lower:
+                return True
     return False
