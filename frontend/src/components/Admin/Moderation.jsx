@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import logger from '../../utils/logger';
 import authFetch from '../../utils/authFetch';
+import ProtectedMediaPreview from '../Common/ProtectedMediaPreview';
 
 const AdminModeration = () => {
   const { t } = useTranslation();
@@ -268,7 +269,12 @@ const AdminModeration = () => {
                     </td>
                     <td className="py-3">
                       <Link to={`/media/${item.id}`} state={{ media: item }}>
-                        <img src={`${API_URL}${item.file_url}`} alt="preview" className="w-16 h-16 object-cover rounded-lg border-2 border-pink-200 hover:opacity-80 transition" />
+                        <ProtectedMediaPreview
+                          fileUrl={`${API_URL}${item.file_url}`}
+                          mediaType={item.media_type}
+                          className="w-16 h-16 object-cover rounded-lg border-2 border-pink-200 hover:opacity-80 transition"
+                          alt="preview"
+                        />
                       </Link>
                     </td>
                     <td className="py-3 text-gray-700">{item.user_email || t('anonymous')}</td>
@@ -324,11 +330,11 @@ const AdminModeration = () => {
                   {/* Media preview */}
                   <div className="aspect-w-1 aspect-h-1 bg-gray-200">
                     {item.file_url ? (
-                      <img
-                        src={item.file_url}
-                        alt={item.caption || 'Media'}
+                      <ProtectedMediaPreview
+                        fileUrl={`${API_URL}${item.file_url}`}
+                        mediaType={item.media_type}
                         className="object-cover w-full h-full"
-                        loading="lazy"
+                        alt={item.caption || 'Media'}
                       />
                     ) : (
                       <div className="flex items-center justify-center h-full text-gray-400">
