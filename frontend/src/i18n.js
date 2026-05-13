@@ -384,7 +384,8 @@ const resources = {
       "Host": "Host",
       "Port": "Porta",
       "Use TLS": "Usa TLS",
-      "From Email": "Email Mittente"
+      "From Email": "Email Mittente",
+      "uploaded_at": "Caricato il"
     }
   },
   ko: {
@@ -769,7 +770,8 @@ const resources = {
       "Host": "호스트",
       "Port": "포트",
       "Use TLS": "TLS 사용",
-      "From Email": "보내는 이메일"
+      "From Email": "보내는 이메일",
+      "uploaded_at": "업로드 날짜"
     }
   },
   en: {
@@ -1154,7 +1156,8 @@ const resources = {
       "Host": "Host",
       "Port": "Port",
       "Use TLS": "Use TLS",
-      "From Email": "From Email"
+      "From Email": "From Email",
+      "uploaded_at": "Uploaded at"
     }
   }
 };

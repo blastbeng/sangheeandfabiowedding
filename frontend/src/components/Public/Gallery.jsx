@@ -187,7 +187,7 @@ const Gallery = () => {
                   </div>
                 )}
                 <p className="text-gray-500 text-xs">
-                  📅 {new Date(item.uploaded_at).toLocaleDateString()}
+                  {t('uploaded_at')}: {new Date(item.uploaded_at).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' })} {new Date(item.uploaded_at).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit', hour12: false })}
                 </p>
               </div>
             </div>
