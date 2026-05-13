@@ -7,6 +7,7 @@ from django.db.models import Count, Q
 import hashlib
 import os
 import requests
+import cv2
 import face_recognition
 import mediapipe as mp
 import numpy as np
@@ -21,6 +22,52 @@ from config.settings import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _align_face(image_array, top, right, bottom, left, target_size=160):
+    """
+    Align a face so the eyes are horizontal, then crop and resize.
+    Returns an aligned face image (numpy array) or None if alignment fails.
+    """
+    try:
+        landmarks_list = face_recognition.face_landmarks(
+            image_array, [(top, right, bottom, left)]
+        )
+        if not landmarks_list:
+            return None
+        landmarks = landmarks_list[0]
+        left_eye = np.mean(landmarks['left_eye'], axis=0)
+        right_eye = np.mean(landmarks['right_eye'], axis=0)
+
+        # Compute angle between eyes
+        dY = right_eye[1] - left_eye[1]
+        dX = right_eye[0] - left_eye[0]
+        angle = np.degrees(np.arctan2(dY, dX)) - 180
+
+        # Desired position of eyes in the aligned image
+        desired_left_eye = (0.35, 0.35)
+        desired_right_eye = (0.65, 0.35)
+        desired_dist = desired_right_eye[0] - desired_left_eye[0]
+        dist = np.sqrt(dX**2 + dY**2)
+        scale = desired_dist * target_size / dist
+
+        # Center between eyes
+        eyes_center = ((left_eye[0] + right_eye[0]) / 2,
+                       (left_eye[1] + right_eye[1]) / 2)
+
+        # Rotation matrix
+        M = cv2.getRotationMatrix2D(eyes_center, angle, scale)
+        # Adjust translation so eyes land at desired positions
+        tX = target_size * 0.5 - eyes_center[0]
+        tY = target_size * desired_left_eye[1] - eyes_center[1]
+        M[0, 2] += tX
+        M[1, 2] += tY
+
+        aligned = cv2.warpAffine(image_array, M, (target_size, target_size),
+                                 flags=cv2.INTER_CUBIC)
+        return aligned
+    except Exception:
+        return None
 
 
 @shared_task(bind=True, max_retries=3)
@@ -230,6 +277,7 @@ def detect_faces_task(self, media_id):
     logger.info(f"[detect_faces] MediaPipe found {len(results.detections)} face(s) in media {media_id}")
 
     # Extract face locations in dlib format (top, right, bottom, left)
+    # Expand boxes by 20% and filter out tiny faces
     face_locations = []
     h, w, _ = img_array.shape
     for detection in results.detections:
@@ -238,19 +286,23 @@ def detect_faces_task(self, media_id):
         ymin = int(bbox.ymin * h)
         width = int(bbox.width * w)
         height = int(bbox.height * h)
-        # Ensure coordinates are within image bounds
-        xmin = max(0, xmin)
-        ymin = max(0, ymin)
-        xmax = min(w, xmin + width)
-        ymax = min(h, ymin + height)
+
+        # Expand box by 20% to include more context
+        expand_w = int(width * 0.2)
+        expand_h = int(height * 0.2)
+        xmin = max(0, xmin - expand_w)
+        ymin = max(0, ymin - expand_h)
+        xmax = min(w, xmin + width + 2 * expand_w)
+        ymax = min(h, ymin + height + 2 * expand_h)
+
+        # Skip faces that are too small
+        if (xmax - xmin) < 30 or (ymax - ymin) < 30:
+            continue
+
         face_locations.append((ymin, xmax, ymax, xmin))  # dlib order: top, right, bottom, left
 
-    # Compute face encodings using dlib on the full image with known locations
-    face_encodings = face_recognition.face_encodings(img_array, known_face_locations=face_locations)
-
-    if not face_encodings:
-        # No encodings could be computed (should not happen if MediaPipe found faces)
-        logger.warning(f"[detect_faces] No encodings computed for media {media_id} despite {len(face_locations)} detected face(s)")
+    if not face_locations:
+        logger.info(f"[detect_faces] No usable faces after filtering in media {media_id}")
         media.face_detection_attempted = True
         media.save(update_fields=['face_detection_attempted'])
         return
@@ -272,17 +324,28 @@ def detect_faces_task(self, media_id):
 
     # Process each detected face
     faces_created = 0
-    for (top, right, bottom, left), encoding in zip(face_locations, face_encodings):
-        # Extract face image
-        face_image = img_array[top:bottom, left:right]
-        pil_image = Image.fromarray(face_image)
+    for (top, right, bottom, left) in face_locations:
+        # Align face
+        aligned_face = _align_face(img_array, top, right, bottom, left)
+        if aligned_face is None:
+            continue
+
+        # Compute encoding on the aligned face
+        aligned_face_uint8 = (aligned_face * 255).astype(np.uint8) if aligned_face.dtype == np.float64 else aligned_face
+        encoding_result = face_recognition.face_encodings(aligned_face_uint8)
+        if not encoding_result:
+            continue
+        encoding = encoding_result[0]
+
+        # Create thumbnail from aligned face
+        pil_thumb = Image.fromarray(aligned_face_uint8)
         thumb_io = BytesIO()
-        pil_image.save(thumb_io, format='JPEG', quality=85)
+        pil_thumb.save(thumb_io, format='JPEG', quality=85)
         thumb_content = thumb_io.getvalue()
 
         # Find closest existing group
         best_group_id = None
-        min_distance = 0.6
+        min_distance = 0.55
         for group_id, centroid in group_centroids.items():
             distance = np.linalg.norm(encoding - centroid)
             if distance < min_distance:
@@ -498,24 +561,35 @@ def detect_faces_profile_picture(self, user_id):
     ymin = int(bbox.ymin * h)
     width = int(bbox.width * w)
     height = int(bbox.height * h)
-    xmin = max(0, xmin)
-    ymin = max(0, ymin)
-    xmax = min(w, xmin + width)
-    ymax = min(h, ymin + height)
-    face_location = (ymin, xmax, ymax, xmin)  # top, right, bottom, left
 
-    # Compute encoding
-    face_encodings = face_recognition.face_encodings(img_array, known_face_locations=[face_location])
+    # Expand box by 20%
+    expand_w = int(width * 0.2)
+    expand_h = int(height * 0.2)
+    xmin = max(0, xmin - expand_w)
+    ymin = max(0, ymin - expand_h)
+    xmax = min(w, xmin + width + 2 * expand_w)
+    ymax = min(h, ymin + height + 2 * expand_h)
+
+    if (xmax - xmin) < 30 or (ymax - ymin) < 30:
+        logger.info(f"[detect_faces_profile] Face too small for user {user_id}")
+        return
+
+    face_location = (ymin, xmax, ymax, xmin)
+
+    # Align face
+    aligned_face = _align_face(img_array, ymin, xmax, ymax, xmin)
+    if aligned_face is None:
+        return
+    aligned_face_uint8 = (aligned_face * 255).astype(np.uint8) if aligned_face.dtype == np.float64 else aligned_face
+    face_encodings = face_recognition.face_encodings(aligned_face_uint8)
     if not face_encodings:
-        logger.warning(f"[detect_faces_profile] No encoding for user {user_id}")
         return
     encoding = face_encodings[0]
 
-    # Extract face thumbnail
-    face_image = img_array[ymin:ymax, xmin:xmax]
-    pil_face = Image.fromarray(face_image)
+    # Thumbnail from aligned face
+    pil_thumb = Image.fromarray(aligned_face_uint8)
     thumb_io = BytesIO()
-    pil_face.save(thumb_io, format='JPEG', quality=85)
+    pil_thumb.save(thumb_io, format='JPEG', quality=85)
     thumb_content = thumb_io.getvalue()
 
     # Load existing groups and centroids
@@ -535,7 +609,7 @@ def detect_faces_profile_picture(self, user_id):
 
     # Find closest group
     best_group_id = None
-    min_distance = 0.6
+    min_distance = 0.55
     for group_id, centroid in group_centroids.items():
         distance = np.linalg.norm(encoding - centroid)
         if distance < min_distance:
@@ -602,7 +676,7 @@ def deduplicate_faces():
     Periodic task that removes duplicate FaceTags within the same media
     and merges duplicate FaceGroups (same person).
     """
-    THRESHOLD = 0.5
+    THRESHOLD = 0.55
     logger.info("[deduplicate_faces] Starting face deduplication")
 
     # ---------- 1. Deduplicate FaceTags within each media ----------
