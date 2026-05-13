@@ -61,27 +61,43 @@ const Gallery = () => {
       </div>
 
       {/* Face group row */}
-      {faceGroups.length > 0 && (
-        <div className="flex flex-wrap gap-4 mb-6 justify-center">
-          {faceGroups.map(group => (
-            <button
-              key={group.id}
-              onClick={() => setSelectedGroupId(prev => prev === group.id ? null : group.id)}
-              className={`flex flex-col items-center gap-1 transition-transform hover:scale-105 ${
-                selectedGroupId === group.id ? 'ring-4 ring-pink-500 rounded-full' : ''
-              }`}
-            >
-              <img
-                src={group.thumbnail_url || 'https://i.imgur.com/V4RclNb.png'}
-                alt={group.name || `Person ${group.id}`}
-                className="w-16 h-16 rounded-full object-cover border-2 border-white shadow-md"
-                onError={(e) => { e.target.src = 'https://i.imgur.com/V4RclNb.png'; }}
-              />
-              <span className="text-xs text-gray-600">{group.name || `#${group.id}`}</span>
-            </button>
-          ))}
-        </div>
-      )}
+      {faceGroups.length > 0 && (() => {
+        // Deduplicate by thumbnail_url – keep only the first occurrence of each unique thumbnail
+        const seenThumbnails = new Set();
+        const uniqueGroups = faceGroups.filter(group => {
+          const thumb = group.thumbnail_url || '';
+          if (seenThumbnails.has(thumb)) return false;
+          seenThumbnails.add(thumb);
+          return true;
+        });
+
+        if (uniqueGroups.length === 0) return null;
+
+        return (
+          <div className="mb-6 overflow-x-auto pb-2 scrollbar-hide">
+            <div className="flex gap-3 px-2" style={{ scrollSnapType: 'x mandatory' }}>
+              {uniqueGroups.map(group => (
+                <button
+                  key={group.id}
+                  onClick={() => setSelectedGroupId(prev => prev === group.id ? null : group.id)}
+                  className={`flex flex-col items-center gap-1 flex-shrink-0 transition-transform hover:scale-105 ${
+                    selectedGroupId === group.id ? 'ring-2 ring-pink-500 rounded-full' : ''
+                  }`}
+                  style={{ scrollSnapAlign: 'start' }}
+                >
+                  <img
+                    src={group.thumbnail_url || 'https://i.imgur.com/V4RclNb.png'}
+                    alt={group.name || `Person ${group.id}`}
+                    className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm"
+                    onError={(e) => { e.target.src = 'https://i.imgur.com/V4RclNb.png'; }}
+                  />
+                  <span className="text-xs text-gray-600 whitespace-nowrap">{group.name || `#${group.id}`}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Filter controls */}
       <div className="mb-6 flex flex-wrap gap-4 items-end">
