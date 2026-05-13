@@ -48,6 +48,8 @@ const Gallery = () => {
   const localeMap = { it: 'it-IT', ko: 'ko-KR', en: 'en-US' };
   const dateLocale = localeMap[i18n.language] || 'it-IT';
 
+  const selectedGroup = faceGroups.find(g => g.id === selectedGroupId);
+
   if (loading) {
     return (
       <div className="text-center py-20">
@@ -92,7 +94,7 @@ const Gallery = () => {
                   <img
                     src={group.thumbnail_url || 'https://i.imgur.com/V4RclNb.png'}
                     alt={group.user_display_name || ''}
-                    className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm"
+                    className="w-12 h-12 rounded-full object-contain border-2 border-white shadow-sm"
                     onError={(e) => { e.target.src = 'https://i.imgur.com/V4RclNb.png'; }}
                   />
                   {group.user_id && (
@@ -132,7 +134,13 @@ const Gallery = () => {
       {selectedGroupId && (
         <div className="mb-4 flex items-center gap-2">
           <span className="text-sm text-gray-600">
-            {t('Filtering by')}: <strong>{faceGroups.find(g => g.id === selectedGroupId)?.name || `#${selectedGroupId}`}</strong>
+            {t('Filtering by')}:{' '}
+            <img
+              src={selectedGroup?.thumbnail_url || 'https://i.imgur.com/V4RclNb.png'}
+              alt=""
+              className="w-6 h-6 rounded-full object-cover inline-block align-middle border border-pink-200"
+              onError={(e) => { e.target.src = 'https://i.imgur.com/V4RclNb.png'; }}
+            />
           </span>
           <button
             onClick={() => setSelectedGroupId(null)}
