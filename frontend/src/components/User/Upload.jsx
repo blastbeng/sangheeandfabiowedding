@@ -77,19 +77,8 @@ const Upload = () => {
         }
         // PENDING or STARTED → keep polling
       } catch (err) {
-        clearInterval(interval);
-        delete intervalsRef.current[taskId];
-
-        setFileStatuses(prev =>
-          prev.map(fs =>
-            fs.taskId === taskId
-              ? { ...fs, status: 'error', error: t('failed_check_status') }
-              : fs
-          )
-        );
-
-        const pending = getPendingTasks().filter(t => t.taskId !== taskId);
-        savePendingTasks(pending);
+        // Temporary network error (e.g. browser backgrounded) – keep polling
+        console.warn('[Upload] Polling fetch failed, will retry:', err);
       }
     }, POLL_INTERVAL);
 
@@ -275,14 +264,27 @@ const Upload = () => {
           <div className="mb-6">
             <h3 className="text-lg font-bold mb-3 text-pink-600">📁 {t('files_selected')} ({total})</h3>
             {fileStatuses.map((fs, idx) => (
-              <div key={idx} className="bg-pink-50 p-3 rounded-xl mb-2 flex justify-between items-center">
-                <span className="text-sm">📄 {fs.name}</span>
-                <span className="text-sm">
-                  {fs.status === 'pending' && '⏳'}
-                  {fs.status === 'uploading' && '⏳'}
-                  {fs.status === 'success' && '✅'}
-                  {fs.status === 'error' && '❌'}
-                </span>
+              <div key={idx} className="bg-pink-50 p-3 rounded-xl mb-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm">📄 {fs.name}</span>
+                  <span className="text-sm">
+                    {fs.status === 'pending' && '⏳'}
+                    {fs.status === 'uploading' && '⏳'}
+                    {fs.status === 'success' && '✅'}
+                    {fs.status === 'error' && '❌'}
+                  </span>
+                </div>
+                {/* Per‑file progress bar */}
+                <div className="mt-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all duration-500 ${
+                      fs.status === 'success' ? 'bg-green-500 w-full' :
+                      fs.status === 'error' ? 'bg-red-500 w-full' :
+                      fs.status === 'uploading' ? 'bg-pink-400 animate-pulse w-full' :
+                      'w-0'
+                    }`}
+                  />
+                </div>
               </div>
             ))}
           </div>
