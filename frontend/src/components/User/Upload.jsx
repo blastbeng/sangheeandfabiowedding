@@ -6,7 +6,7 @@ import authFetch from '../../utils/authFetch';
 const Upload = () => {
   const { t } = useTranslation();
   const [files, setFiles] = useState([]);
-  const [captions, setCaptions] = useState({});
+  const [caption, setCaption] = useState('');
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -16,22 +16,10 @@ const Upload = () => {
   const handleFileSelect = (e) => {
     const selectedFiles = Array.from(e.target.files);
     setFiles(prev => [...prev, ...selectedFiles]);
-    selectedFiles.forEach(file => {
-      setCaptions(prev => ({ ...prev, [file.name]: '' }));
-    });
-  };
-
-  const handleCaptionChange = (fileName, value) => {
-    setCaptions(prev => ({ ...prev, [fileName]: value }));
   };
 
   const removeFile = (fileName) => {
     setFiles(prev => prev.filter(f => f.name !== fileName));
-    setCaptions(prev => {
-      const newCaptions = { ...prev };
-      delete newCaptions[fileName];
-      return newCaptions;
-    });
   };
 
   const handleUpload = async () => {
@@ -43,7 +31,7 @@ const Upload = () => {
     const formData = new FormData();
     files.forEach((file) => {
       formData.append('files', file);
-      formData.append('captions', captions[file.name] || '');
+      formData.append('captions', caption);
     });
 
     try {
@@ -121,13 +109,14 @@ const Upload = () => {
               ))}
             </div>
             <div className="mb-6">
-              <h3 className="text-lg font-bold mb-3 text-pink-600">✏️ {t('add_captions_optional')}</h3>
-              {files.map((file, index) => (
-                <div key={index} className="mb-3">
-                  <label className="block text-gray-700 text-xs font-bold mb-1">📝 {file.name}</label>
-                  <input type="text" value={captions[file.name] || ''} onChange={(e) => handleCaptionChange(file.name, e.target.value)} className="wedding-input w-full text-sm" placeholder={t('add_sweet_memory')} />
-                </div>
-              ))}
+              <label className="block text-gray-700 text-sm font-bold mb-2">✏️ {t('add_caption_optional')}</label>
+              <input
+                type="text"
+                value={caption}
+                onChange={(e) => setCaption(e.target.value)}
+                className="wedding-input w-full"
+                placeholder={t('add_sweet_memory')}
+              />
             </div>
           </>
         )}
