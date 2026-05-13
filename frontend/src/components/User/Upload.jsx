@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import authFetch from '../../utils/authFetch';
 
-const CONCURRENCY = 2;          // upload at most 2 files at a time
-const POLL_INTERVAL = 2000;     // ms between status checks
+const CONCURRENCY = 4;          // upload up to 4 files simultaneously
+const POLL_INTERVAL = 1000;     // ms between status checks
 const STORAGE_KEY = 'pendingUploadTasks';
 
 const Upload = () => {
