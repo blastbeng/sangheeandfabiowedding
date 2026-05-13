@@ -1,5 +1,6 @@
 import logging
 import os
+import uuid
 import base64
 import requests
 import redis
@@ -1078,20 +1079,31 @@ class MediaUploadView(APIView):
         if not files:
             return Response({'error': 'No files provided'}, status=status.HTTP_400_BAD_REQUEST)
 
-        file_data_list = []
+        # Directory where we'll temporarily store files for the task
+        tmp_dir = os.path.join(django_settings.MEDIA_ROOT, 'tmp_uploads')
+        os.makedirs(tmp_dir, exist_ok=True)
+
+        file_paths = []
         for i, file in enumerate(files):
-            content = file.read()
-            encoded = base64.b64encode(content).decode('utf-8')
+            # Generate a unique temporary filename
+            tmp_name = f"{request.user.id}_{uuid.uuid4().hex}_{file.name}"
+            tmp_path = os.path.join(tmp_dir, tmp_name)
+
+            # Write the uploaded file to the temporary location
+            with open(tmp_path, 'wb') as dst:
+                for chunk in file.chunks():
+                    dst.write(chunk)
+
             caption = captions[i] if i < len(captions) else ''
             media_type = 'video' if file.content_type.startswith('video') else 'image'
-            file_data_list.append({
-                'file_content': encoded,
-                'filename': file.name,
+            file_paths.append({
+                'tmp_path': tmp_path,
+                'original_filename': file.name,
                 'caption': caption,
                 'media_type': media_type,
             })
 
-        task = upload_media_task.delay(request.user.id, file_data_list)
+        task = upload_media_task.delay(request.user.id, file_paths)
         return Response({'task_id': task.id, 'message': 'Upload started'}, status=status.HTTP_202_ACCEPTED)
 
 

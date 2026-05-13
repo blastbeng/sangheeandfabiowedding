@@ -23,13 +23,13 @@ logger = logging.getLogger(__name__)
 
 
 @shared_task(bind=True, max_retries=3)
-def upload_media_task(self, user_id, file_data_list):
+def upload_media_task(self, user_id, file_paths):
     """
-    Celery task for async media upload to Nextcloud
-    
-    file_data_list: List of dicts with keys:
-        - file_content: base64 encoded file content
-        - filename: original filename
+    Celery task for async media upload to Nextcloud.
+
+    file_paths: List of dicts with keys:
+        - tmp_path: absolute path to the temporary uploaded file
+        - original_filename: original filename
         - caption: file caption
         - media_type: 'image' or 'video'
     """
@@ -44,24 +44,27 @@ def upload_media_task(self, user_id, file_data_list):
     uploaded_media = []
     errors = []
 
-    for file_data in file_data_list:
+    for file_data in file_paths:
+        tmp_path = file_data['tmp_path']
+        original_filename = file_data['original_filename']
+        caption = file_data.get('caption', '')
+        media_type = file_data.get('media_type', 'image')
+
         try:
-            import base64
-            file_content = base64.b64decode(file_data['file_content'])
-            filename = file_data['filename']
-            caption = file_data.get('caption', '')
-            media_type = file_data.get('media_type', 'image')
+            # Read the file from the temporary location
+            with open(tmp_path, 'rb') as f:
+                file_content = f.read()
 
-            logger.info(f"Uploading file {filename} for user {user_id}")
+            logger.info(f"Uploading file {original_filename} for user {user_id}")
 
-            # Generate unique filename
-            unique_filename = f"{user_id}_{hashlib.md5(filename.encode()).hexdigest()[:8]}_{filename}"
+            # Generate unique filename for Nextcloud
+            unique_filename = f"{user_id}_{hashlib.md5(original_filename.encode()).hexdigest()[:8]}_{original_filename}"
 
             # Upload to Nextcloud
             nextcloud_id = nextcloud_client.upload_file(file_content, unique_filename)
             if not nextcloud_id:
-                errors.append(f"Nextcloud upload failed for {filename} (check Nextcloud logs for details)")
-                logger.error(f"Nextcloud upload failed for {filename}")
+                errors.append(f"Nextcloud upload failed for {original_filename} (check Nextcloud logs for details)")
+                logger.error(f"Nextcloud upload failed for {original_filename}")
                 continue
 
             # Create Media record – auto-approve if user is admin
@@ -72,7 +75,7 @@ def upload_media_task(self, user_id, file_data_list):
                 caption=caption,
                 status=media_status,
                 nextcloud_file_id=nextcloud_id,
-                original_filename=filename,
+                original_filename=original_filename,
                 view_count=0
             )
 
@@ -82,17 +85,23 @@ def upload_media_task(self, user_id, file_data_list):
 
             uploaded_media.append({
                 'id': media.id,
-                'filename': filename,
+                'filename': original_filename,
                 'status': media.status
             })
-            logger.info(f"File {filename} uploaded successfully")
+            logger.info(f"File {original_filename} uploaded successfully")
 
         except Exception as e:
-            errors.append(f"Error uploading {file_data.get('filename', 'unknown')}: {str(e)}")
-            logger.error(f"Upload failed for {file_data.get('filename', 'unknown')}: {e}")
+            errors.append(f"Error uploading {original_filename}: {str(e)}")
+            logger.error(f"Upload failed for {original_filename}: {e}")
             # Retry logic
             if self.request.retries < self.max_retries:
                 raise self.retry(exc=e, countdown=60)
+        finally:
+            # Always delete the temporary file
+            try:
+                os.remove(tmp_path)
+            except OSError:
+                pass
 
     return {
         'uploaded': uploaded_media,
