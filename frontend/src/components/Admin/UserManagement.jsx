@@ -140,6 +140,32 @@ const UserManagement = () => {
     }
   };
 
+  const handleToggleActive = async (userId) => {
+    const user = users.find(u => u.id === userId);
+    if (!user) return;
+
+    const isActive = user.email_verified && user.is_active;
+    const payload = isActive
+      ? { is_active: false }
+      : { is_active: true, email_verified: true };
+
+    try {
+      const res = await authFetch(`${API_URL}/api/auth/admin/users/${userId}/`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        fetchUsers();
+      } else {
+        const err = await res.json().catch(() => ({}));
+        logger.error('[UserManagement] Toggle active failed:', err);
+      }
+    } catch (err) {
+      logger.error('[UserManagement] Toggle active error:', err);
+    }
+  };
+
   const toggleSelectAll = () => {
     if (selectAll) {
       setSelectedUserIds([]);
@@ -337,6 +363,14 @@ const UserManagement = () => {
                   </td>
                   <td className="py-3">
                     <button onClick={() => { setEditingUser(user); setFormData({...user, password: '', password_confirm: ''}); resetModalState(); setShowModal(true); }} className="text-blue-500 hover:text-blue-700 text-sm mr-2">{t('admin_edit')}</button>
+                    {!user.is_default_admin && (
+                      <button
+                        onClick={() => handleToggleActive(user.id)}
+                        className="text-green-600 hover:text-green-800 text-sm mr-2"
+                      >
+                        {user.email_verified && user.is_active ? t('admin_deactivate') : t('admin_activate')}
+                      </button>
+                    )}
                     {!user.is_default_admin && (
                       <button onClick={() => handleDelete(user.id)} className="text-red-500 hover:text-red-700 text-sm">{t('admin_delete')}</button>
                     )}
