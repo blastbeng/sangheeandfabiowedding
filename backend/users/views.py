@@ -2,6 +2,7 @@ import logging
 import os
 import uuid
 import base64
+import re
 import requests
 import redis
 from io import BytesIO
@@ -105,6 +106,18 @@ _EMAIL_TRANSLATIONS = {
 
 def _get_email_subject(language):
     return _EMAIL_TRANSLATIONS.get(language, _EMAIL_TRANSLATIONS['en'])['subject']
+
+
+def sanitize_username(raw_username):
+    """
+    Replace any character that is not alphanumeric or one of @ . + - _ with underscore.
+    Returns a non-empty string suitable as a Django username.
+    """
+    sanitized = re.sub(r'[^a-zA-Z0-9@.+\-_]', '_', raw_username)
+    sanitized = sanitized.strip('_')
+    if not sanitized:
+        sanitized = 'user'
+    return sanitized
 
 
 def build_verification_email(verification_url, site_name="SangHee & Fabio's Wedding", language='en'):
@@ -855,6 +868,8 @@ class SocialLoginView(APIView):
     def generate_username(self, user_info):
         base = user_info.get('given_name', '') + '_' + user_info.get('family_name', '')
         base = base.strip('_') or user_info.get('email', '').split('@')[0]
+        # Sanitize to only allowed characters
+        base = sanitize_username(base)
         username = base
         counter = 1
         while User.objects.filter(username=username).exists():
@@ -957,6 +972,10 @@ class SocialLoginCallbackView(APIView):
                 else:  # google or fallback
                     base = extra_data.get('given_name', '') + '_' + extra_data.get('family_name', '')
                     base = base.strip('_') or extra_data.get('email', '').split('@')[0]
+
+                # Sanitize to only allowed characters
+                base = sanitize_username(base)
+
                 # Make unique
                 username = base
                 counter = 1
