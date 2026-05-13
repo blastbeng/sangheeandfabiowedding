@@ -9,33 +9,52 @@ const UserProfile = () => {
   const [user, setUser] = useState(null);
   const [media, setMedia] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const API_URL = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
         const userRes = await fetch(`${API_URL}/api/auth/users/public/${id}/`);
+        if (!userRes.ok) {
+          throw new Error(`User API error: ${userRes.status}`);
+        }
         const userData = await userRes.json();
         setUser(userData);
 
         const mediaRes = await fetch(`${API_URL}/api/auth/media/public/?user_id=${id}`);
-        const mediaData = await mediaRes.json();
-        setMedia(mediaData);
+        if (mediaRes.ok) {
+          const mediaData = await mediaRes.json();
+          setMedia(mediaData);
+        } else {
+          logger.warn('[UserProfile] Media fetch failed with status:', mediaRes.status);
+        }
       } catch (err) {
         logger.error('[UserProfile] Failed to fetch user data:', err);
+        setError(err.message);
       } finally {
         setLoading(false);
       }
     };
 
     fetchUserData();
-  }, [id]);
+  }, [id, API_URL]);
 
   if (loading) {
     return (
       <div className="text-center py-20">
         <span className="text-5xl heart-decoration inline-block">💝</span>
         <p className="mt-4 text-gray-600 text-lg">{t('loading_profile')}</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-20 wedding-card">
+        <span className="text-6xl floating-heart inline-block">🌸</span>
+        <p className="mt-4 text-red-500 text-lg">{t('error_loading_profile')}: {error}</p>
+        <Link to="/users" className="wedding-btn inline-block mt-4">{t('back_to_guests')}</Link>
       </div>
     );
   }
