@@ -1,12 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import logger from '../../utils/logger';
+
+const PAGE_SIZE = 20;
 
 const Gallery = () => {
   const { t, i18n } = useTranslation();
   const [media, setMedia] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [filters, setFilters] = useState({
     user_search: ''
   });
@@ -15,27 +20,41 @@ const Gallery = () => {
   const [captionFilter, setCaptionFilter] = useState('');
   const API_URL = import.meta.env.VITE_API_URL;
 
-  const fetchMedia = () => {
+  const sentinelRef = useRef(null);
+
+  const fetchMedia = useCallback(async (pageNum, append = false) => {
     const params = new URLSearchParams();
     if (filters.user_search) params.append('user_search', filters.user_search);
     if (selectedGroupId) params.append('face_group_id', selectedGroupId);
     if (captionFilter) params.append('caption', captionFilter);
+    params.append('page', pageNum);
+    params.append('page_size', PAGE_SIZE);
 
-    fetch(`${API_URL}/api/auth/media/public/?${params}`)
-      .then(res => res.json())
-      .then(data => {
-        setMedia(data);
-        setLoading(false);
-      })
-      .catch(err => {
-        logger.error('[Gallery] Failed to fetch media:', err);
-        setLoading(false);
-      });
-  };
+    try {
+      const res = await fetch(`${API_URL}/api/auth/media/public/?${params}`);
+      const data = await res.json();
+      const newMedia = Array.isArray(data) ? data : (data.results || []);
+      if (append) {
+        setMedia(prev => [...prev, ...newMedia]);
+      } else {
+        setMedia(newMedia);
+      }
+      setHasMore(newMedia.length === PAGE_SIZE);
+      setLoading(false);
+      setLoadingMore(false);
+    } catch (err) {
+      logger.error('[Gallery] Failed to fetch media:', err);
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  }, [filters, selectedGroupId, captionFilter, API_URL]);
 
   useEffect(() => {
-    fetchMedia();
-  }, [filters, selectedGroupId, captionFilter]);
+    setPage(1);
+    setHasMore(true);
+    setLoading(true);
+    fetchMedia(1, false);
+  }, [filters, selectedGroupId, captionFilter, fetchMedia]);
 
   useEffect(() => {
     fetch(`${API_URL}/api/auth/face-groups/`)
@@ -43,6 +62,26 @@ const Gallery = () => {
       .then(data => setFaceGroups(data))
       .catch(err => logger.error('[Gallery] Failed to fetch face groups:', err));
   }, []);
+
+  useEffect(() => {
+    if (!hasMore || loadingMore) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loadingMore) {
+          setLoadingMore(true);
+          const nextPage = page + 1;
+          setPage(nextPage);
+          fetchMedia(nextPage, true);
+        }
+      },
+      { threshold: 0.1 }
+    );
+    const currentSentinel = sentinelRef.current;
+    if (currentSentinel) observer.observe(currentSentinel);
+    return () => {
+      if (currentSentinel) observer.unobserve(currentSentinel);
+    };
+  }, [hasMore, loadingMore, page, fetchMedia]);
 
   // Map i18n language to locale string for date formatting
   const localeMap = { it: 'it-IT', ko: 'ko-KR', en: 'en-US' };
@@ -151,7 +190,7 @@ const Gallery = () => {
         </div>
       )}
 
-      {media.length === 0 ? (
+      {!loading && media.length === 0 ? (
         <div className="text-center py-20 wedding-card">
           <span className="text-6xl floating-heart inline-block">🌸</span>
           <p className="mt-4 text-gray-600 text-lg">{t('no_photos_yet')}</p>
@@ -240,6 +279,15 @@ const Gallery = () => {
               </div>
             );
           })}
+          {hasMore && (
+            <div ref={sentinelRef} className="col-span-full flex justify-center py-4">
+              {loadingMore ? (
+                <span className="text-gray-500">{t('loading_more')}</span>
+              ) : (
+                <span className="text-gray-400">&#8203;</span>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>
