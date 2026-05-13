@@ -3,6 +3,7 @@ import redis
 
 from celery import shared_task
 from django.core.files.base import ContentFile
+from django.db.models import Count
 import hashlib
 import os
 import requests
@@ -143,6 +144,17 @@ def delete_media_task(media_id):
 
     media.delete()
     logger.info(f"Media {media_id} deleted successfully")
+
+    # Clean up any FaceGroups that are now empty
+    empty_groups = FaceGroup.objects.annotate(
+        tag_count=Count('face_tags')
+    ).filter(tag_count=0)
+    for group in empty_groups:
+        if group.thumbnail:
+            group.thumbnail.delete(save=False)
+        group.delete()
+        logger.info(f"Deleted empty FaceGroup {group.id}")
+
     return {'message': 'File deleted successfully'}
 
 
@@ -363,4 +375,20 @@ def backfill_faces_periodic():
         logger.info(f'[backfill] Queued face detection for {count} media items.')
     else:
         logger.debug('[backfill] No eligible media items found for face detection.')
+    return count
+
+
+@shared_task
+def cleanup_empty_face_groups():
+    empty_groups = FaceGroup.objects.annotate(
+        tag_count=Count('face_tags')
+    ).filter(tag_count=0)
+    count = 0
+    for group in empty_groups:
+        if group.thumbnail:
+            group.thumbnail.delete(save=False)
+        group.delete()
+        count += 1
+    if count:
+        logger.info(f"Cleaned up {count} empty FaceGroups")
     return count

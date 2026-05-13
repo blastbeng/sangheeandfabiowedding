@@ -1195,6 +1195,17 @@ class MediaModerateSingleView(APIView):
         # Delete from database
         media.delete()
         logger.info(f"Admin {request.user.username} deleted media {media_id}")
+
+        # Clean up empty FaceGroups
+        empty_groups = FaceGroup.objects.annotate(
+            tag_count=Count('face_tags')
+        ).filter(tag_count=0)
+        for group in empty_groups:
+            if group.thumbnail:
+                group.thumbnail.delete(save=False)
+            group.delete()
+            logger.info(f"Deleted empty FaceGroup {group.id}")
+
         return Response({'message': 'Media deleted successfully'}, status=status.HTTP_200_OK)
 
 
@@ -1522,7 +1533,7 @@ class FaceGroupListView(APIView):
     def get(self, request):
         groups = FaceGroup.objects.annotate(
             face_count=Count('face_tags')
-        ).order_by('-face_count')
+        ).filter(face_count__gt=0).order_by('-face_count')
         serializer = FaceGroupSerializer(groups, many=True, context={'request': request})
         return Response(serializer.data)
 

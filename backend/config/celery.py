@@ -8,6 +8,13 @@ app = Celery('config')
 
 app.config_from_object('django.conf:settings', namespace='CELERY')
 
+app.conf.beat_schedule = {
+    'cleanup-empty-face-groups-every-hour': {
+        'task': 'users.tasks.cleanup_empty_face_groups',
+        'schedule': 3600.0,  # every hour
+    },
+}
+
 app.autodiscover_tasks()
 
 @app.task(bind=True)
