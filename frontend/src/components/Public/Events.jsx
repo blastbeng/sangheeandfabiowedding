@@ -82,7 +82,10 @@ const Events = () => {
     <div className="min-h-screen">
       {/* Hero Section */}
       <div className="wedding-card mx-4 mt-8 p-8 md:p-12 text-center ribbon wedding-glow">
-        <span className="text-6xl mb-4 inline-block floating-heart">5️⃣1️⃣6️⃣</span>
+        <div className="mb-4">
+          <span className="text-6xl inline-block floating-heart">💖</span>
+          <p className="text-2xl font-bold text-pink-600 mt-2 wedding-title">May 16</p>
+        </div>
         <h1 className="text-5xl md:text-7xl wedding-title mb-4 sparkle">
           {t('Our Wedding Events')}
         </h1>
