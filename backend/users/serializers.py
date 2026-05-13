@@ -374,23 +374,25 @@ class AdminDashboardSerializer(serializers.Serializer):
 
 class FaceGroupSerializer(serializers.ModelSerializer):
     thumbnail_url = serializers.SerializerMethodField()
-    face_count = serializers.SerializerMethodField()
+    user_id = serializers.IntegerField(source='user.id', read_only=True, allow_null=True)
+    user_display_name = serializers.SerializerMethodField()
 
     class Meta:
         model = FaceGroup
-        fields = ('id', 'name', 'thumbnail', 'thumbnail_url', 'face_count')
+        fields = ['id', 'name', 'thumbnail_url', 'user_id', 'user_display_name']
 
     def get_thumbnail_url(self, obj):
         if obj.thumbnail:
             request = self.context.get('request')
-            url = obj.thumbnail.url
             if request:
-                return request.build_absolute_uri(url)
-            return url
+                return request.build_absolute_uri(obj.thumbnail.url)
+            return obj.thumbnail.url
         return None
 
-    def get_face_count(self, obj):
-        return obj.face_tags.count()
+    def get_user_display_name(self, obj):
+        if obj.user:
+            return obj.user.get_full_name() or obj.user.username
+        return None
 
 
 class FaceTagSerializer(serializers.ModelSerializer):

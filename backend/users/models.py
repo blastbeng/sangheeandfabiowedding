@@ -213,6 +213,13 @@ class SiteSettings(models.Model):
 class FaceGroup(models.Model):
     name = models.CharField(max_length=100, default='')
     thumbnail = models.ImageField(upload_to='facetags/', null=True, blank=True)
+    user = models.ForeignKey(
+        CustomUser,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='face_groups'
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

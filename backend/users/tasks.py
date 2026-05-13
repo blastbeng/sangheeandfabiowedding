@@ -505,10 +505,11 @@ def detect_faces_profile_picture(self, user_id):
         group = FaceGroup.objects.get(id=best_group_id)
         if not group.name or group.name.strip() == '':
             group.name = user_display_name
-            group.save(update_fields=['name'])
+        group.user = user
+        group.save(update_fields=['name', 'user'])
         logger.info(f"[detect_faces_profile] Matched user {user_id} to group {best_group_id}, name='{user_display_name}'")
     else:
-        new_group = FaceGroup.objects.create(name=user_display_name)
+        new_group = FaceGroup.objects.create(name=user_display_name, user=user)
         new_group.thumbnail.save(f'group_{new_group.id}.jpg', ContentFile(thumb_content), save=True)
         logger.info(f"[detect_faces_profile] Created new group {new_group.id} for user {user_id}, name='{user_display_name}'")
 
@@ -528,6 +529,11 @@ def _merge_groups(keep_group, remove_group):
     if (not keep_group.name or keep_group.name.strip() == '') and remove_group.name:
         keep_group.name = remove_group.name
         keep_group.save(update_fields=['name'])
+
+    # Preserve user link
+    if not keep_group.user and remove_group.user:
+        keep_group.user = remove_group.user
+        keep_group.save(update_fields=['user'])
 
     # Ensure keep_group has a thumbnail
     if not keep_group.thumbnail:

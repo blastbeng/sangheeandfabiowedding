@@ -87,11 +87,13 @@ const Gallery = () => {
                 >
                   <img
                     src={group.thumbnail_url || 'https://i.imgur.com/V4RclNb.png'}
-                    alt={group.name || `Person ${group.id}`}
+                    alt={group.user_display_name || ''}
                     className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm"
                     onError={(e) => { e.target.src = 'https://i.imgur.com/V4RclNb.png'; }}
                   />
-                  <span className="text-xs text-gray-600 whitespace-nowrap">{group.name || `#${group.id}`}</span>
+                  {group.user_id && (
+                    <span className="text-xs text-gray-600 whitespace-nowrap">{group.user_display_name}</span>
+                  )}
                 </button>
               ))}
             </div>
