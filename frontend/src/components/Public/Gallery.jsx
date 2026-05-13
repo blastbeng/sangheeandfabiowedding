@@ -197,7 +197,7 @@ const Gallery = () => {
           <p className="text-gray-500 text-sm">{t('be_first_to_share')}</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {media.map((item) => {
             const uniqueFaceTags = item.face_tags
               ? item.face_tags.filter(
@@ -211,7 +211,7 @@ const Gallery = () => {
                   {item.media_type === 'video' ? (
                     <video
                       src={`${API_URL}${item.file_url}`}
-                      className="w-full h-48 object-contain"
+                      className="w-full aspect-square object-cover"
                       muted
                       preload="metadata"
                     />
@@ -219,11 +219,11 @@ const Gallery = () => {
                     <img
                       src={`${API_URL}${item.file_url}`}
                       alt={item.caption || t('beautiful_moment')}
-                      className="w-full h-48 object-contain"
+                      className="w-full aspect-square object-cover"
                     />
                   )}
                 </Link>
-                <div className="p-4">
+                <div className="p-3">
                   {/* Uploader info */}
                   {item.uploader_username && (
                     <div className="mb-2 flex items-center gap-1">
