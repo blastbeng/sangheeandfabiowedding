@@ -164,7 +164,7 @@ const Gallery = () => {
                   {item.caption || t('beautiful_moment')}
                 </p>
                 {item.face_tags && item.face_tags.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mt-2">
+                  <div className="flex overflow-x-auto gap-1 mt-2">
                     {item.face_tags.map(tag => (
                       <button
                         key={tag.group_id}
@@ -172,7 +172,7 @@ const Gallery = () => {
                           e.stopPropagation();
                           setSelectedGroupId(prev => prev === tag.group_id ? null : tag.group_id);
                         }}
-                        className={`w-8 h-8 rounded-full overflow-hidden border-2 transition-colors ${
+                        className={`flex-shrink-0 w-8 h-8 rounded-full overflow-hidden border-2 transition-colors ${
                           selectedGroupId === tag.group_id ? 'border-pink-500' : 'border-white'
                         }`}
                       >
