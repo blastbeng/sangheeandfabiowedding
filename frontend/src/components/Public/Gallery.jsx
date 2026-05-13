@@ -172,7 +172,7 @@ const Gallery = () => {
                   {item.media_type === 'video' ? (
                     <video
                       src={`${API_URL}${item.file_url}`}
-                      className="w-full h-48 object-cover"
+                      className="w-full h-48 object-contain"
                       muted
                       preload="metadata"
                     />
@@ -180,7 +180,7 @@ const Gallery = () => {
                     <img
                       src={`${API_URL}${item.file_url}`}
                       alt={item.caption || t('beautiful_moment')}
-                      className="w-full h-48 object-cover"
+                      className="w-full h-48 object-contain"
                     />
                   )}
                 </Link>
