@@ -154,7 +154,15 @@ def detect_faces_task(self, media_id):
     # Download file content from cloud
     content, _ = get_file_from_cloud(media)
     if content is None:
-        return
+        # Fallback to local file storage
+        if media.file and media.file.storage.exists(media.file.name):
+            try:
+                with media.file.open('rb') as f:
+                    content = f.read()
+            except Exception:
+                return
+        else:
+            return
 
     # Load image with PIL and convert to RGB numpy array
     try:
