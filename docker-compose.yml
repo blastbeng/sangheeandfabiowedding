@@ -100,6 +100,8 @@ services:
   celery:
     build: ./backend
     command: celery -A config worker --loglevel=info
+    volumes:
+      - ./backend/media:/app/media
     environment:
       - PUID=1000
       - PGID=1000
@@ -124,7 +126,6 @@ services:
       - NEXTCLOUD_URL=${NEXTCLOUD_URL}
       - NEXTCLOUD_USERNAME=${NEXTCLOUD_USERNAME}
       - NEXTCLOUD_PASSWORD=${NEXTCLOUD_PASSWORD}
-      - NEXTCLOUD_FOLDER=${NEXTCLOUD_FOLDER}
       - NEXTCLOUD_FOLDER=${NEXTCLOUD_FOLDER}
     depends_on:
       db:
