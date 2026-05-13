@@ -10,18 +10,37 @@ const UserProfile = () => {
   const [media, setMedia] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [mediaLoading, setMediaLoading] = useState(true);
   const API_URL = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     const fetchUserData = async () => {
+      setLoading(true);
+      setError(null);
+      setMediaLoading(true);
+
       try {
         const userRes = await fetch(`${API_URL}/api/auth/users/public/${id}/`);
+        if (userRes.status === 404) {
+          setError('not_found');
+          setLoading(false);
+          return;
+        }
         if (!userRes.ok) {
-          throw new Error(`User API error: ${userRes.status}`);
+          setError(`http_error:${userRes.status}`);
+          setLoading(false);
+          return;
         }
         const userData = await userRes.json();
         setUser(userData);
+      } catch (err) {
+        logger.error('[UserProfile] Failed to fetch user data:', err);
+        setError('network_error');
+        setLoading(false);
+        return;
+      }
 
+      try {
         const mediaRes = await fetch(`${API_URL}/api/auth/media/public/?user_id=${id}`);
         if (mediaRes.ok) {
           const mediaData = await mediaRes.json();
@@ -30,9 +49,9 @@ const UserProfile = () => {
           logger.warn('[UserProfile] Media fetch failed with status:', mediaRes.status);
         }
       } catch (err) {
-        logger.error('[UserProfile] Failed to fetch user data:', err);
-        setError(err.message);
+        logger.warn('[UserProfile] Media fetch error:', err);
       } finally {
+        setMediaLoading(false);
         setLoading(false);
       }
     };
@@ -50,10 +69,17 @@ const UserProfile = () => {
   }
 
   if (error) {
+    const errorMessage =
+      error === 'not_found'
+        ? t('user_not_found')
+        : error === 'network_error'
+          ? t('network_error', 'Network error. Please check your connection and try again.')
+          : t('error_loading_profile');
+
     return (
       <div className="text-center py-20 wedding-card">
         <span className="text-6xl floating-heart inline-block">🌸</span>
-        <p className="mt-4 text-red-500 text-lg">{t('error_loading_profile')}: {error}</p>
+        <p className="mt-4 text-red-500 text-lg">{errorMessage}</p>
         <Link to="/users" className="wedding-btn inline-block mt-4">{t('back_to_guests')}</Link>
       </div>
     );
@@ -94,7 +120,11 @@ const UserProfile = () => {
         <p className="text-gray-600 italic">{t('guest_uploads_subtitle')}</p>
       </div>
 
-      {media.length === 0 ? (
+      {mediaLoading ? (
+        <div className="text-center py-10">
+          <p className="text-gray-600">{t('loading', 'Loading...')}</p>
+        </div>
+      ) : media.length === 0 ? (
         <div className="text-center py-10 wedding-card">
           <span className="text-6xl floating-heart inline-block">📸</span>
           <p className="mt-4 text-gray-600 text-lg">{t('no_uploads_from_guest')}</p>

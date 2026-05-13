@@ -7,6 +7,7 @@ const UserList = () => {
   const { t } = useTranslation();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [search, setSearch] = useState('');
   const API_URL = import.meta.env.VITE_API_URL;
 
@@ -15,22 +16,43 @@ const UserList = () => {
     if (search) params.append('search', search);
 
     fetch(`${API_URL}/api/auth/users/public/?${params}`)
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) {
+          throw new Error(`HTTP error: ${res.status}`);
+        }
+        return res.json();
+      })
       .then(data => {
         setUsers(data);
         setLoading(false);
       })
       .catch(err => {
         logger.error('[UserList] Failed to fetch users:', err);
+        setError(err.message);
         setLoading(false);
       });
-  }, [search]);
+  }, [search, API_URL]);
 
   if (loading) {
     return (
       <div className="text-center py-20">
         <span className="text-5xl heart-decoration inline-block">💝</span>
         <p className="mt-4 text-gray-600 text-lg">{t('loading_guests')}</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-20 wedding-card">
+        <span className="text-6xl floating-heart inline-block">🌸</span>
+        <p className="mt-4 text-red-500 text-lg">{t('error_loading_guests', 'Failed to load guests. Please try again later.')}</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="wedding-btn inline-block mt-4"
+        >
+          {t('retry', 'Retry')}
+        </button>
       </div>
     );
   }
