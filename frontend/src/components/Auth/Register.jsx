@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
 import { useTranslation } from 'react-i18next';
@@ -22,6 +22,14 @@ const Register = ({ setIsAuthenticated, setIsAdmin }) => {
     instagram: false
   });
   const navigate = useNavigate();
+
+  const errorRef = useRef(null);
+
+  useEffect(() => {
+    if (error) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [error]);
 
   useEffect(() => {
     fetch(`${import.meta.env.VITE_API_URL}/api/auth/social/status/`)
@@ -159,7 +167,7 @@ const Register = ({ setIsAuthenticated, setIsAdmin }) => {
         </p>
 
         {error && (
-          <div className="bg-red-50 border-2 border-red-300 text-red-700 px-4 py-3 rounded-xl mb-4 text-center">
+          <div ref={errorRef} className="bg-red-50 border-2 border-red-300 text-red-700 px-4 py-3 rounded-xl mb-4 text-center">
             💔 {error}
           </div>
         )}
