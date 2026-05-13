@@ -139,16 +139,25 @@ def delete_media_task(media_id):
 
 @shared_task(bind=True, max_retries=3)
 def detect_faces_task(self, media_id):
+    logger.info(f"[detect_faces] Starting face detection for media {media_id}")
+
     try:
         media = Media.objects.get(id=media_id)
     except Media.DoesNotExist:
+        logger.warning(f"[detect_faces] Media {media_id} not found, skipping")
         return
 
-    if media.status != 'approved' or media.media_type != 'image':
+    if media.status != 'approved':
+        logger.info(f"[detect_faces] Skipping media {media_id}: status is '{media.status}', not 'approved'")
+        return
+
+    if media.media_type != 'image':
+        logger.info(f"[detect_faces] Skipping media {media_id}: media_type is '{media.media_type}', not 'image'")
         return
 
     # Skip if already attempted (safety net)
     if media.face_detection_attempted:
+        logger.info(f"[detect_faces] Skipping media {media_id}: face_detection_attempted is already True")
         return
 
     # Download file content from cloud
@@ -159,17 +168,21 @@ def detect_faces_task(self, media_id):
             try:
                 with media.file.open('rb') as f:
                     content = f.read()
-            except Exception:
+            except Exception as e:
+                logger.warning(f"[detect_faces] Local file read failed for media {media_id}: {e}")
                 return
         else:
+            logger.warning(f"[detect_faces] No content available for media {media_id} (cloud and local both returned None)")
             return
+
+    logger.info(f"[detect_faces] Downloaded content for media {media_id} ({len(content)} bytes)")
 
     # Load image with PIL and convert to RGB numpy array
     try:
         pil_image = Image.open(BytesIO(content)).convert('RGB')
         img_array = np.array(pil_image)
     except Exception as e:
-        logger.error(f"Cannot load image for media {media_id}: {e}")
+        logger.error(f"[detect_faces] Cannot load image for media {media_id}: {e}")
         return
 
     # Use MediaPipe for fast face detection
@@ -179,14 +192,17 @@ def detect_faces_task(self, media_id):
         ) as face_detection:
             results = face_detection.process(img_array)
     except Exception as e:
-        logger.error(f"MediaPipe face detection failed for media {media_id}: {e}")
+        logger.error(f"[detect_faces] MediaPipe face detection failed for media {media_id}: {e}")
         return
 
     if not results.detections:
         # No faces found – mark as attempted and exit
+        logger.info(f"[detect_faces] No faces detected in media {media_id} by MediaPipe")
         media.face_detection_attempted = True
         media.save(update_fields=['face_detection_attempted'])
         return
+
+    logger.info(f"[detect_faces] MediaPipe found {len(results.detections)} face(s) in media {media_id}")
 
     # Extract face locations in dlib format (top, right, bottom, left)
     face_locations = []
@@ -209,6 +225,7 @@ def detect_faces_task(self, media_id):
 
     if not face_encodings:
         # No encodings could be computed (should not happen if MediaPipe found faces)
+        logger.warning(f"[detect_faces] No encodings computed for media {media_id} despite {len(face_locations)} detected face(s)")
         media.face_detection_attempted = True
         media.save(update_fields=['face_detection_attempted'])
         return
@@ -229,6 +246,7 @@ def detect_faces_task(self, media_id):
             group_centroids[group.id] = np.mean(encodings, axis=0)
 
     # Process each detected face
+    faces_created = 0
     for (top, right, bottom, left), encoding in zip(face_locations, face_encodings):
         # Extract face image
         face_image = img_array[top:bottom, left:right]
@@ -273,6 +291,7 @@ def detect_faces_task(self, media_id):
             encoding=pickle.dumps(encoding),
         )
         face_tag.thumbnail.save(f'face_{face_tag.id}.jpg', ContentFile(thumb_content), save=True)
+        faces_created += 1
 
     # Ensure every group has a thumbnail
     from django.db.models import Q
@@ -285,6 +304,8 @@ def detect_faces_task(self, media_id):
     # Mark media as attempted
     media.face_detection_attempted = True
     media.save(update_fields=['face_detection_attempted'])
+
+    logger.info(f"[detect_faces] Completed for media {media_id}: created {faces_created} face tag(s)")
 
 
 @shared_task
@@ -306,5 +327,7 @@ def backfill_faces_periodic():
         count += 1
 
     if count > 0:
-        logger.info(f'Backfill: queued face detection for {count} media items.')
+        logger.info(f'[backfill] Queued face detection for {count} media items.')
+    else:
+        logger.debug('[backfill] No eligible media items found for face detection.')
     return count
