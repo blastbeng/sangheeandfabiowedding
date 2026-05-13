@@ -1,8 +1,8 @@
 import logging
 import os
 from rest_framework import serializers
+from django.conf import settings
 from django.contrib.auth.password_validation import validate_password
-from django.contrib.staticfiles.storage import staticfiles_storage
 from django.utils.translation import gettext_lazy as _
 from .models import CustomUser, Media, SiteSettings, FaceGroup, FaceTag, CookieConsent
 from .profanity_words import contains_profanity
@@ -139,7 +139,8 @@ class CustomUserSerializer(serializers.ModelSerializer):
     def set_default_profile_picture(self, user):
         from django.core.files.base import ContentFile
         try:
-            with staticfiles_storage.open('images/default_profile_pic.png', 'rb') as f:
+            default_pic_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'default_profile_pic.png')
+            with open(default_pic_path, 'rb') as f:
                 user.profile_picture.save('default.png', ContentFile(f.read()), save=True)
         except Exception as e:
             print(f"Failed to set default profile picture: {e}")
@@ -343,7 +344,8 @@ class AdminUserSerializer(serializers.ModelSerializer):
     def _set_default_profile_picture(self, user):
         from django.core.files.base import ContentFile
         try:
-            with staticfiles_storage.open('images/default_profile_pic.png', 'rb') as f:
+            default_pic_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'default_profile_pic.png')
+            with open(default_pic_path, 'rb') as f:
                 user.profile_picture.save('default.png', ContentFile(f.read()), save=True)
         except Exception as e:
             logger.error(f"Failed to set default profile picture: {e}")
