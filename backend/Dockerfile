@@ -7,7 +7,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libopenblas-dev \
     liblapack-dev \
     libgl1 \
-    libssl-dev \
     libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
@@ -20,9 +19,9 @@ COPY requirements.txt .
 
 # Build latest stable dlib from source with RPi5 optimizations (NEON, BLAS, LAPACK)
 # Use 4 parallel build jobs
-RUN CMAKE_ARGS="-DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=ON -DDLIB_NO_GUI_SUPPORT=ON -DDLIB_USE_BLAS=ON -DDLIB_USE_LAPACK=ON" \
+RUN CMAKE_ARGS="-DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=ON -DDLIB_NO_GUI_SUPPORT=ON -DUSE_NEON=ON -DUSE_AVX=OFF -DUSE_SSE2=OFF -DUSE_SSE4=OFF -DUSE_AVX2=OFF -DDLIB_USE_BLAS=ON -DDLIB_USE_LAPACK=ON" \
     CMAKE_BUILD_PARALLEL_LEVEL=4 \
-    pip install --no-cache-dir --no-binary :all: dlib -v
+    pip install --no-cache-dir --no-binary dlib dlib
 
 # Install remaining Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
