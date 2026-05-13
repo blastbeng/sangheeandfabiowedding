@@ -14,6 +14,7 @@ const Upload = () => {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const navigate = useNavigate();
   const API_URL = import.meta.env.VITE_API_URL;
 
@@ -22,6 +23,13 @@ const Upload = () => {
 
   // Keep track of active polling intervals so we can clear them on unmount
   const intervalsRef = useRef({});
+
+  // ---------- mobile detection ----------
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // ---------- helpers for localStorage ----------
   const savePendingTasks = (tasks) => {
@@ -130,7 +138,16 @@ const Upload = () => {
   // ---------- file selection ----------
   const handleFileSelect = (e) => {
     const selectedFiles = Array.from(e.target.files);
-    setFiles(prev => [...prev, ...selectedFiles]);
+    if (isMobile) {
+      const combined = [...files, ...selectedFiles];
+      if (combined.length > 10) {
+        setFiles(combined.slice(0, 10));
+      } else {
+        setFiles(combined);
+      }
+    } else {
+      setFiles(prev => [...prev, ...selectedFiles]);
+    }
   };
 
   const removeFile = (fileName) => {
@@ -290,6 +307,19 @@ const Upload = () => {
               <label htmlFor="file-upload" className="block text-gray-700 text-sm font-bold mb-2">📸 {t('select_photos_videos')}</label>
               <input id="file-upload" type="file" multiple accept="image/*,video/*" onChange={handleFileSelect} className="wedding-input w-full py-4" />
               <p className="text-sm text-gray-500 mt-2">✨ {t('supported_formats')}</p>
+
+              {/* Mobile limit message */}
+              {isMobile && (
+                <p className="text-sm text-amber-600 mt-2">⚠️ {t('mobile_max_files_10')}</p>
+              )}
+
+              {/* Desktop many‑files warning */}
+              {!isMobile && files.length > 10 && (
+                <p className="text-sm text-amber-600 mt-2">⚠️ {t('desktop_many_files_warning')}</p>
+              )}
+
+              {/* General upload size notice */}
+              <p className="text-sm text-gray-500 mt-2">ℹ️ {t('upload_size_notice')}</p>
             </div>
 
             {files.length > 0 && (
