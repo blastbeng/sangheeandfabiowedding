@@ -136,9 +136,6 @@ const Gallery = () => {
                     className="w-12 h-12 rounded-full object-contain border-2 border-white shadow-sm"
                     onError={(e) => { e.target.src = 'https://i.imgur.com/V4RclNb.png'; }}
                   />
-                  {group.user_id && (
-                    <span className="text-xs text-gray-600 whitespace-nowrap">{group.user_display_name}</span>
-                  )}
                 </button>
               ))}
             </div>
@@ -224,25 +221,6 @@ const Gallery = () => {
                   )}
                 </Link>
                 <div className="p-3">
-                  {/* Uploader info */}
-                  {item.uploader_username && (
-                    <div className="mb-2 flex items-center gap-1">
-                      <span className="text-xs text-gray-500">{t('uploaded_by')}:</span>
-                      <Link to={`/user/${item.user_id}`} className="inline-flex items-center gap-1 hover:opacity-80">
-                        <img
-                          src={item.uploader_profile_picture || 'https://i.imgur.com/V4RclNb.png'}
-                          alt={item.uploader_username}
-                          className="w-6 h-6 rounded-full object-cover border border-pink-200"
-                          onError={(e) => { e.target.src = 'https://i.imgur.com/V4RclNb.png'; }}
-                        />
-                        <span className="text-sm text-gray-600 font-medium">
-                          {item.uploader_first_name || item.uploader_last_name
-                            ? `${item.uploader_first_name || ''} ${item.uploader_last_name || ''}`.trim()
-                            : item.uploader_username}
-                        </span>
-                      </Link>
-                    </div>
-                  )}
                   <p className="text-gray-700 text-sm mb-2 line-clamp-2">
                     {item.caption || t('beautiful_moment')}
                   </p>
