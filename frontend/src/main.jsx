@@ -15,6 +15,15 @@ import './i18n'
 import i18n from './i18n'
 import './index.css'
 
+// Register service worker for background uploads
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(reg => console.log('[SW] Registered:', reg.scope))
+      .catch(err => console.error('[SW] Registration failed:', err));
+  });
+}
+
 if (import.meta.env.DEV) {
   console.log('[Main] App starting in development mode');
   console.log('[Main] Google Client ID configured:', !!import.meta.env.VITE_GOOGLE_CLIENT_ID);
