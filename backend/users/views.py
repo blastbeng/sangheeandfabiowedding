@@ -1235,7 +1235,10 @@ class MediaFileView(APIView):
             media = Media.objects.get(id=media_id)
         except Media.DoesNotExist:
             raise Http404("Media not found")
-        if media.status != 'approved' and not request.user.is_staff:
+        if media.status != 'approved' and not (
+            request.user.is_staff or
+            (request.user.is_authenticated and request.user == media.user)
+        ):
             raise Http404("Media not available")
 
         redis_client = redis.Redis(
