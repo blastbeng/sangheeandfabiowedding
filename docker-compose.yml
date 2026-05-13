@@ -2,6 +2,7 @@
 services:
   db:
     image: postgres:15-alpine
+    user: "1000:1000"
     volumes:
       - ./postgres_data:/var/lib/postgresql/data
     environment:
@@ -19,6 +20,7 @@ services:
 
   redis:
     image: redis:7-alpine
+    user: "1000:1000"
     volumes:
       - ./redis_data:/data
     ports:
