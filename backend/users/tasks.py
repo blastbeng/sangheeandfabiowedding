@@ -511,3 +511,163 @@ def detect_faces_profile_picture(self, user_id):
         new_group = FaceGroup.objects.create(name=user_display_name)
         new_group.thumbnail.save(f'group_{new_group.id}.jpg', ContentFile(thumb_content), save=True)
         logger.info(f"[detect_faces_profile] Created new group {new_group.id} for user {user_id}, name='{user_display_name}'")
+
+
+def _merge_groups(keep_group, remove_group):
+    """
+    Merge remove_group into keep_group:
+    - Reassign all FaceTags from remove_group to keep_group.
+    - Copy name if keep_group has no name.
+    - Ensure keep_group has a thumbnail (use remove_group's if missing).
+    - Delete remove_group.
+    """
+    # Reassign tags
+    FaceTag.objects.filter(face_group=remove_group).update(face_group=keep_group)
+
+    # Copy name if keep_group lacks one
+    if (not keep_group.name or keep_group.name.strip() == '') and remove_group.name:
+        keep_group.name = remove_group.name
+        keep_group.save(update_fields=['name'])
+
+    # Ensure keep_group has a thumbnail
+    if not keep_group.thumbnail:
+        if remove_group.thumbnail:
+            keep_group.thumbnail = remove_group.thumbnail
+            keep_group.save(update_fields=['thumbnail'])
+        else:
+            # Try to get a thumbnail from any of its tags
+            first_tag = keep_group.face_tags.first()
+            if first_tag and first_tag.thumbnail:
+                keep_group.thumbnail = first_tag.thumbnail
+                keep_group.save(update_fields=['thumbnail'])
+
+    # Delete the now-empty group
+    if remove_group.thumbnail and remove_group.thumbnail != keep_group.thumbnail:
+        remove_group.thumbnail.delete(save=False)
+    remove_group.delete()
+
+
+@shared_task
+def deduplicate_faces():
+    """
+    Periodic task that removes duplicate FaceTags within the same media
+    and merges duplicate FaceGroups (same person).
+    """
+    THRESHOLD = 0.5
+    logger.info("[deduplicate_faces] Starting face deduplication")
+
+    # ---------- 1. Deduplicate FaceTags within each media ----------
+    # Get all media that have more than one FaceTag with an encoding
+    media_ids = (
+        FaceTag.objects
+        .exclude(encoding__isnull=True)
+        .values('media_id')
+        .annotate(tag_count=Count('id'))
+        .filter(tag_count__gt=1)
+        .values_list('media_id', flat=True)
+    )
+
+    tags_deleted = 0
+    groups_merged = set()  # track (kept_group_id, deleted_group_id) to avoid double merge
+
+    for media_id in media_ids:
+        tags = list(FaceTag.objects.filter(media_id=media_id).exclude(encoding__isnull=True))
+        if len(tags) < 2:
+            continue
+
+        # Load encodings
+        encodings = []
+        for tag in tags:
+            try:
+                enc = pickle.loads(tag.encoding)
+                encodings.append(enc)
+            except Exception:
+                encodings.append(None)
+
+        # Compare all pairs
+        to_delete = set()
+        for i in range(len(tags)):
+            if i in to_delete:
+                continue
+            for j in range(i + 1, len(tags)):
+                if j in to_delete:
+                    continue
+                if encodings[i] is None or encodings[j] is None:
+                    continue
+                dist = np.linalg.norm(encodings[i] - encodings[j])
+                if dist < THRESHOLD:
+                    # Duplicate found – keep the one with smaller ID
+                    keep, remove = (i, j) if tags[i].id < tags[j].id else (j, i)
+                    to_delete.add(remove)
+
+                    # Merge face groups if they differ
+                    g1 = tags[keep].face_group
+                    g2 = tags[remove].face_group
+                    if g1 and g2 and g1.id != g2.id:
+                        # Merge g2 into g1
+                        if (g1.id, g2.id) not in groups_merged and (g2.id, g1.id) not in groups_merged:
+                            _merge_groups(g1, g2)
+                            groups_merged.add((g1.id, g2.id))
+
+        # Delete duplicate tags
+        for idx in to_delete:
+            tag = tags[idx]
+            logger.info(f"[deduplicate_faces] Deleting duplicate FaceTag {tag.id} (media {media_id})")
+            tag.delete()
+            tags_deleted += 1
+
+    logger.info(f"[deduplicate_faces] Deleted {tags_deleted} duplicate FaceTags")
+
+    # ---------- 2. Deduplicate FaceGroups ----------
+    # Get all groups that have at least one encoding
+    groups = FaceGroup.objects.annotate(
+        tag_count=Count('face_tags')
+    ).filter(tag_count__gt=0)
+
+    # Build centroids
+    group_centroids = {}
+    for group in groups:
+        encodings_list = []
+        for tag in group.face_tags.exclude(encoding__isnull=True):
+            try:
+                enc = pickle.loads(tag.encoding)
+                encodings_list.append(enc)
+            except Exception:
+                pass
+        if encodings_list:
+            group_centroids[group.id] = np.mean(encodings_list, axis=0)
+
+    # Compare all group pairs
+    group_ids = list(group_centroids.keys())
+    merged_groups = set()
+    for i in range(len(group_ids)):
+        gid1 = group_ids[i]
+        if gid1 in merged_groups:
+            continue
+        for j in range(i + 1, len(group_ids)):
+            gid2 = group_ids[j]
+            if gid2 in merged_groups:
+                continue
+            dist = np.linalg.norm(group_centroids[gid1] - group_centroids[gid2])
+            if dist < THRESHOLD:
+                # Merge gid2 into gid1 (keep the one with smaller ID)
+                keep_id, remove_id = (gid1, gid2) if gid1 < gid2 else (gid2, gid1)
+                if (keep_id, remove_id) not in groups_merged and (remove_id, keep_id) not in groups_merged:
+                    keep_group = FaceGroup.objects.get(id=keep_id)
+                    remove_group = FaceGroup.objects.get(id=remove_id)
+                    _merge_groups(keep_group, remove_group)
+                    groups_merged.add((keep_id, remove_id))
+                    merged_groups.add(remove_id)
+                    logger.info(f"[deduplicate_faces] Merged group {remove_id} into {keep_id}")
+
+    # Clean up empty groups (just in case)
+    empty_groups = FaceGroup.objects.annotate(
+        tag_count=Count('face_tags')
+    ).filter(tag_count=0)
+    for group in empty_groups:
+        if group.thumbnail:
+            group.thumbnail.delete(save=False)
+        group.delete()
+
+    logger.info("[deduplicate_faces] Deduplication complete")
+    return {'tags_deleted': tags_deleted, 'groups_merged': len(groups_merged)}
