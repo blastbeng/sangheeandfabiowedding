@@ -11,9 +11,18 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
 import os
+import warnings
 from pathlib import Path
 from dotenv import load_dotenv
 from datetime import timedelta
+
+# Suppress protobuf deprecation warning triggered by mediapipe
+warnings.filterwarnings(
+    "ignore",
+    message="SymbolDatabase.GetPrototype\\(\\) is deprecated",
+    category=UserWarning,
+    module="google.protobuf.symbol_database"
+)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
