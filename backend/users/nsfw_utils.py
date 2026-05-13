@@ -86,11 +86,17 @@ def check_nsfw_image(image_file):
                 return False, 0.0
 
         # Classify the image
-        result = classifier.classify(tmp_path)
+        predictions = classifier.classify(tmp_path)
 
-        # Extract the unsafe score from the result
-        # Result format: {'/path/to/image.jpg': {'safe': 0.9, 'unsafe': 0.1}}
-        unsafe_score = result.get(tmp_path, {}).get('unsafe', 0.0)
+        # Extract the unsafe score from the result.
+        # nudenet >=1.0 returns a list of dicts, e.g.:
+        # [{'class': 'safe', 'score': 0.9}, {'class': 'unsafe', 'score': 0.1}]
+        unsafe_score = 0.0
+        for pred in predictions:
+            if pred.get('class') == 'unsafe':
+                unsafe_score = pred.get('score', 0.0)
+                break
+
         is_nsfw = unsafe_score > NSFW_THRESHOLD
 
         return is_nsfw, unsafe_score

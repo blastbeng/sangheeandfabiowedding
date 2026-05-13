@@ -33,4 +33,4 @@ face_recognition
 mediapipe>=0.10.0,<0.11
 
 # NSFW detection
-nudenet>=0.1.0,<0.2
+nudenet>=1.0.4,<4.0
