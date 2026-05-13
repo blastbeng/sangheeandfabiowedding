@@ -173,13 +173,13 @@ const Gallery = () => {
                 <div className="p-4">
                   {/* Uploader info */}
                   {item.uploader_username && (
-                    <div className="mb-2">
+                    <div className="mb-2 flex items-center gap-1">
                       <span className="text-xs text-gray-500">{t('uploaded_by')}:</span>
-                      <Link to={`/user/${item.user_id}`} className="flex items-center gap-2 mt-1 hover:opacity-80">
+                      <Link to={`/user/${item.user_id}`} className="inline-flex items-center gap-1 hover:opacity-80">
                         <img
                           src={item.uploader_profile_picture || 'https://i.imgur.com/V4RclNb.png'}
                           alt={item.uploader_username}
-                          className="w-8 h-8 rounded-full object-cover border border-pink-200"
+                          className="w-6 h-6 rounded-full object-cover border border-pink-200"
                           onError={(e) => { e.target.src = 'https://i.imgur.com/V4RclNb.png'; }}
                         />
                         <span className="text-sm text-gray-600 font-medium">
@@ -194,9 +194,9 @@ const Gallery = () => {
                     {item.caption || t('beautiful_moment')}
                   </p>
                   {item.media_type === 'image' && uniqueFaceTags.length > 0 && (
-                    <div className="mt-2">
+                    <div className="mt-2 flex items-center gap-1">
                       <span className="text-xs text-gray-500">{t('in_this_photo')}:</span>
-                      <div className="flex overflow-x-auto gap-1 mt-1">
+                      <div className="inline-flex overflow-x-auto gap-1">
                         {uniqueFaceTags.map(tag => (
                           <button
                             key={tag.group_id}
@@ -204,7 +204,7 @@ const Gallery = () => {
                               e.stopPropagation();
                               setSelectedGroupId(prev => prev === tag.group_id ? null : tag.group_id);
                             }}
-                            className={`flex-shrink-0 w-8 h-8 rounded-full overflow-hidden border-2 transition-colors ${
+                            className={`flex-shrink-0 w-6 h-6 rounded-full overflow-hidden border-2 transition-colors ${
                               selectedGroupId === tag.group_id ? 'border-pink-500' : 'border-white'
                             }`}
                           >
