@@ -294,7 +294,7 @@ class BulkModerationSerializer(serializers.Serializer):
     media_ids = serializers.ListField(
         child=serializers.IntegerField(), min_length=1
     )
-    action = serializers.ChoiceField(choices=['approve', 'reject'])
+    action = serializers.ChoiceField(choices=['approve', 'reject', 'delete'])
 
 
 class AdminDashboardSerializer(serializers.Serializer):

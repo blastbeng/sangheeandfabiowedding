@@ -312,10 +312,13 @@ def detect_faces_task(self, media_id):
 def backfill_faces_periodic():
     """
     Periodic task: queue face detection for all approved images
-    that have not been attempted yet.
+    that have not been attempted yet, and also clean up images
+    that have face tags with missing group thumbnails.
     """
-    from .models import Media
+    from .models import Media, FaceGroup
+    from django.db.models import Q
 
+    # 1. Standard backfill: images never attempted
     eligible = Media.objects.filter(
         status='approved',
         media_type='image',
@@ -323,6 +326,27 @@ def backfill_faces_periodic():
     )
     count = 0
     for media in eligible:
+        detect_faces_task.delay(media.id)
+        count += 1
+
+    # 2. Cleanup: images that have face tags but the group thumbnail is missing
+    broken = Media.objects.filter(
+        status='approved',
+        media_type='image',
+        face_detection_attempted=True,
+    ).filter(
+        Q(face_tags__isnull=False) &
+        Q(face_tags__face_group__thumbnail__isnull=True) |
+        Q(face_tags__face_group__thumbnail='')
+    ).distinct()
+
+    for media in broken:
+        # Delete the broken face tags (they reference missing files)
+        media.face_tags.all().delete()
+        # Reset the flag so the image will be re-processed
+        media.face_detection_attempted = False
+        media.save(update_fields=['face_detection_attempted'])
+        # Queue face detection
         detect_faces_task.delay(media.id)
         count += 1
 
