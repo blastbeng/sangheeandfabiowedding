@@ -1,14 +1,53 @@
+import { useState, useEffect } from 'react';
 import { useLocation, useParams, Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
 const MediaView = () => {
   const { t } = useTranslation();
+  const { id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
-  const { id } = useParams();
-  const media = location.state?.media;
+  const API_URL = import.meta.env.VITE_API_URL;
 
-  if (!media) {
+  const [media, setMedia] = useState(location.state?.media || null);
+  const [loading, setLoading] = useState(!location.state?.media);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (location.state?.media) return; // already have media from state
+    // Fetch media by id
+    fetch(`${API_URL}/api/auth/media/public/?id=${id}`)
+      .then(res => {
+        if (!res.ok) throw new Error('Media not found');
+        return res.json();
+      })
+      .then(data => {
+        // The endpoint returns an array; find the matching item
+        const item = Array.isArray(data) ? data.find(m => m.id === parseInt(id)) : data;
+        if (item) {
+          setMedia(item);
+        } else {
+          setError('Media not found');
+        }
+      })
+      .catch(err => {
+        setError(err.message);
+      })
+      .finally(() => setLoading(false));
+  }, [id, API_URL]);
+
+  if (loading) {
+    return (
+      <div className="max-w-4xl mx-auto p-4 text-center">
+        <div className="wedding-card p-8">
+          <span className="text-5xl">⏳</span>
+          <p className="mt-4 text-gray-600">{t('loading')}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !media) {
     return (
       <div className="max-w-4xl mx-auto p-4 text-center">
         <div className="wedding-card p-8">
@@ -21,8 +60,6 @@ const MediaView = () => {
       </div>
     );
   }
-
-  const API_URL = import.meta.env.VITE_API_URL;
 
   return (
     <div className="max-w-4xl mx-auto p-4">
@@ -65,11 +102,20 @@ const MediaView = () => {
           )}
 
           {media.face_tags && media.face_tags.length > 0 && (
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 items-center">
+              <span className="text-xs text-gray-500">{t('in_this_photo')}:</span>
               {media.face_tags.map(tag => (
-                <span key={tag} className="text-xs px-2 py-1 rounded-full bg-pink-100 text-pink-700">
-                  {tag}
-                </span>
+                <div key={tag.group_id} className="flex items-center gap-1">
+                  <img
+                    src={tag.thumbnail_url || 'https://i.imgur.com/V4RclNb.png'}
+                    alt=""
+                    className="w-6 h-6 rounded-full object-cover border border-pink-200"
+                    onError={(e) => { e.target.src = 'https://i.imgur.com/V4RclNb.png'; }}
+                  />
+                  {tag.user_display_name && (
+                    <span className="text-xs text-gray-600">{tag.user_display_name}</span>
+                  )}
+                </div>
               ))}
             </div>
           )}
