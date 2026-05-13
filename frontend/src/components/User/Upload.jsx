@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import authFetch from '../../utils/authFetch';
@@ -6,31 +6,6 @@ import authFetch from '../../utils/authFetch';
 const CONCURRENCY = 2;          // upload at most 2 files at a time
 const POLL_INTERVAL = 2000;     // ms between status checks
 const STORAGE_KEY = 'pendingUploadTasks';
-
-// Helper: store token in IndexedDB for the service worker
-function storeTokenForSW(token) {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open('TokenStore', 1);
-    request.onupgradeneeded = (e) => {
-      const db = e.target.result;
-      if (!db.objectStoreNames.contains('tokens')) {
-        db.createObjectStore('tokens', { keyPath: 'id' });
-      }
-    };
-    request.onsuccess = () => {
-      const db = request.result;
-      const tx = db.transaction('tokens', 'readwrite');
-      const store = tx.objectStore('tokens');
-      store.put({ id: 'accessToken', value: token });
-      tx.oncomplete = () => resolve();
-      tx.onerror = () => reject(tx.error);
-    };
-    request.onerror = () => reject(request.error);
-  });
-}
-
-// Check Background Fetch support
-const supportsBackgroundFetch = 'BackgroundFetchManager' in self;
 
 const Upload = () => {
   const { t } = useTranslation();
@@ -44,10 +19,6 @@ const Upload = () => {
 
   // Per‑file status: { name, taskId, status: 'pending'|'uploading'|'success'|'error', error? }
   const [fileStatuses, setFileStatuses] = useState([]);
-  const swRegistrationRef = useRef(null);
-  const [activeFetchIds, setActiveFetchIds] = useState([]);
-  const fileStatusesRef = useRef(fileStatuses);
-  useEffect(() => { fileStatusesRef.current = fileStatuses; }, [fileStatuses]);
 
   // Keep track of active polling intervals so we can clear them on unmount
   const intervalsRef = useRef({});
@@ -70,7 +41,7 @@ const Upload = () => {
   };
 
   // ---------- poll a single task ----------
-  const pollTask = useCallback((taskId, fileName) => {
+  const pollTask = (taskId, fileName) => {
     const interval = setInterval(async () => {
       try {
         const res = await authFetch(`${API_URL}/api/auth/media/upload/status/${taskId}/`);
@@ -110,48 +81,7 @@ const Upload = () => {
     }, POLL_INTERVAL);
 
     intervalsRef.current[taskId] = interval;
-  }, [API_URL, t]);
-
-  // ---------- handle service worker messages ----------
-  const handleSWMessage = useCallback((event) => {
-    const { type, fetchId, taskId, error } = event.data;
-    if (!type) return;
-
-    setFileStatuses(prev => {
-      switch (type) {
-        case 'UPLOAD_COMPLETED':
-          return prev.map(fs =>
-            fs.fetchId === fetchId ? { ...fs, taskId, status: 'uploading' } : fs
-          );
-        case 'TASK_SUCCESS':
-          return prev.map(fs =>
-            fs.fetchId === fetchId || fs.taskId === taskId
-              ? { ...fs, status: 'success' }
-              : fs
-          );
-        case 'TASK_ERROR':
-          return prev.map(fs =>
-            fs.fetchId === fetchId || fs.taskId === taskId
-              ? { ...fs, status: 'error', error: error || 'Processing failed' }
-              : fs
-          );
-        case 'UPLOAD_ERROR':
-          return prev.map(fs =>
-            fs.fetchId === fetchId
-              ? { ...fs, status: 'error', error: error || 'Upload failed' }
-              : fs
-          );
-        default:
-          return prev;
-      }
-    });
-
-    if (type === 'TASK_SUCCESS' || type === 'TASK_ERROR') {
-      setActiveFetchIds(prev => prev.filter(id => id !== fetchId));
-      const pending = getPendingTasks().filter(t => t.fetchId !== fetchId);
-      savePendingTasks(pending);
-    }
-  }, []);
+  };
 
   // ---------- resume pending tasks on mount ----------
   useEffect(() => {
@@ -174,41 +104,6 @@ const Upload = () => {
     return () => {
       Object.values(intervalsRef.current).forEach(clearInterval);
     };
-  }, [pollTask]);
-
-  // ---------- Service Worker setup & message listener ----------
-  useEffect(() => {
-    if (!supportsBackgroundFetch) return;
-
-    navigator.serviceWorker.ready.then(reg => {
-      swRegistrationRef.current = reg;
-
-      navigator.serviceWorker.addEventListener('message', handleSWMessage);
-
-      // Check for any already active background fetches
-      reg.backgroundFetch.getIds().then(ids => {
-        if (ids.length > 0) {
-          setActiveFetchIds(ids);
-          const pending = getPendingTasks().filter(t => ids.includes(t.fetchId));
-          if (pending.length > 0) {
-            const restored = pending.map(p => ({
-              name: p.fileName,
-              fetchId: p.fetchId,
-              taskId: p.taskId || null,
-              status: 'uploading',
-            }));
-            setFileStatuses(restored);
-            setUploading(true);
-          }
-        }
-      });
-    });
-
-    return () => {
-      if (supportsBackgroundFetch) {
-        navigator.serviceWorker.removeEventListener('message', handleSWMessage);
-      }
-    };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ---------- watch for all files finished ----------
@@ -216,9 +111,8 @@ const Upload = () => {
     if (!uploading || fileStatuses.length === 0) return;
 
     const allDone = fileStatuses.every(fs => fs.status === 'success' || fs.status === 'error');
-    const noActiveFetches = activeFetchIds.length === 0;
 
-    if (allDone && noActiveFetches) {
+    if (allDone) {
       setUploading(false);
       const successCount = fileStatuses.filter(fs => fs.status === 'success').length;
       const errorCount = fileStatuses.filter(fs => fs.status === 'error').length;
@@ -231,7 +125,7 @@ const Upload = () => {
       }
       clearPendingTasks();
     }
-  }, [fileStatuses, uploading, activeFetchIds, navigate, t]);
+  }, [fileStatuses, uploading, navigate, t]);
 
   // ---------- file selection ----------
   const handleFileSelect = (e) => {
@@ -258,143 +152,73 @@ const Upload = () => {
     }));
     setFileStatuses(initialStatuses);
 
-    if (supportsBackgroundFetch) {
-      // ---------- Background Fetch path ----------
-      const token = localStorage.getItem('accessToken');
-      if (!token) {
-        setError('Not authenticated');
-        setUploading(false);
-        return;
-      }
-      await storeTokenForSW(token);
+    // Direct upload (no Background Fetch)
+    const queue = [...files];
+    const running = new Set();
 
-      const queue = [...files];
-      const worker = async () => {
-        while (queue.length > 0) {
-          const file = queue.shift();
-          setFileStatuses(prev =>
-            prev.map(fs => fs.name === file.name ? { ...fs, status: 'uploading' } : fs)
-          );
+    const uploadOne = async (file) => {
+      setFileStatuses(prev =>
+        prev.map(fs => fs.name === file.name ? { ...fs, status: 'uploading' } : fs)
+      );
 
-          const formData = new FormData();
-          formData.append('file', file);
-          formData.append('caption', caption);
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('caption', caption);
 
-          const request = new Request(`${API_URL}/api/auth/media/upload/`, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${token}`,
-            },
-            body: formData,
-          });
+      try {
+        const res = await authFetch(`${API_URL}/api/auth/media/upload/`, {
+          method: 'POST',
+          body: formData,
+        });
+        const data = await res.json();
 
-          try {
-            const reg = await swRegistrationRef.current.backgroundFetch.fetch(
-              `upload-${file.name}-${Date.now()}`,
-              request,
-              {
-                title: file.name,
-                icons: [{ sizes: '32x32', src: '/icon-32.png', type: 'image/png' }],
-                downloadTotal: file.size,
-              }
-            );
-
-            const fetchId = reg.id;
-            setFileStatuses(prev =>
-              prev.map(fs => fs.name === file.name ? { ...fs, fetchId, status: 'uploading' } : fs)
-            );
-
-            const pending = getPendingTasks();
-            pending.push({ fetchId, fileName: file.name, taskId: null });
-            savePendingTasks(pending);
-
-            setActiveFetchIds(prev => [...prev, fetchId]);
-          } catch (err) {
-            console.error('[Upload] Background fetch failed:', err);
-            setFileStatuses(prev =>
-              prev.map(fs =>
-                fs.name === file.name
-                  ? { ...fs, status: 'error', error: 'Background fetch not supported or failed' }
-                  : fs
-              )
-            );
-          }
-        }
-      };
-
-      const workers = Array(Math.min(CONCURRENCY, queue.length))
-        .fill()
-        .map(() => worker());
-      await Promise.all(workers);
-    } else {
-      // ---------- Fallback: original direct upload (unchanged) ----------
-      const queue = [...files];
-      const running = new Set();
-
-      const uploadOne = async (file) => {
-        setFileStatuses(prev =>
-          prev.map(fs => fs.name === file.name ? { ...fs, status: 'uploading' } : fs)
-        );
-
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('caption', caption);
-
-        try {
-          const res = await authFetch(`${API_URL}/api/auth/media/upload/`, {
-            method: 'POST',
-            body: formData,
-          });
-          const data = await res.json();
-
-          if (!res.ok) {
-            setFileStatuses(prev =>
-              prev.map(fs =>
-                fs.name === file.name
-                  ? { ...fs, status: 'error', error: data.error || t('upload_failed') }
-                  : fs
-              )
-            );
-            return;
-          }
-
-          const taskId = data.task_id;
-          setFileStatuses(prev =>
-            prev.map(fs =>
-              fs.name === file.name ? { ...fs, taskId, status: 'uploading' } : fs
-            )
-          );
-
-          const pending = getPendingTasks();
-          pending.push({ taskId, fileName: file.name });
-          savePendingTasks(pending);
-
-          pollTask(taskId, file.name);
-        } catch (err) {
+        if (!res.ok) {
           setFileStatuses(prev =>
             prev.map(fs =>
               fs.name === file.name
-                ? { ...fs, status: 'error', error: t('error_during_upload') }
+                ? { ...fs, status: 'error', error: data.error || t('upload_failed') }
                 : fs
             )
           );
+          return;
         }
-      };
 
-      const worker = async () => {
-        while (queue.length > 0) {
-          const file = queue.shift();
-          running.add(file);
-          await uploadOne(file);
-          running.delete(file);
-        }
-      };
+        const taskId = data.task_id;
+        setFileStatuses(prev =>
+          prev.map(fs =>
+            fs.name === file.name ? { ...fs, taskId, status: 'uploading' } : fs
+          )
+        );
 
-      const workers = Array(Math.min(CONCURRENCY, queue.length))
-        .fill()
-        .map(() => worker());
-      await Promise.all(workers);
-    }
+        const pending = getPendingTasks();
+        pending.push({ taskId, fileName: file.name });
+        savePendingTasks(pending);
+
+        pollTask(taskId, file.name);
+      } catch (err) {
+        setFileStatuses(prev =>
+          prev.map(fs =>
+            fs.name === file.name
+              ? { ...fs, status: 'error', error: t('error_during_upload') }
+              : fs
+          )
+        );
+      }
+    };
+
+    const worker = async () => {
+      while (queue.length > 0) {
+        const file = queue.shift();
+        running.add(file);
+        await uploadOne(file);
+        running.delete(file);
+      }
+    };
+
+    const workers = Array(Math.min(CONCURRENCY, queue.length))
+      .fill()
+      .map(() => worker());
+    await Promise.all(workers);
   };
 
   // ---------- progress calculation ----------
