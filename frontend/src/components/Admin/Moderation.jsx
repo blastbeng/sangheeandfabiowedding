@@ -158,6 +158,27 @@ const AdminModeration = () => {
       });
   };
 
+  const handleReTriggerFaces = () => {
+    if (selectedIds.length === 0) return;
+
+    if (!window.confirm(t('admin_re_trigger_faces_confirm', { count: selectedIds.length }))) return;
+
+    authFetch(`${API_URL}/api/auth/media/moderation/detect-faces/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ media_ids: selectedIds })
+    })
+      .then(res => res.json())
+      .then(data => {
+        alert(data.message || t('admin_re_trigger_faces_success'));
+        fetchMedia();
+      })
+      .catch(err => {
+        logger.error('[Moderation] Re-trigger faces failed:', err);
+        alert(t('admin_re_trigger_faces_error'));
+      });
+  };
+
   const getStatusBadge = (status) => {
     const badges = { pending: 'status-pending', approved: 'status-approved', rejected: 'status-rejected' };
     const icons = { pending: '⏳', approved: '✅', rejected: '❌' };
@@ -236,6 +257,12 @@ const AdminModeration = () => {
                 className="bg-purple-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-purple-600"
               >
                 {t('admin_detect_faces')} ({selectedIds.length})
+              </button>
+              <button
+                onClick={handleReTriggerFaces}
+                className="bg-indigo-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-indigo-600"
+              >
+                {t('admin_re_trigger_faces')} ({selectedIds.length})
               </button>
             </div>
           )}
