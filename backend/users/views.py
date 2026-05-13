@@ -1074,36 +1074,32 @@ class MediaUploadView(APIView):
     parser_classes = [MultiPartParser, FormParser]
 
     def post(self, request):
-        files = request.FILES.getlist('files')
-        captions = request.POST.getlist('captions')
-        if not files:
-            return Response({'error': 'No files provided'}, status=status.HTTP_400_BAD_REQUEST)
+        file = request.FILES.get('file')
+        if not file:
+            return Response({'error': 'No file provided'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Directory where we'll temporarily store files for the task
+        caption = request.POST.get('caption', '')
+
+        # Temporary storage for the single file
         tmp_dir = os.path.join(django_settings.MEDIA_ROOT, 'tmp_uploads')
         os.makedirs(tmp_dir, exist_ok=True)
 
-        file_paths = []
-        for i, file in enumerate(files):
-            # Generate a unique temporary filename
-            tmp_name = f"{request.user.id}_{uuid.uuid4().hex}_{file.name}"
-            tmp_path = os.path.join(tmp_dir, tmp_name)
+        tmp_name = f"{request.user.id}_{uuid.uuid4().hex}_{file.name}"
+        tmp_path = os.path.join(tmp_dir, tmp_name)
 
-            # Write the uploaded file to the temporary location
-            with open(tmp_path, 'wb') as dst:
-                for chunk in file.chunks():
-                    dst.write(chunk)
+        with open(tmp_path, 'wb') as dst:
+            for chunk in file.chunks():
+                dst.write(chunk)
 
-            caption = captions[i] if i < len(captions) else ''
-            media_type = 'video' if file.content_type.startswith('video') else 'image'
-            file_paths.append({
-                'tmp_path': tmp_path,
-                'original_filename': file.name,
-                'caption': caption,
-                'media_type': media_type,
-            })
+        media_type = 'video' if file.content_type.startswith('video') else 'image'
+        file_data = {
+            'tmp_path': tmp_path,
+            'original_filename': file.name,
+            'caption': caption,
+            'media_type': media_type,
+        }
 
-        task = upload_media_task.delay(request.user.id, file_paths)
+        task = upload_media_task.delay(request.user.id, [file_data])
         return Response({'task_id': task.id, 'message': 'Upload started'}, status=status.HTTP_202_ACCEPTED)
 
 
