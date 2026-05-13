@@ -62,3 +62,9 @@ msgstr "Current password is incorrect"
 
 msgid "Remember Me"
 msgstr "Remember Me"
+
+msgid "Content contains inappropriate language"
+msgstr "Content contains inappropriate language"
+
+msgid "Image contains inappropriate content"
+msgstr "Image contains inappropriate content"

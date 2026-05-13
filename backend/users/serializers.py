@@ -3,7 +3,10 @@ import os
 from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.staticfiles.storage import staticfiles_storage
+from django.utils.translation import gettext_lazy as _
 from .models import CustomUser, Media, SiteSettings, FaceGroup, FaceTag, CookieConsent
+from .profanity_words import contains_profanity
+from .nsfw_utils import check_nsfw_image, is_image_file
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +56,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
 
         if password:
             if password != password_confirm:
-                raise serializers.ValidationError({"password_confirm": "Passwords don't match"})
+                raise serializers.ValidationError({"password_confirm": _("Passwords don't match")})
             try:
                 validate_password(password)
             except Exception as e:
@@ -70,6 +73,21 @@ class CustomUserSerializer(serializers.ModelSerializer):
             username = attrs['username']
             if CustomUser.objects.filter(username=username).exists():
                 raise serializers.ValidationError({"username": "This username is already taken."})
+
+        # Check for profanity in text fields
+        for field in ['username', 'first_name', 'last_name']:
+            if field in attrs and attrs[field] and contains_profanity(str(attrs[field])):
+                raise serializers.ValidationError({
+                    field: _("Content contains inappropriate language")
+                })
+
+        # Check for NSFW content in profile picture
+        if 'profile_picture' in attrs:
+            is_nsfw, confidence = check_nsfw_image(attrs['profile_picture'])
+            if is_nsfw:
+                raise serializers.ValidationError({
+                    'profile_picture': _("Image contains inappropriate content")
+                })
 
         return attrs
 
@@ -154,6 +172,23 @@ class MediaSerializer(serializers.ModelSerializer):
 
     def get_file_url(self, obj):
         return f"/api/auth/media/{obj.id}/file/"
+
+    def validate(self, attrs):
+        # Check for profanity in caption
+        if 'caption' in attrs and attrs['caption'] and contains_profanity(str(attrs['caption'])):
+            raise serializers.ValidationError({
+                'caption': _("Content contains inappropriate language")
+            })
+
+        # Check for NSFW content in uploaded file (if it's an image)
+        if 'file' in attrs and is_image_file(attrs['file']):
+            is_nsfw, confidence = check_nsfw_image(attrs['file'])
+            if is_nsfw:
+                raise serializers.ValidationError({
+                    'file': _("Image contains inappropriate content")
+                })
+
+        return attrs
 
 
 class PublicMediaSerializer(serializers.ModelSerializer):
@@ -256,7 +291,23 @@ class AdminUserSerializer(serializers.ModelSerializer):
         password_confirm = attrs.get('password_confirm')
         if password:
             if password != password_confirm:
-                raise serializers.ValidationError({"password_confirm": "Passwords don't match"})
+                raise serializers.ValidationError({"password_confirm": _("Passwords don't match")})
+
+        # Check for profanity in text fields
+        for field in ['username', 'first_name', 'last_name']:
+            if field in attrs and attrs[field] and contains_profanity(str(attrs[field])):
+                raise serializers.ValidationError({
+                    field: _("Content contains inappropriate language")
+                })
+
+        # Check for NSFW content in profile picture
+        if 'profile_picture' in attrs:
+            is_nsfw, confidence = check_nsfw_image(attrs['profile_picture'])
+            if is_nsfw:
+                raise serializers.ValidationError({
+                    'profile_picture': _("Image contains inappropriate content")
+                })
+
         return attrs
 
     def update(self, instance, validated_data):
