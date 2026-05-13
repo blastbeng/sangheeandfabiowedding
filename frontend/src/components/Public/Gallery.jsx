@@ -129,69 +129,87 @@ const Gallery = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {media.map((item) => (
-            <div key={item.id} className="gallery-item bg-white shadow-lg">
-              <Link to={`/media/${item.id}`} state={{ media: item }} className="block relative">
-                {item.media_type === 'video' ? (
-                  <video
-                    src={`${API_URL}${item.file_url}`}
-                    className="w-full h-48 object-cover"
-                    muted
-                    preload="metadata"
-                  />
-                ) : (
-                  <img
-                    src={`${API_URL}${item.file_url}`}
-                    alt={item.caption || t('beautiful_moment')}
-                    className="w-full h-48 object-cover"
-                  />
-                )}
-              </Link>
-              <div className="p-4">
-                {/* Uploader info */}
-                {item.uploader_username && (
-                  <div className="flex items-center gap-2 mb-2">
-                    <img
-                      src={item.uploader_profile_picture || 'https://i.imgur.com/V4RclNb.png'}
-                      alt={item.uploader_username}
-                      className="w-8 h-8 rounded-full object-cover border border-pink-200"
-                      onError={(e) => { e.target.src = 'https://i.imgur.com/V4RclNb.png'; }}
+          {media.map((item) => {
+            const uniqueFaceTags = item.face_tags
+              ? item.face_tags.filter(
+                  (tag, index, self) => index === self.findIndex(t => t.group_id === tag.group_id)
+                )
+              : [];
+
+            return (
+              <div key={item.id} className="gallery-item bg-white shadow-lg">
+                <Link to={`/media/${item.id}`} state={{ media: item }} className="block relative">
+                  {item.media_type === 'video' ? (
+                    <video
+                      src={`${API_URL}${item.file_url}`}
+                      className="w-full h-48 object-cover"
+                      muted
+                      preload="metadata"
                     />
-                    <span className="text-sm text-gray-600 font-medium">{item.uploader_username}</span>
-                  </div>
-                )}
-                <p className="text-gray-700 text-sm mb-2 line-clamp-2">
-                  {item.caption || t('beautiful_moment')}
-                </p>
-                {item.face_tags && item.face_tags.length > 0 && (
-                  <div className="flex overflow-x-auto gap-1 mt-2">
-                    {item.face_tags.map(tag => (
-                      <button
-                        key={tag.group_id}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedGroupId(prev => prev === tag.group_id ? null : tag.group_id);
-                        }}
-                        className={`flex-shrink-0 w-8 h-8 rounded-full overflow-hidden border-2 transition-colors ${
-                          selectedGroupId === tag.group_id ? 'border-pink-500' : 'border-white'
-                        }`}
-                      >
+                  ) : (
+                    <img
+                      src={`${API_URL}${item.file_url}`}
+                      alt={item.caption || t('beautiful_moment')}
+                      className="w-full h-48 object-cover"
+                    />
+                  )}
+                </Link>
+                <div className="p-4">
+                  {/* Uploader info */}
+                  {item.uploader_username && (
+                    <div className="mb-2">
+                      <span className="text-xs text-gray-500">{t('uploaded_by')}:</span>
+                      <Link to={`/user/${item.user_id}`} className="flex items-center gap-2 mt-1 hover:opacity-80">
                         <img
-                          src={tag.thumbnail_url || 'https://i.imgur.com/V4RclNb.png'}
-                          alt=""
-                          className="w-full h-full object-cover"
+                          src={item.uploader_profile_picture || 'https://i.imgur.com/V4RclNb.png'}
+                          alt={item.uploader_username}
+                          className="w-8 h-8 rounded-full object-cover border border-pink-200"
                           onError={(e) => { e.target.src = 'https://i.imgur.com/V4RclNb.png'; }}
                         />
-                      </button>
-                    ))}
-                  </div>
-                )}
-                <p className="text-gray-500 text-xs">
-                  {t('uploaded_at')}: {new Date(item.uploaded_at).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' })} {new Date(item.uploaded_at).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit', hour12: false })}
-                </p>
+                        <span className="text-sm text-gray-600 font-medium">
+                          {item.uploader_first_name || item.uploader_last_name
+                            ? `${item.uploader_first_name || ''} ${item.uploader_last_name || ''}`.trim()
+                            : item.uploader_username}
+                        </span>
+                      </Link>
+                    </div>
+                  )}
+                  <p className="text-gray-700 text-sm mb-2 line-clamp-2">
+                    {item.caption || t('beautiful_moment')}
+                  </p>
+                  {item.media_type === 'image' && uniqueFaceTags.length > 0 && (
+                    <div className="mt-2">
+                      <span className="text-xs text-gray-500">{t('in_this_photo')}:</span>
+                      <div className="flex overflow-x-auto gap-1 mt-1">
+                        {uniqueFaceTags.map(tag => (
+                          <button
+                            key={tag.group_id}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedGroupId(prev => prev === tag.group_id ? null : tag.group_id);
+                            }}
+                            className={`flex-shrink-0 w-8 h-8 rounded-full overflow-hidden border-2 transition-colors ${
+                              selectedGroupId === tag.group_id ? 'border-pink-500' : 'border-white'
+                            }`}
+                          >
+                            <img
+                              src={tag.thumbnail_url || 'https://i.imgur.com/V4RclNb.png'}
+                              alt=""
+                              className="w-full h-full object-cover"
+                              onError={(e) => { e.target.src = 'https://i.imgur.com/V4RclNb.png'; }}
+                            />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <p className="text-gray-500 text-xs">
+                    {t('uploaded_at')}: {new Date(item.uploaded_at).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' })} {new Date(item.uploaded_at).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit', hour12: false })}
+                  </p>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

@@ -158,7 +158,7 @@ const resources = {
       "Caption...": "Didascalia...",
       "Search by user": "Cerca per utente",
       "Username or name...": "Nome utente o nome...",
-      "Filtering_by": "Filtrando per",
+      "Filtering by": "Filtrando per",
       "Clear filter": "Rimuovi filtro",
       "upload_subtitle": "Carica le tue belle foto e video del nostro giorno speciale 🌹",
       "select_photos_videos": "Seleziona Foto e Video",
@@ -385,7 +385,9 @@ const resources = {
       "Port": "Porta",
       "Use TLS": "Usa TLS",
       "From Email": "Email Mittente",
-      "uploaded_at": "Caricato il"
+      "uploaded_at": "Caricato il",
+      "in_this_photo": "In questa foto",
+      "uploaded_by": "Caricato da"
     }
   },
   ko: {
@@ -771,7 +773,9 @@ const resources = {
       "Port": "포트",
       "Use TLS": "TLS 사용",
       "From Email": "보내는 이메일",
-      "uploaded_at": "업로드 날짜"
+      "uploaded_at": "업로드 날짜",
+      "in_this_photo": "이 사진에",
+      "uploaded_by": "업로드한 사람"
     }
   },
   en: {
@@ -1157,7 +1161,9 @@ const resources = {
       "Port": "Port",
       "Use TLS": "Use TLS",
       "From Email": "From Email",
-      "uploaded_at": "Uploaded at"
+      "uploaded_at": "Uploaded at",
+      "in_this_photo": "In this photo",
+      "uploaded_by": "Uploaded by"
     }
   }
 };

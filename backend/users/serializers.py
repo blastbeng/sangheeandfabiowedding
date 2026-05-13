@@ -153,16 +153,19 @@ class MediaSerializer(serializers.ModelSerializer):
 class PublicMediaSerializer(serializers.ModelSerializer):
     file_url = serializers.SerializerMethodField()
     uploader_username = serializers.CharField(source='user.username', read_only=True)
+    uploader_first_name = serializers.CharField(source='user.first_name', read_only=True)
+    uploader_last_name = serializers.CharField(source='user.last_name', read_only=True)
     uploader_profile_picture = serializers.SerializerMethodField()
     face_tags = serializers.SerializerMethodField()
+    user_id = serializers.IntegerField(source='user.id', read_only=True)
 
     class Meta:
         model = Media
         fields = (
             'id', 'user', 'file', 'media_type', 'caption',
             'uploaded_at', 'status', 'view_count', 'file_url',
-            'uploader_username', 'uploader_profile_picture',
-            'face_tags',
+            'uploader_username', 'uploader_first_name', 'uploader_last_name',
+            'uploader_profile_picture', 'face_tags', 'user_id',
         )
         read_only_fields = fields
 
