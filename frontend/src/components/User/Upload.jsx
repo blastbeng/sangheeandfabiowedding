@@ -294,6 +294,17 @@ const Upload = () => {
             <div className="bg-amber-50 border-2 border-amber-300 text-amber-800 px-4 py-3 rounded-xl mb-4 text-sm">
               {t('upload_do_not_close')}
             </div>
+            <button
+              onClick={() => {
+                if (window.confirm(t('stop_upload_confirm'))) {
+                  localStorage.removeItem('pendingUploadTasks');
+                  window.location.reload();
+                }
+              }}
+              className="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-xl transition-colors"
+            >
+              {t('stop_upload')}
+            </button>
           </div>
         )}
 
