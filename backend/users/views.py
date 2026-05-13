@@ -345,6 +345,11 @@ class RegisterView(APIView):
                     user.set_password(password)
                     user.save()
 
+                # Trigger face detection if a profile picture was uploaded
+                if 'profile_picture' in data:
+                    from .tasks import detect_faces_profile_picture
+                    detect_faces_profile_picture.delay(user.id)
+
                 # Resend verification email
                 signer = TimestampSigner()
                 token = signer.sign(user.email)
@@ -383,6 +388,11 @@ class RegisterView(APIView):
             user.is_active = False
             user.set_password(request.data['password'])
             user.save()
+
+            # Trigger face detection if a profile picture was uploaded
+            if 'profile_picture' in data:
+                from .tasks import detect_faces_profile_picture
+                detect_faces_profile_picture.delay(user.id)
 
             signer = TimestampSigner()
             token = signer.sign(user.email)
@@ -714,6 +724,10 @@ class ProfileView(APIView):
         serializer = CustomUserSerializer(request.user, data=data, partial=True, context={'request': request})
         if serializer.is_valid():
             serializer.save()
+            # Trigger face detection if a new profile picture was provided
+            if 'profile_picture' in request.FILES:
+                from .tasks import detect_faces_profile_picture
+                detect_faces_profile_picture.delay(request.user.id)
             # Invalidate profile picture cache
             redis_client = redis.Redis(
                 host=django_settings.REDIS_HOST,
@@ -809,6 +823,11 @@ class SocialLoginView(APIView):
         # Update profile with Google data if user already existed
         if not created:
             update_user_from_social(user, 'google', user_info)
+
+        # Trigger face detection if a profile picture was set
+        if user.profile_picture and user.profile_picture.name != 'profile_pics/default.png':
+            from .tasks import detect_faces_profile_picture
+            detect_faces_profile_picture.delay(user.id)
 
         # If user is not active, they need admin approval
         if not user.is_active:
@@ -965,6 +984,9 @@ class SocialLoginCallbackView(APIView):
                             try:
                                 processed = process_profile_picture(ContentFile(resp.content, name='social.jpg'))
                                 user.profile_picture.save(f"{user.username}_social.jpg", processed, save=False)
+                                # Trigger face detection on the new social profile picture
+                                from .tasks import detect_faces_profile_picture
+                                detect_faces_profile_picture.delay(user.id)
                             except ValidationError:
                                 logger.warning(f"Could not process social profile picture for {user.email}, using default.")
                     except Exception as e:

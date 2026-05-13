@@ -392,3 +392,122 @@ def cleanup_empty_face_groups():
     if count:
         logger.info(f"Cleaned up {count} empty FaceGroups")
     return count
+
+
+@shared_task(bind=True, max_retries=3)
+def detect_faces_profile_picture(self, user_id):
+    from .models import CustomUser, FaceGroup
+    from django.core.files.base import ContentFile
+    import face_recognition
+    import mediapipe as mp
+    import numpy as np
+    import pickle
+    from PIL import Image
+    from io import BytesIO
+
+    logger.info(f"[detect_faces_profile] Starting for user {user_id}")
+
+    try:
+        user = CustomUser.objects.get(id=user_id)
+    except CustomUser.DoesNotExist:
+        logger.warning(f"[detect_faces_profile] User {user_id} not found")
+        return
+
+    if not user.profile_picture or user.profile_picture.name == 'profile_pics/default.png':
+        logger.info(f"[detect_faces_profile] User {user_id} has no custom profile picture")
+        return
+
+    # Read profile picture
+    try:
+        with user.profile_picture.open('rb') as f:
+            content = f.read()
+    except Exception as e:
+        logger.error(f"[detect_faces_profile] Cannot read profile picture for user {user_id}: {e}")
+        return
+
+    # Load image
+    try:
+        pil_image = Image.open(BytesIO(content)).convert('RGB')
+        img_array = np.array(pil_image)
+    except Exception as e:
+        logger.error(f"[detect_faces_profile] Cannot load image for user {user_id}: {e}")
+        return
+
+    # Detect faces with MediaPipe
+    try:
+        with mp.solutions.face_detection.FaceDetection(
+            model_selection=1, min_detection_confidence=0.5
+        ) as face_detection:
+            results = face_detection.process(img_array)
+    except Exception as e:
+        logger.error(f"[detect_faces_profile] MediaPipe failed for user {user_id}: {e}")
+        return
+
+    if not results.detections:
+        logger.info(f"[detect_faces_profile] No face detected for user {user_id}")
+        return
+
+    # Use the first detected face
+    detection = results.detections[0]
+    bbox = detection.location_data.relative_bounding_box
+    h, w, _ = img_array.shape
+    xmin = int(bbox.xmin * w)
+    ymin = int(bbox.ymin * h)
+    width = int(bbox.width * w)
+    height = int(bbox.height * h)
+    xmin = max(0, xmin)
+    ymin = max(0, ymin)
+    xmax = min(w, xmin + width)
+    ymax = min(h, ymin + height)
+    face_location = (ymin, xmax, ymax, xmin)  # top, right, bottom, left
+
+    # Compute encoding
+    face_encodings = face_recognition.face_encodings(img_array, known_face_locations=[face_location])
+    if not face_encodings:
+        logger.warning(f"[detect_faces_profile] No encoding for user {user_id}")
+        return
+    encoding = face_encodings[0]
+
+    # Extract face thumbnail
+    face_image = img_array[ymin:ymax, xmin:xmax]
+    pil_face = Image.fromarray(face_image)
+    thumb_io = BytesIO()
+    pil_face.save(thumb_io, format='JPEG', quality=85)
+    thumb_content = thumb_io.getvalue()
+
+    # Load existing groups and centroids
+    existing_groups = FaceGroup.objects.prefetch_related('face_tags').all()
+    group_centroids = {}
+    for group in existing_groups:
+        encodings_list = []
+        for tag in group.face_tags.all():
+            if tag.encoding:
+                try:
+                    enc = pickle.loads(tag.encoding)
+                    encodings_list.append(enc)
+                except Exception:
+                    pass
+        if encodings_list:
+            group_centroids[group.id] = np.mean(encodings_list, axis=0)
+
+    # Find closest group
+    best_group_id = None
+    min_distance = 0.6
+    for group_id, centroid in group_centroids.items():
+        distance = np.linalg.norm(encoding - centroid)
+        if distance < min_distance:
+            min_distance = distance
+            best_group_id = group_id
+
+    user_display_name = user.get_full_name() or user.username
+
+    if best_group_id is not None:
+        group = FaceGroup.objects.get(id=best_group_id)
+        if not group.name or group.name.strip() == '':
+            group.name = user_display_name
+            group.save(update_fields=['name'])
+        logger.info(f"[detect_faces_profile] Matched user {user_id} to group {best_group_id}, name='{user_display_name}'")
+    else:
+        new_group = FaceGroup.objects.create(name=user_display_name)
+        new_group.thumbnail.save(f'group_{new_group.id}.jpg', ContentFile(thumb_content), save=True)
+        logger.info(f"[detect_faces_profile] Created new group {new_group.id} for user {user_id}, name='{user_display_name}'")

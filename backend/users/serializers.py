@@ -110,6 +110,12 @@ class CustomUserSerializer(serializers.ModelSerializer):
             instance.set_password(password)
 
         instance.save()
+
+        # Trigger face detection on new profile picture
+        if new_picture:
+            from .tasks import detect_faces_profile_picture
+            detect_faces_profile_picture.delay(instance.id)
+
         return instance
 
     def set_default_profile_picture(self, user):
@@ -275,6 +281,11 @@ class AdminUserSerializer(serializers.ModelSerializer):
 
         if remove_pic and not new_picture:
             self._set_default_profile_picture(instance)
+
+        # Trigger face detection if a new picture was uploaded
+        if new_picture:
+            from .tasks import detect_faces_profile_picture
+            detect_faces_profile_picture.delay(instance.id)
 
         return instance
 
