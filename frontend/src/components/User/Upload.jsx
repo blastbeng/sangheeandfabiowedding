@@ -311,7 +311,7 @@ const Upload = () => {
                   ))}
                 </div>
                 <div className="mb-6">
-                  <label className="block text-gray-700 text-sm font-bold mb-2">✏️ {t('add_caption_optional')}</label>
+                  <label className="block text-gray-700 text-sm font-bold mb-2">✏️ {t('add_captions_optional')}</label>
                   <input
                     type="text"
                     value={caption}

@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import logger from '../../utils/logger';
 
 const Gallery = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [media, setMedia] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
@@ -43,6 +43,10 @@ const Gallery = () => {
       .then(data => setFaceGroups(data))
       .catch(err => logger.error('[Gallery] Failed to fetch face groups:', err));
   }, []);
+
+  // Map i18n language to locale string for date formatting
+  const localeMap = { it: 'it-IT', ko: 'ko-KR', en: 'en-US' };
+  const dateLocale = localeMap[i18n.language] || 'it-IT';
 
   if (loading) {
     return (
@@ -222,7 +226,7 @@ const Gallery = () => {
                     </div>
                   )}
                   <p className="text-gray-500 text-xs">
-                    {t('uploaded_at')}: {new Date(item.uploaded_at).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' })} {new Date(item.uploaded_at).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit', hour12: false })}
+                    {t('uploaded_at')}: {new Date(item.uploaded_at).toLocaleDateString(dateLocale, { day: '2-digit', month: '2-digit', year: 'numeric' })} {new Date(item.uploaded_at).toLocaleTimeString(dateLocale, { hour: '2-digit', minute: '2-digit', hour12: false })}
                   </p>
                 </div>
               </div>
