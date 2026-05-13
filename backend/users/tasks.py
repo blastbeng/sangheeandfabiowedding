@@ -252,6 +252,12 @@ def detect_faces_task(self, media_id):
             new_centroid = (old_centroid * count + encoding) / (count + 1)
             group_centroids[best_group_id] = new_centroid
 
+        # Ensure the face group has a thumbnail (for groups created before this fix)
+        if best_group_id:
+            group = FaceGroup.objects.get(id=best_group_id)
+            if not group.thumbnail:
+                group.thumbnail.save(f'group_{group.id}.jpg', ContentFile(thumb_content), save=True)
+
         # Create FaceTag
         face_tag = FaceTag.objects.create(
             media=media,
@@ -271,3 +277,26 @@ def detect_faces_task(self, media_id):
     # Mark media as attempted
     media.face_detection_attempted = True
     media.save(update_fields=['face_detection_attempted'])
+
+
+@shared_task
+def backfill_faces_periodic():
+    """
+    Periodic task: queue face detection for all approved images
+    that have not been attempted yet.
+    """
+    from .models import Media
+
+    eligible = Media.objects.filter(
+        status='approved',
+        media_type='image',
+        face_detection_attempted=False
+    )
+    count = 0
+    for media in eligible:
+        detect_faces_task.delay(media.id)
+        count += 1
+
+    if count > 0:
+        logger.info(f'Backfill: queued face detection for {count} media items.')
+    return count

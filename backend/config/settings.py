@@ -254,6 +254,14 @@ CELERY_TIMEZONE = TIME_ZONE  # Uses Europe/Rome from settings
 CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_TIME_LIMIT = 30 * 60  # 30 minutes max per task
 
+# Celery Beat Schedule
+CELERY_BEAT_SCHEDULE = {
+    'backfill-faces-every-5-minutes': {
+        'task': 'users.tasks.backfill_faces_periodic',
+        'schedule': 300.0,  # every 5 minutes
+    },
+}
+
 # Email Configuration
 EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
 EMAIL_HOST = os.environ.get('EMAIL_HOST', '')
