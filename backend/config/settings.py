@@ -36,7 +36,7 @@ REST_FRAMEWORK = {
 
 
 # Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
+# See https://docs.djangoproject.com/en/5.0/howto/deployment-checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
@@ -256,9 +256,9 @@ CELERY_TASK_TIME_LIMIT = 30 * 60  # 30 minutes max per task
 
 # Celery Beat Schedule
 CELERY_BEAT_SCHEDULE = {
-    'backfill-faces-every-5-minutes': {
+    'backfill-faces-every-hour': {
         'task': 'users.tasks.backfill_faces_periodic',
-        'schedule': 300.0,  # every 5 minutes
+        'schedule': 3600.0,  # every hour
     },
 }
 
