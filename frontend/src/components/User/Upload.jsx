@@ -23,6 +23,7 @@ const Upload = () => {
 
   // Keep track of active polling intervals so we can clear them on unmount
   const intervalsRef = useRef({});
+  const wakeLockRef = useRef(null);
 
   // ---------- mobile detection ----------
   useEffect(() => {
@@ -91,6 +92,37 @@ const Upload = () => {
     intervalsRef.current[taskId] = interval;
   };
 
+  // ---------- wake lock helpers ----------
+  const requestWakeLock = async () => {
+    if ('wakeLock' in navigator) {
+      try {
+        wakeLockRef.current = await navigator.wakeLock.request('screen');
+        wakeLockRef.current.addEventListener('release', () => {
+          console.log('[Upload] Wake lock released');
+        });
+      } catch (err) {
+        console.warn('[Upload] Wake lock request failed:', err);
+      }
+    }
+  };
+
+  const releaseWakeLock = async () => {
+    if (wakeLockRef.current) {
+      try {
+        await wakeLockRef.current.release();
+        wakeLockRef.current = null;
+      } catch (err) {
+        console.warn('[Upload] Wake lock release failed:', err);
+      }
+    }
+  };
+
+  // ---------- beforeunload handler ----------
+  const beforeUnloadHandler = (e) => {
+    e.preventDefault();
+    e.returnValue = ''; // required for Chrome
+  };
+
   // ---------- resume pending tasks on mount ----------
   useEffect(() => {
     const pending = getPendingTasks();
@@ -111,6 +143,8 @@ const Upload = () => {
     // Cleanup intervals on unmount
     return () => {
       Object.values(intervalsRef.current).forEach(clearInterval);
+      releaseWakeLock();
+      window.removeEventListener('beforeunload', beforeUnloadHandler);
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -132,6 +166,8 @@ const Upload = () => {
         setError(`${t('upload_completed_with_errors')} (${successCount} ok, ${errorCount} failed)`);
       }
       clearPendingTasks();
+      releaseWakeLock();
+      window.removeEventListener('beforeunload', beforeUnloadHandler);
     }
   }, [fileStatuses, uploading, navigate, t]);
 
@@ -160,6 +196,12 @@ const Upload = () => {
     setUploading(true);
     setError('');
     setSuccess('');
+
+    // Keep device awake and warn on page close
+    requestWakeLock();
+    window.addEventListener('beforeunload', beforeUnloadHandler);
+    // Scroll to top so the warning banner is visible
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 
     const initialStatuses = files.map(f => ({
       name: f.name,
@@ -265,6 +307,9 @@ const Upload = () => {
                 className="bg-pink-500 h-3 rounded-full transition-all duration-300"
                 style={{ width: `${percent}%` }}
               />
+            </div>
+            <div className="bg-amber-50 border-2 border-amber-300 text-amber-800 px-4 py-3 rounded-xl mb-4 text-sm">
+              {t('upload_do_not_close')}
             </div>
           </div>
         )}

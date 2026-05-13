@@ -392,7 +392,8 @@ const resources = {
       "uploaded_by": "Caricato da",
       "mobile_max_files_10": "📱 Mobile: puoi caricare fino a 10 file alla volta per evitare errori di rete. Per caricamenti illimitati, usa la versione desktop.",
       "desktop_many_files_warning": "⚠️ Caricare molti file potrebbe richiedere molto tempo. Sii paziente.",
-      "upload_size_notice": "ℹ️ Il tempo di caricamento dipende dalla dimensione del file. I file grandi potrebbero richiedere più tempo."
+      "upload_size_notice": "ℹ️ Il tempo di caricamento dipende dalla dimensione del file. I file grandi potrebbero richiedere più tempo.",
+      "upload_do_not_close": "⚠️ Non chiudere il browser o mettere il telefono in standby fino al termine del caricamento."
     }
   },
   ko: {
@@ -785,7 +786,8 @@ const resources = {
       "uploaded_by": "업로드한 사람",
       "mobile_max_files_10": "📱 모바일: 네트워크 오류를 방지하기 위해 한 번에 최대 10개 파일까지 업로드할 수 있습니다. 무제한 업로드는 데스크톱 버전을 이용하세요.",
       "desktop_many_files_warning": "⚠️ 많은 파일을 업로드하면 시간이 오래 걸릴 수 있습니다. 기다려 주세요.",
-      "upload_size_notice": "ℹ️ 업로드 시간은 파일 크기에 따라 다릅니다. 대용량 파일은 시간이 걸릴 수 있습니다."
+      "upload_size_notice": "ℹ️ 업로드 시간은 파일 크기에 따라 다릅니다. 대용량 파일은 시간이 걸릴 수 있습니다.",
+      "upload_do_not_close": "⚠️ 업로드가 완료될 때까지 브라우저를 닫거나 휴대폰을 대기 모드로 전환하지 마세요."
     }
   },
   en: {
@@ -1178,7 +1180,8 @@ const resources = {
       "uploaded_by": "Uploaded by",
       "mobile_max_files_10": "📱 Mobile: You can upload up to 10 files at a time to prevent network errors. For unlimited uploads, please use the desktop version.",
       "desktop_many_files_warning": "⚠️ Uploading many files may take a long time. Please be patient.",
-      "upload_size_notice": "ℹ️ Upload time depends on the file size. Large files may take a while."
+      "upload_size_notice": "ℹ️ Upload time depends on the file size. Large files may take a while.",
+      "upload_do_not_close": "⚠️ Do not close the browser or let your phone go to sleep until the upload finishes."
     }
   }
 };
