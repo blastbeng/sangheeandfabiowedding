@@ -39,6 +39,7 @@ services:
 
   web:
     image: "blastbeng/sangheeandfabiowedding-backend:1.0.0"
+    pull_policy: build
     build: ./backend
     container_name: wedding-backend
     privileged: true
@@ -106,6 +107,7 @@ services:
 
   celery:
     image: "blastbeng/sangheeandfabiowedding-backend:1.0.0"
+    pull_policy: build
     build: ./backend
     container_name: wedding-celery
     command: celery -A config worker --loglevel=info
@@ -155,6 +157,7 @@ services:
 
   celery-beat:
     image: "blastbeng/sangheeandfabiowedding-backend:1.0.0"
+    pull_policy: build
     build: ./backend
     container_name: wedding-celery-beat
     command: celery -A config beat --loglevel=info
@@ -193,6 +196,7 @@ services:
 
   frontend:
     image: "blastbeng/sangheeandfabiowedding-frontend:1.0.0"
+    pull_policy: build
     container_name: wedding-frontend
     build:
       context: ./frontend
@@ -221,6 +225,7 @@ services:
 
   nginx:
     image: nginx:alpine
+    container_name: wedding-nginx
     ports:
       - "5232:80"
     volumes:
