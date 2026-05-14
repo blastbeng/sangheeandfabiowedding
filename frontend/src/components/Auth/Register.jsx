@@ -101,16 +101,36 @@ const Register = ({ setIsAuthenticated, setIsAdmin }) => {
         navigate('/registration-success', { replace: true });
         return;
       } else {
-        // Handle specific known errors with translations
-        if (result.email) {
-          setError(t('email_already_exists'));
-        } else if (result.username) {
-          setError(t('username_already_taken'));
-        } else {
-          // Fallback: extract first error message
-          const firstError = Object.values(result)[0];
-          const message = Array.isArray(firstError) ? firstError[0] : firstError;
-          setError(message || t('registration_failed'));
+        // Helper to extract the first error string from a field
+        const getFirstError = (fieldErrors) => {
+          if (Array.isArray(fieldErrors)) return fieldErrors[0];
+          return fieldErrors;
+        };
+
+        // Handle username errors
+        if (result.username) {
+          const msg = getFirstError(result.username);
+          if (typeof msg === 'string' && /already exists|already taken|già stato preso|이미 사용 중입니다/i.test(msg)) {
+            setError(t('username_already_taken'));
+          } else {
+            setError(t('username_invalid_characters'));
+          }
+        }
+        // Handle email errors
+        else if (result.email) {
+          const msg = getFirstError(result.email);
+          if (typeof msg === 'string' && /already exists|esiste già|이미 존재합니다/i.test(msg)) {
+            setError(t('email_already_exists'));
+          } else {
+            setError(t('email_invalid'));
+          }
+        }
+        // Handle other field errors (password, etc.)
+        else {
+          const firstErrorKey = Object.keys(result)[0];
+          const firstError = getFirstError(result[firstErrorKey]);
+          const message = typeof firstError === 'string' ? firstError : t('registration_failed');
+          setError(message);
         }
       }
     } catch (err) {
