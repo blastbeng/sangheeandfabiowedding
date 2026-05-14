@@ -12,21 +12,18 @@ const Gallery = () => {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [filters, setFilters] = useState({
-    user_search: ''
-  });
+  const [users, setUsers] = useState([]);
+  const [selectedUserId, setSelectedUserId] = useState('');
   const [faceGroups, setFaceGroups] = useState([]);
   const [selectedGroupId, setSelectedGroupId] = useState(null);
-  const [captionFilter, setCaptionFilter] = useState('');
   const API_URL = import.meta.env.VITE_API_URL;
 
   const sentinelRef = useRef(null);
 
   const fetchMedia = useCallback(async (pageNum, append = false) => {
     const params = new URLSearchParams();
-    if (filters.user_search) params.append('user_search', filters.user_search);
+    if (selectedUserId) params.append('user_id', selectedUserId);
     if (selectedGroupId) params.append('face_group_id', selectedGroupId);
-    if (captionFilter) params.append('caption', captionFilter);
     params.append('page', pageNum);
     params.append('page_size', PAGE_SIZE);
 
@@ -47,14 +44,14 @@ const Gallery = () => {
       setLoading(false);
       setLoadingMore(false);
     }
-  }, [filters, selectedGroupId, captionFilter, API_URL]);
+  }, [selectedUserId, selectedGroupId, API_URL]);
 
   useEffect(() => {
     setPage(1);
     setHasMore(true);
     setLoading(true);
     fetchMedia(1, false);
-  }, [filters, selectedGroupId, captionFilter, fetchMedia]);
+  }, [selectedUserId, selectedGroupId, fetchMedia]);
 
   useEffect(() => {
     fetch(`${API_URL}/api/auth/face-groups/`)
@@ -62,6 +59,13 @@ const Gallery = () => {
       .then(data => setFaceGroups(data))
       .catch(err => logger.error('[Gallery] Failed to fetch face groups:', err));
   }, []);
+
+  useEffect(() => {
+    fetch(`${API_URL}/api/auth/users/public/`)
+      .then(res => res.json())
+      .then(data => setUsers(Array.isArray(data) ? data : []))
+      .catch(err => logger.error('[Gallery] Failed to fetch users:', err));
+  }, [API_URL]);
 
   useEffect(() => {
     if (!hasMore || loadingMore) return;
@@ -147,23 +151,20 @@ const Gallery = () => {
       <div className="mb-6 flex flex-wrap gap-4 items-end">
         <div>
           <label className="block text-sm text-gray-600 mb-1">{t('Search by user')}</label>
-          <input
-            type="text"
-            value={filters.user_search}
-            onChange={e => setFilters({ ...filters, user_search: e.target.value })}
+          <select
+            value={selectedUserId}
+            onChange={e => setSelectedUserId(e.target.value)}
             className="wedding-input"
-            placeholder={t('Username or name...')}
-          />
-        </div>
-        <div>
-          <label className="block text-sm text-gray-600 mb-1">{t('Search by caption')}</label>
-          <input
-            type="text"
-            value={captionFilter}
-            onChange={e => setCaptionFilter(e.target.value)}
-            className="wedding-input"
-            placeholder={t('Caption...')}
-          />
+          >
+            <option value="">{t('All users')}</option>
+            {users.map(user => (
+              <option key={user.id} value={user.id}>
+                {user.first_name || user.last_name
+                  ? `${user.first_name || ''} ${user.last_name || ''}`.trim()
+                  : user.username}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
