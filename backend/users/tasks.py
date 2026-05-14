@@ -66,7 +66,8 @@ def _align_face(image_array, top, right, bottom, left, target_size=160):
         aligned = cv2.warpAffine(image_array, M, (target_size, target_size),
                                  flags=cv2.INTER_CUBIC)
         return aligned
-    except Exception:
+    except Exception as e:
+        logger.error(f"[_align_face] Alignment failed: {e}", exc_info=True)
         return None
 
 
@@ -341,12 +342,20 @@ def detect_faces_task(self, media_id, force=False):
         # Align face
         aligned_face = _align_face(img_array, top, right, bottom, left)
         if aligned_face is None:
-            continue
+            # Fallback: use the original face crop (no alignment)
+            logger.warning(f"[detect_faces] Alignment failed for media {media_id}, using unaligned crop")
+            face_crop = img_array[top:bottom, left:right]
+            if face_crop.size == 0:
+                logger.warning(f"[detect_faces] Empty face crop for media {media_id}, skipping")
+                continue
+            # Resize to target size for consistency
+            aligned_face = cv2.resize(face_crop, (160, 160))
 
-        # Compute encoding on the aligned face
+        # Compute encoding on the aligned (or fallback) face
         aligned_face_uint8 = (aligned_face * 255).astype(np.uint8) if aligned_face.dtype == np.float64 else aligned_face
         encoding_result = face_recognition.face_encodings(aligned_face_uint8)
         if not encoding_result:
+            logger.warning(f"[detect_faces] No encoding generated for face in media {media_id}")
             continue
         encoding = encoding_result[0]
 
@@ -592,10 +601,18 @@ def detect_faces_profile_picture(self, user_id):
     # Align face
     aligned_face = _align_face(img_array, ymin, xmax, ymax, xmin)
     if aligned_face is None:
-        return
+        # Fallback: use the original face crop (no alignment)
+        logger.warning(f"[detect_faces_profile] Alignment failed for user {user_id}, using unaligned crop")
+        face_crop = img_array[ymin:ymax, xmin:xmax]
+        if face_crop.size == 0:
+            logger.warning(f"[detect_faces_profile] Empty face crop for user {user_id}")
+            return
+        aligned_face = cv2.resize(face_crop, (160, 160))
+
     aligned_face_uint8 = (aligned_face * 255).astype(np.uint8) if aligned_face.dtype == np.float64 else aligned_face
     face_encodings = face_recognition.face_encodings(aligned_face_uint8)
     if not face_encodings:
+        logger.warning(f"[detect_faces_profile] No encoding generated for user {user_id}")
         return
     encoding = face_encodings[0]
 

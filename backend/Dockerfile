@@ -26,6 +26,9 @@ COPY requirements.txt .
 # Install remaining Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Verify that face_recognition models are accessible (shape predictor + recognition model)
+RUN python -c "import face_recognition_models; import dlib; predictor = dlib.shape_predictor(face_recognition_models.pose_predictor_model_location()); print('Face recognition models verified OK')"
+
 COPY . .
 
 # Verify manage.py exists
