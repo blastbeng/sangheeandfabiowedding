@@ -107,6 +107,10 @@ const UserProfile = () => {
     };
   }, [hasMoreMedia, loadingMoreMedia, mediaPage, fetchMedia]);
 
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [id]);
+
   if (loading) {
     return (
       <div className="text-center py-20">
