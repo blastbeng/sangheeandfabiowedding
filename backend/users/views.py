@@ -1542,21 +1542,30 @@ class MediaDetectFacesView(APIView):
 
     def post(self, request):
         media_ids = request.data.get('media_ids', [])
+        force = request.data.get('force', False)
+
         if not media_ids:
             return Response({'error': 'No media IDs provided.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Only approved images that have NO existing face tags
-        eligible = Media.objects.filter(
-            id__in=media_ids,
-            status='approved',
-            media_type='image'
-        ).exclude(
-            face_tags__isnull=False
-        )
+        if force:
+            # Process all selected images, regardless of status or previous processing
+            eligible = Media.objects.filter(
+                id__in=media_ids,
+                media_type='image'
+            )
+        else:
+            # Original behaviour: only approved images with no existing face tags
+            eligible = Media.objects.filter(
+                id__in=media_ids,
+                status='approved',
+                media_type='image'
+            ).exclude(
+                face_tags__isnull=False
+            )
 
         processed = 0
         for media in eligible:
-            detect_faces_task.delay(media.id)
+            detect_faces_task.delay(media.id, force=force)
             processed += 1
 
         skipped = len(media_ids) - processed

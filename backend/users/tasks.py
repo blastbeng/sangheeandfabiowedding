@@ -210,7 +210,7 @@ def delete_media_task(media_id):
 
 
 @shared_task(bind=True, max_retries=3)
-def detect_faces_task(self, media_id):
+def detect_faces_task(self, media_id, force=False):
     logger.info(f"[detect_faces] Starting face detection for media {media_id}")
 
     try:
@@ -219,18 +219,31 @@ def detect_faces_task(self, media_id):
         logger.warning(f"[detect_faces] Media {media_id} not found, skipping")
         return
 
-    if media.status != 'approved':
-        logger.info(f"[detect_faces] Skipping media {media_id}: status is '{media.status}', not 'approved'")
-        return
+    # If force=True, clear existing face tags and reset the attempted flag
+    if force:
+        # Delete all existing face tags for this media
+        media.face_tags.all().delete()
+        media.face_detection_attempted = False
+        media.save(update_fields=['face_detection_attempted'])
 
-    if media.media_type != 'image':
-        logger.info(f"[detect_faces] Skipping media {media_id}: media_type is '{media.media_type}', not 'image'")
-        return
+    if not force:
+        if media.status != 'approved':
+            logger.info(f"[detect_faces] Skipping media {media_id}: status is '{media.status}', not 'approved'")
+            return
 
-    # Skip if already attempted (safety net)
-    if media.face_detection_attempted:
-        logger.info(f"[detect_faces] Skipping media {media_id}: face_detection_attempted is already True")
-        return
+        if media.media_type != 'image':
+            logger.info(f"[detect_faces] Skipping media {media_id}: media_type is '{media.media_type}', not 'image'")
+            return
+
+        # Skip if already attempted (safety net)
+        if media.face_detection_attempted:
+            logger.info(f"[detect_faces] Skipping media {media_id}: face_detection_attempted is already True")
+            return
+    else:
+        # When forcing, still require the file to be an image
+        if media.media_type != 'image':
+            logger.info(f"[detect_faces] Skipping media {media_id}: media_type is '{media.media_type}', not 'image'")
+            return
 
     # Download file content from cloud
     content, _ = get_file_from_cloud(media)

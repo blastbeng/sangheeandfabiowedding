@@ -125,27 +125,28 @@ const AdminModeration = () => {
   const handleDetectFaces = () => {
     if (selectedIds.length === 0) return;
 
-    // Filter selected media to only approved images
-    const approvedMedia = media.filter(
-      item => selectedIds.includes(item.id) && item.status === 'approved' && item.media_type === 'image'
-    );
-    const skippedCount = selectedIds.length - approvedMedia.length;
+    // Filter to images only (videos are ignored by the backend)
+    const imageMedia = media.filter(item => selectedIds.includes(item.id) && item.media_type === 'image');
+    const skippedCount = selectedIds.length - imageMedia.length;
 
-    if (approvedMedia.length === 0) {
-      alert(t('admin_detect_faces_no_approved'));
+    if (imageMedia.length === 0) {
+      alert(t('admin_detect_faces_no_images'));
       return;
     }
 
     const confirmMsg = skippedCount > 0
-      ? t('admin_detect_faces_confirm_with_skipped', { approved: approvedMedia.length, skipped: skippedCount })
-      : t('admin_detect_faces_confirm', { count: approvedMedia.length });
+      ? t('admin_detect_faces_confirm_with_skipped', { approved: imageMedia.length, skipped: skippedCount })
+      : t('admin_detect_faces_confirm', { count: imageMedia.length });
 
     if (!window.confirm(confirmMsg)) return;
 
     authFetch(`${API_URL}/api/auth/media/moderation/detect-faces/`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ media_ids: approvedMedia.map(m => m.id) })
+      body: JSON.stringify({
+        media_ids: imageMedia.map(m => m.id),
+        force: true
+      })
     })
       .then(res => res.json())
       .then(data => {
@@ -155,27 +156,6 @@ const AdminModeration = () => {
       .catch(err => {
         logger.error('[Moderation] Detect faces failed:', err);
         alert(t('admin_detect_faces_error'));
-      });
-  };
-
-  const handleReTriggerFaces = () => {
-    if (selectedIds.length === 0) return;
-
-    if (!window.confirm(t('admin_re_trigger_faces_confirm', { count: selectedIds.length }))) return;
-
-    authFetch(`${API_URL}/api/auth/media/moderation/detect-faces/`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ media_ids: selectedIds })
-    })
-      .then(res => res.json())
-      .then(data => {
-        alert(data.message || t('admin_re_trigger_faces_success'));
-        fetchMedia();
-      })
-      .catch(err => {
-        logger.error('[Moderation] Re-trigger faces failed:', err);
-        alert(t('admin_re_trigger_faces_error'));
       });
   };
 
@@ -257,12 +237,6 @@ const AdminModeration = () => {
                 className="bg-purple-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-purple-600"
               >
                 {t('admin_detect_faces')} ({selectedIds.length})
-              </button>
-              <button
-                onClick={handleReTriggerFaces}
-                className="bg-indigo-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-indigo-600"
-              >
-                {t('admin_re_trigger_faces')} ({selectedIds.length})
               </button>
             </div>
           )}
