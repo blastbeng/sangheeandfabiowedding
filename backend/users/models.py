@@ -240,9 +240,7 @@ class FaceTag(models.Model):
 
     class Meta:
         # Remove unique_together – multiple faces per media are allowed
-        indexes = [
-            models.Index(fields=['face_group']),
-        ]
+        pass
 
     def save(self, *args, **kwargs):
         if self.face_group and self.face_group.name:
