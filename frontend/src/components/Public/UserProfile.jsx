@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import logger from '../../utils/logger';
+
+const PAGE_SIZE = 20;
 
 const UserProfile = () => {
   const { t } = useTranslation();
@@ -11,14 +13,48 @@ const UserProfile = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [mediaLoading, setMediaLoading] = useState(true);
+  const [mediaPage, setMediaPage] = useState(1);
+  const [hasMoreMedia, setHasMoreMedia] = useState(true);
+  const [loadingMoreMedia, setLoadingMoreMedia] = useState(false);
+  const sentinelRef = useRef(null);
   const API_URL = import.meta.env.VITE_API_URL;
+
+  const fetchMedia = useCallback(async (pageNum, append = false) => {
+    const params = new URLSearchParams();
+    params.append('user_id', id);
+    params.append('page', pageNum);
+    params.append('page_size', PAGE_SIZE);
+
+    try {
+      const res = await fetch(`${API_URL}/api/auth/media/public/?${params}`);
+      if (!res.ok) {
+        logger.warn('[UserProfile] Media fetch failed with status:', res.status);
+        if (!append) setMedia([]);
+        setHasMoreMedia(false);
+        return;
+      }
+      const data = await res.json();
+      const newMedia = Array.isArray(data) ? data : (data.results || []);
+      if (append) {
+        setMedia(prev => [...prev, ...newMedia]);
+      } else {
+        setMedia(newMedia);
+      }
+      setHasMoreMedia(newMedia.length === PAGE_SIZE);
+    } catch (err) {
+      logger.warn('[UserProfile] Media fetch error:', err);
+      if (!append) setMedia([]);
+      setHasMoreMedia(false);
+    } finally {
+      setMediaLoading(false);
+      setLoadingMoreMedia(false);
+    }
+  }, [id, API_URL]);
 
   useEffect(() => {
     const fetchUserData = async () => {
       setLoading(true);
       setError(null);
-      setMediaLoading(true);
-
       try {
         const userRes = await fetch(`${API_URL}/api/auth/users/public/${id}/`);
         if (userRes.status === 404) {
@@ -36,34 +72,40 @@ const UserProfile = () => {
       } catch (err) {
         logger.error('[UserProfile] Failed to fetch user data:', err);
         setError('network_error');
-        setLoading(false);
-        return;
-      }
-
-      const MEDIA_TIMEOUT = 10000; // 10 seconds
-      const mediaFetchPromise = fetch(`${API_URL}/api/auth/media/public/?user_id=${id}`);
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Media fetch timed out')), MEDIA_TIMEOUT)
-      );
-
-      try {
-        const mediaRes = await Promise.race([mediaFetchPromise, timeoutPromise]);
-        if (mediaRes.ok) {
-          const mediaData = await mediaRes.json();
-          setMedia(mediaData);
-        } else {
-          logger.warn('[UserProfile] Media fetch failed with status:', mediaRes.status);
-        }
-      } catch (err) {
-        logger.warn('[UserProfile] Media fetch error:', err);
       } finally {
-        setMediaLoading(false);
         setLoading(false);
       }
     };
-
     fetchUserData();
   }, [id, API_URL]);
+
+  useEffect(() => {
+    setMediaPage(1);
+    setHasMoreMedia(true);
+    setMediaLoading(true);
+    setMedia([]);
+    fetchMedia(1, false);
+  }, [id, fetchMedia]);
+
+  useEffect(() => {
+    if (!hasMoreMedia || loadingMoreMedia) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMoreMedia && !loadingMoreMedia) {
+          setLoadingMoreMedia(true);
+          const nextPage = mediaPage + 1;
+          setMediaPage(nextPage);
+          fetchMedia(nextPage, true);
+        }
+      },
+      { threshold: 0.1 }
+    );
+    const currentSentinel = sentinelRef.current;
+    if (currentSentinel) observer.observe(currentSentinel);
+    return () => {
+      if (currentSentinel) observer.unobserve(currentSentinel);
+    };
+  }, [hasMoreMedia, loadingMoreMedia, mediaPage, fetchMedia]);
 
   if (loading) {
     return (
@@ -158,24 +200,21 @@ const UserProfile = () => {
                 <p className="text-gray-700 text-sm mb-2 line-clamp-2">
                   {item.caption || t('beautiful_moment')}
                 </p>
-                {item.face_tags && item.face_tags.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mt-2">
-                    {item.face_tags.map(tag => (
-                      <span
-                        key={tag.group_id}
-                        className="text-xs px-2 py-0.5 rounded-full bg-pink-50 text-pink-700 border border-pink-200"
-                      >
-                        {tag.group_id}
-                      </span>
-                    ))}
-                  </div>
-                )}
                 <p className="text-gray-500 text-xs mt-2">
                   📅 {new Date(item.uploaded_at).toLocaleDateString()}
                 </p>
               </div>
             </div>
           ))}
+          {hasMoreMedia && (
+            <div ref={sentinelRef} className="col-span-full flex justify-center py-4">
+              {loadingMoreMedia ? (
+                <span className="text-gray-500">{t('loading_more')}</span>
+              ) : (
+                <span className="text-gray-400">&#8203;</span>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>
