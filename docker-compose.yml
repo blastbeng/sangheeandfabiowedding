@@ -106,7 +106,7 @@ services:
       - app-network
 
   celery:
-    image: "blastbeng/sangheeandfabiowedding-backend:1.0.0"
+    image: "blastbeng/sangheeandfabiowedding-celery:1.0.0"
     pull_policy: build
     build: ./backend
     container_name: wedding-celery
@@ -156,7 +156,7 @@ services:
       start_period: 40s
 
   celery-beat:
-    image: "blastbeng/sangheeandfabiowedding-backend:1.0.0"
+    image: "blastbeng/sangheeandfabiowedding-celery-beat:1.0.0"
     pull_policy: build
     build: ./backend
     container_name: wedding-celery-beat
