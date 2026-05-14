@@ -40,8 +40,14 @@ const UserProfile = () => {
         return;
       }
 
+      const MEDIA_TIMEOUT = 10000; // 10 seconds
+      const mediaFetchPromise = fetch(`${API_URL}/api/auth/media/public/?user_id=${id}`);
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Media fetch timed out')), MEDIA_TIMEOUT)
+      );
+
       try {
-        const mediaRes = await fetch(`${API_URL}/api/auth/media/public/?user_id=${id}`);
+        const mediaRes = await Promise.race([mediaFetchPromise, timeoutPromise]);
         if (mediaRes.ok) {
           const mediaData = await mediaRes.json();
           setMedia(mediaData);
@@ -156,10 +162,10 @@ const UserProfile = () => {
                   <div className="flex flex-wrap gap-1 mt-2">
                     {item.face_tags.map(tag => (
                       <span
-                        key={tag}
+                        key={tag.group_id}
                         className="text-xs px-2 py-0.5 rounded-full bg-pink-50 text-pink-700 border border-pink-200"
                       >
-                        {tag}
+                        {tag.group_id}
                       </span>
                     ))}
                   </div>

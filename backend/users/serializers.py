@@ -235,13 +235,17 @@ class PublicMediaSerializer(serializers.ModelSerializer):
         return result
 
     def _get_group_thumbnail(self, group):
-        if group.thumbnail:
+        if not group.thumbnail:
+            return None
+        try:
             request = self.context.get('request')
             url = group.thumbnail.url
             if request:
                 return request.build_absolute_uri(url)
             return url
-        return None
+        except Exception as e:
+            logger.error(f"Failed to get thumbnail URL for FaceGroup {group.id}: {e}")
+            return None
 
 
 class MediaModerationSerializer(serializers.ModelSerializer):
@@ -384,12 +388,16 @@ class FaceGroupSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'thumbnail_url', 'user_id', 'user_display_name']
 
     def get_thumbnail_url(self, obj):
-        if obj.thumbnail:
+        if not obj.thumbnail:
+            return None
+        try:
             request = self.context.get('request')
             if request:
                 return request.build_absolute_uri(obj.thumbnail.url)
             return obj.thumbnail.url
-        return None
+        except Exception as e:
+            logger.error(f"Failed to get thumbnail URL for FaceGroup {obj.id}: {e}")
+            return None
 
     def get_user_display_name(self, obj):
         if obj.user:
