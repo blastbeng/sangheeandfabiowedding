@@ -2,6 +2,7 @@
 services:
   db:
     image: postgres:15-alpine
+    container_name: wedding-db
     volumes:
       - ./postgres_data:/var/lib/postgresql/data
     environment:
@@ -19,6 +20,7 @@ services:
 
   redis:
     image: redis:7-alpine
+    container_name: wedding-redis
     volumes:
       - ./redis_data:/data
     ports:
@@ -34,7 +36,9 @@ services:
       - app-network
 
   web:
+    image: "blastbeng/sangheeandfabiowedding-backend:1.0.0"
     build: ./backend
+    container_name: wedding-backend
     privileged: true
     command:
       - sh
@@ -98,7 +102,9 @@ services:
       - app-network
 
   celery:
+    image: "blastbeng/sangheeandfabiowedding-backend:1.0.0"
     build: ./backend
+    container_name: wedding-celery
     command: celery -A config worker --loglevel=info
     volumes:
       - ./backend/media:/app/media
@@ -142,7 +148,9 @@ services:
       start_period: 40s
 
   celery-beat:
+    image: "blastbeng/sangheeandfabiowedding-backend:1.0.0"
     build: ./backend
+    container_name: wedding-celery-beat
     command: celery -A config beat --loglevel=info
     environment:
       - PUID=1000
@@ -177,6 +185,8 @@ services:
       start_period: 40s
 
   frontend:
+    image: "blastbeng/sangheeandfabiowedding-frontend:1.0.0"
+    container_name: wedding-frontend
     build:
       context: ./frontend
       args:
