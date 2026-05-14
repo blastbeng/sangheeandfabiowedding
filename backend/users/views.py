@@ -1544,6 +1544,8 @@ class MediaDetectFacesView(APIView):
         media_ids = request.data.get('media_ids', [])
         force = request.data.get('force', False)
 
+        logger.info(f"[MediaDetectFacesView] force={force}, media_ids={media_ids}")
+
         if not media_ids:
             return Response({'error': 'No media IDs provided.'}, status=status.HTTP_400_BAD_REQUEST)
 

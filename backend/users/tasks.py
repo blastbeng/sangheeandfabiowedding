@@ -138,7 +138,7 @@ def upload_media_task(self, user_id, file_paths):
             uploaded_media.append({
                 'id': media.id,
                 'filename': original_filename,
-                'status': media.status
+                'status': media_status
             })
             logger.info(f"File {original_filename} uploaded successfully")
 
@@ -211,7 +211,7 @@ def delete_media_task(media_id):
 
 @shared_task(bind=True, max_retries=3)
 def detect_faces_task(self, media_id, force=False):
-    logger.info(f"[detect_faces] Starting face detection for media {media_id}")
+    logger.info(f"[detect_faces] Called with media_id={media_id}, force={force}")
 
     try:
         media = Media.objects.get(id=media_id)
