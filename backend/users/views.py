@@ -1441,6 +1441,13 @@ class AdminUserDetailView(APIView):
         serializer = AdminUserSerializer(user, data=data, partial=True, context={'request': request})
         if serializer.is_valid():
             user = serializer.save()
+            # Invalidate the cached profile picture so the new one is served immediately
+            redis_client = redis.Redis(
+                host=django_settings.REDIS_HOST,
+                port=django_settings.REDIS_PORT,
+            )
+            cache_key = f"user_profile_pic:{user.id}"
+            redis_client.delete(cache_key)
             return Response(AdminUserSerializer(user, context={'request': request}).data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
