@@ -1177,8 +1177,13 @@ class MyUploadsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        media = Media.objects.filter(user=request.user)
-        return Response(MediaSerializer(media, many=True).data)
+        page = int(request.query_params.get('page', 1))
+        page_size = int(request.query_params.get('page_size', 20))
+        start = (page - 1) * page_size
+        end = start + page_size
+        media = Media.objects.filter(user=request.user).order_by('-uploaded_at')
+        page_media = media[start:end]
+        return Response(MediaSerializer(page_media, many=True).data)
 
 
 class MediaModerationView(APIView):

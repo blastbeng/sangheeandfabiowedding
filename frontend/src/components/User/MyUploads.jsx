@@ -1,17 +1,24 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import logger from '../../utils/logger';
 import authFetch from '../../utils/authFetch';
 
+const PAGE_SIZE = 20;
+
 const MyUploads = () => {
   const { t } = useTranslation();
   const [uploads, setUploads] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [selectedIds, setSelectedIds] = useState([]);
   const [message, setMessage] = useState(null); // { type: 'success'|'error', text: '' }
+  const [viewMode, setViewMode] = useState('gallery'); // 'gallery' | 'table'
   const API_URL = import.meta.env.VITE_API_URL;
+  const sentinelRef = useRef(null);
 
   const refreshUploads = () => setRefreshTrigger(prev => prev + 1);
 
@@ -22,6 +29,67 @@ const MyUploads = () => {
       return () => clearTimeout(timer);
     }
   }, [message]);
+
+  const fetchUploads = useCallback(async (pageNum, append = false) => {
+    const params = new URLSearchParams();
+    params.append('page', pageNum);
+    params.append('page_size', PAGE_SIZE);
+
+    try {
+      const res = await authFetch(`${API_URL}/api/auth/media/my-uploads/?${params}`);
+      if (!res.ok) {
+        logger.warn('[MyUploads] Fetch failed:', res.status);
+        if (!append) setUploads([]);
+        setHasMore(false);
+        return;
+      }
+      const data = await res.json();
+      const newUploads = Array.isArray(data) ? data : (data.results || []);
+      if (append) {
+        setUploads(prev => [...prev, ...newUploads]);
+      } else {
+        setUploads(newUploads);
+      }
+      setHasMore(newUploads.length === PAGE_SIZE);
+    } catch (err) {
+      logger.error('[MyUploads] Fetch error:', err);
+      if (!append) setUploads([]);
+      setHasMore(false);
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  }, [API_URL]);
+
+  // Initial load and refresh
+  useEffect(() => {
+    setPage(1);
+    setHasMore(true);
+    setLoading(true);
+    setUploads([]);
+    fetchUploads(1, false);
+  }, [refreshTrigger, fetchUploads]);
+
+  // Infinite scroll observer
+  useEffect(() => {
+    if (!hasMore || loadingMore) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loadingMore) {
+          setLoadingMore(true);
+          const nextPage = page + 1;
+          setPage(nextPage);
+          fetchUploads(nextPage, true);
+        }
+      },
+      { threshold: 0.1 }
+    );
+    const currentSentinel = sentinelRef.current;
+    if (currentSentinel) observer.observe(currentSentinel);
+    return () => {
+      if (currentSentinel) observer.unobserve(currentSentinel);
+    };
+  }, [hasMore, loadingMore, page, fetchUploads]);
 
   const handleDelete = async (id) => {
     if (!confirm(t('my_uploads_delete_confirm'))) return;
@@ -79,16 +147,6 @@ const MyUploads = () => {
     }
   };
 
-  useEffect(() => {
-    authFetch(`${API_URL}/api/auth/media/my-uploads/`)
-      .then(res => res.json())
-      .then(data => { setUploads(data); setLoading(false); })
-      .catch(err => { 
-        logger.error('[MyUploads] Failed to fetch uploads:', err); 
-        setLoading(false); 
-      });
-  }, [refreshTrigger]);
-
   const getStatusBadge = (status) => {
     const badges = { pending: 'status-pending', approved: 'status-approved', rejected: 'status-rejected' };
     const icons = { pending: '⏳', approved: '✅', rejected: '❌' };
@@ -131,64 +189,175 @@ const MyUploads = () => {
           </div>
         ) : (
           <>
-            {/* Bulk delete button */}
-            {selectedIds.length > 0 && (
-              <div className="mb-4 flex justify-end">
+            {/* View mode toggle and bulk actions */}
+            <div className="flex justify-between items-center mb-4">
+              <div className="inline-flex rounded-md shadow-sm" role="group">
+                <button
+                  type="button"
+                  onClick={() => setViewMode('gallery')}
+                  className={`px-4 py-2 text-sm font-medium rounded-l-lg border ${
+                    viewMode === 'gallery'
+                      ? 'bg-wedding-600 text-gray-900 border-wedding-600'
+                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  🖼️ {t('gallery_view')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('table')}
+                  className={`px-4 py-2 text-sm font-medium rounded-r-lg border-t border-b border-r ${
+                    viewMode === 'table'
+                      ? 'bg-wedding-600 text-gray-900 border-wedding-600'
+                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  📋 {t('table_view')}
+                </button>
+              </div>
+              {selectedIds.length > 0 && (
                 <button
                   onClick={handleBulkDelete}
                   className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm"
                 >
                   {t('my_uploads_delete_selected', { count: selectedIds.length })}
                 </button>
-              </div>
-            )}
+              )}
+            </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b-2 border-pink-200">
-                    <th className="py-3 w-10">
-                      <input
-                        type="checkbox"
-                        checked={selectedIds.length === uploads.length && uploads.length > 0}
-                        onChange={toggleSelectAll}
-                        className="w-4 h-4 accent-pink-500"
-                      />
-                    </th>
-                    <th className="text-left py-3 text-pink-600 whitespace-nowrap">{t('my_uploads_preview')}</th>
-                    <th className="text-left py-3 text-pink-600 whitespace-nowrap">{t('my_uploads_caption')}</th>
-                    <th className="text-left py-3 text-pink-600 whitespace-nowrap">{t('my_uploads_uploaded')}</th>
-                    <th className="text-left py-3 text-pink-600 whitespace-nowrap">{t('my_uploads_status')}</th>
-                    <th className="text-left py-3 text-pink-600 whitespace-nowrap">{t('my_uploads_actions')}</th>
-                  </tr>
-                </thead>
-                <tbody>
+            {viewMode === 'table' ? (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b-2 border-pink-200">
+                      <th className="py-3 w-10">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.length === uploads.length && uploads.length > 0}
+                          onChange={toggleSelectAll}
+                          className="w-4 h-4 accent-pink-500"
+                        />
+                      </th>
+                      <th className="text-left py-3 text-pink-600 whitespace-nowrap">{t('my_uploads_preview')}</th>
+                      <th className="text-left py-3 text-pink-600 whitespace-nowrap">{t('my_uploads_caption')}</th>
+                      <th className="text-left py-3 text-pink-600 whitespace-nowrap">{t('my_uploads_uploaded')}</th>
+                      <th className="text-left py-3 text-pink-600 whitespace-nowrap">{t('my_uploads_status')}</th>
+                      <th className="text-left py-3 text-pink-600 whitespace-nowrap">{t('my_uploads_actions')}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {uploads.map((upload) => (
+                      <tr key={upload.id} className="border-b border-pink-100 hover:bg-pink-50">
+                        <td className="py-3">
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.includes(upload.id)}
+                            onChange={() => toggleSelectItem(upload.id)}
+                            className="w-4 h-4 accent-pink-500"
+                          />
+                        </td>
+                        <td className="py-3">
+                          {upload.file_url ? (
+                            <img src={`${API_URL}${upload.file_url}`} alt={t('my_uploads_preview_alt')} className="w-16 h-16 object-cover rounded-lg border-2 border-pink-200" />
+                          ) : <span className="text-2xl">🎬</span>}
+                        </td>
+                        <td className="py-3 text-gray-700 whitespace-nowrap">{upload.caption || '-'}</td>
+                        <td className="py-3 text-gray-600 text-sm whitespace-nowrap">{new Date(upload.uploaded_at).toLocaleDateString()}</td>
+                        <td className="py-3 whitespace-nowrap">{getStatusBadge(upload.status)}</td>
+                        <td className="py-3 whitespace-nowrap">
+                          <button onClick={() => handleDelete(upload.id)} className="text-red-500 hover:text-red-700 text-sm">{t('my_uploads_delete_button')}</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              /* Gallery view */
+              <>
+                <div className="flex items-center mb-2">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.length === uploads.length && uploads.length > 0}
+                    onChange={toggleSelectAll}
+                    className="w-4 h-4 text-wedding-600 border-gray-300 rounded focus:ring-wedding-500"
+                  />
+                  <span className="ml-2 text-sm text-gray-600">{t('select_all')}</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                   {uploads.map((upload) => (
-                    <tr key={upload.id} className="border-b border-pink-100 hover:bg-pink-50">
-                      <td className="py-3">
+                    <div
+                      key={upload.id}
+                      className={`bg-white rounded-lg shadow overflow-hidden relative cursor-pointer border-2 ${
+                        selectedIds.includes(upload.id) ? 'border-wedding-600' : 'border-transparent'
+                      }`}
+                      onClick={() => toggleSelectItem(upload.id)}
+                    >
+                      {/* Checkbox overlay */}
+                      <div className="absolute top-2 left-2 z-10">
                         <input
                           type="checkbox"
                           checked={selectedIds.includes(upload.id)}
                           onChange={() => toggleSelectItem(upload.id)}
-                          className="w-4 h-4 accent-pink-500"
+                          onClick={(e) => e.stopPropagation()}
+                          className="w-4 h-4 text-wedding-600 border-gray-300 rounded focus:ring-wedding-500"
                         />
-                      </td>
-                      <td className="py-3">
+                      </div>
+                      {/* Media preview */}
+                      <div className="aspect-w-1 aspect-h-1 bg-gray-200">
                         {upload.file_url ? (
-                          <img src={`${API_URL}${upload.file_url}`} alt={t('my_uploads_preview_alt')} className="w-16 h-16 object-cover rounded-lg border-2 border-pink-200" />
-                        ) : <span className="text-2xl">🎬</span>}
-                      </td>
-                      <td className="py-3 text-gray-700 whitespace-nowrap">{upload.caption || '-'}</td>
-                      <td className="py-3 text-gray-600 text-sm whitespace-nowrap">{new Date(upload.uploaded_at).toLocaleDateString()}</td>
-                      <td className="py-3 whitespace-nowrap">{getStatusBadge(upload.status)}</td>
-                      <td className="py-3 whitespace-nowrap">
-                        <button onClick={() => handleDelete(upload.id)} className="text-red-500 hover:text-red-700 text-sm">{t('my_uploads_delete_button')}</button>
-                      </td>
-                    </tr>
+                          upload.media_type === 'video' ? (
+                            <video
+                              src={`${API_URL}${upload.file_url}`}
+                              className="object-cover w-full h-full"
+                              muted
+                              preload="metadata"
+                            />
+                          ) : (
+                            <img
+                              src={`${API_URL}${upload.file_url}`}
+                              alt={upload.caption || t('beautiful_moment')}
+                              className="object-cover w-full h-full"
+                            />
+                          )
+                        ) : (
+                          <div className="flex items-center justify-center h-full text-gray-400">🎬</div>
+                        )}
+                      </div>
+                      {/* Info and actions */}
+                      <div className="p-3">
+                        <p className="text-sm font-medium text-gray-900 truncate">
+                          {upload.caption || t('no_caption')}
+                        </p>
+                        <div className="mt-2 flex items-center justify-between">
+                          {getStatusBadge(upload.status)}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDelete(upload.id);
+                            }}
+                            className="text-red-500 hover:text-red-700 text-sm"
+                          >
+                            {t('my_uploads_delete_button')}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
                   ))}
-                </tbody>
-              </table>
-            </div>
+                </div>
+              </>
+            )}
+
+            {/* Infinite scroll sentinel */}
+            {hasMore && (
+              <div ref={sentinelRef} className="flex justify-center py-4">
+                {loadingMore ? (
+                  <span className="text-gray-500">{t('loading_more')}</span>
+                ) : (
+                  <span className="text-gray-400">&#8203;</span>
+                )}
+              </div>
+            )}
           </>
         )}
       </div>
