@@ -151,7 +151,7 @@ class PublicUserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = ('id', 'username', 'first_name', 'last_name', 'profile_picture', 'profile_picture_url', 'language')
+        fields = ('id', 'username', 'first_name', 'last_name', 'profile_picture_url', 'language')
         read_only_fields = fields
 
     def get_profile_picture_url(self, obj):
