@@ -1,12 +1,13 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import scheduleImage from '../../static/images/SangHee_and_Fabio_schedule.png';
 import ceremonyLocationImage from '../../static/images/ComeRaggiungerci-cerimonia.png';
 
 const Events = () => {
   const { t, i18n } = useTranslation();
   const [currentLang, setCurrentLang] = useState(i18n.language || 'it');
+  const [enlargedImage, setEnlargedImage] = useState(null);
 
   useEffect(() => {
     const handleLanguageChange = () => {
@@ -18,6 +19,14 @@ const Events = () => {
       i18n.off('languageChanged', handleLanguageChange);
     };
   }, [i18n]);
+
+  const openEnlarged = useCallback((src) => {
+    setEnlargedImage(src);
+  }, []);
+
+  const closeEnlarged = useCallback(() => {
+    setEnlargedImage(null);
+  }, []);
 
   // Event data extracted from PSD invitation files
   const events = [
@@ -84,7 +93,7 @@ const Events = () => {
       <div className="wedding-card mx-4 mt-8 p-8 md:p-12 text-center ribbon wedding-glow">
         <div className="mb-4">
           <span className="text-6xl inline-block floating-heart">💖</span>
-          <p className="text-2xl font-bold text-pink-600 mt-2 wedding-title">May 16</p>
+          <p className="text-2xl font-bold text-pink-600 mt-2 wedding-title">{t('May 16')}</p>
         </div>
         <h1 className="text-5xl md:text-7xl wedding-title mb-4 sparkle">
           {t('Our Wedding Events')}
@@ -114,7 +123,8 @@ const Events = () => {
         <img 
           src={scheduleImage} 
           alt="SangHee and Fabio Event Schedule" 
-          className="w-full h-auto rounded-xl shadow-lg wedding-glow" 
+          className="w-full h-auto rounded-xl shadow-lg wedding-glow cursor-pointer" 
+          onClick={() => openEnlarged(scheduleImage)}
         />
       </div>
 
@@ -168,7 +178,8 @@ const Events = () => {
                   <img 
                     src={event.locationImage} 
                     alt="Ceremony Location and Parking Info" 
-                    className="w-full h-auto rounded-xl shadow-lg wedding-glow mb-4" 
+                    className="w-full h-auto rounded-xl shadow-lg wedding-glow mb-4 cursor-pointer" 
+                    onClick={() => openEnlarged(event.locationImage)}
                   />
                   <p className="text-sm text-gray-500 text-center italic">
                     {currentLang === 'it' && "Informazioni su parcheggio e ubicazione della cerimonia"}
@@ -208,6 +219,30 @@ const Events = () => {
           {t('footer_made_with_love')}
         </p>
       </div>
+
+      {/* Enlarged Image Modal */}
+      {enlargedImage && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80 p-4"
+          onClick={closeEnlarged}
+        >
+          <div className="relative max-w-5xl max-h-full">
+            <button
+              className="absolute top-2 right-2 text-white text-3xl font-bold z-10 hover:text-gray-300"
+              onClick={closeEnlarged}
+              aria-label="Close"
+            >
+              &times;
+            </button>
+            <img
+              src={enlargedImage}
+              alt="Enlarged view"
+              className="max-w-full max-h-[90vh] object-contain rounded-lg"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

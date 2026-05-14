@@ -398,7 +398,8 @@ const resources = {
       "upload_size_notice": "ℹ️ Il tempo di caricamento dipende dalla dimensione del file. I file grandi potrebbero richiedere più tempo.",
       "upload_do_not_close": "⚠️ Non chiudere il browser o mettere il telefono in standby fino al termine del caricamento.",
       "stop_upload": "Ferma Caricamento",
-      "stop_upload_confirm": "Sei sicuro di voler fermare tutti i caricamenti? I file in corso andranno persi."
+      "stop_upload_confirm": "Sei sicuro di voler fermare tutti i caricamenti? I file in corso andranno persi.",
+      "May 16": "16 Maggio"
     }
   },
   ko: {
@@ -797,7 +798,8 @@ const resources = {
       "upload_size_notice": "ℹ️ 업로드 시간은 파일 크기에 따라 다릅니다. 대용량 파일은 시간이 걸릴 수 있습니다.",
       "upload_do_not_close": "⚠️ 업로드가 완료될 때까지 브라우저를 닫거나 휴대폰을 대기 모드로 전환하지 마세요.",
       "stop_upload": "업로드 중지",
-      "stop_upload_confirm": "모든 업로드를 중지하시겠습니까? 진행 중인 파일은 손실됩니다."
+      "stop_upload_confirm": "모든 업로드를 중지하시겠습니까? 진행 중인 파일은 손실됩니다.",
+      "May 16": "5월 16일"
     }
   },
   en: {
@@ -1196,7 +1198,8 @@ const resources = {
       "upload_size_notice": "ℹ️ Upload time depends on the file size. Large files may take a while.",
       "upload_do_not_close": "⚠️ Do not close the browser or let your phone go to sleep until the upload finishes.",
       "stop_upload": "Stop Upload",
-      "stop_upload_confirm": "Are you sure you want to stop all uploads? Any in-progress uploads will be lost."
+      "stop_upload_confirm": "Are you sure you want to stop all uploads? Any in-progress uploads will be lost.",
+      "May 16": "May 16"
     }
   }
 };
