@@ -1192,12 +1192,19 @@ class MediaModerationView(APIView):
     def get(self, request):
         status_filter = request.query_params.get('status', 'pending')
         media_type = request.query_params.get('media_type', '')
+        page = int(request.query_params.get('page', 1))
+        page_size = int(request.query_params.get('page_size', 20))
+        start = (page - 1) * page_size
+        end = start + page_size
+
         queryset = Media.objects.all()
         if status_filter:
             queryset = queryset.filter(status=status_filter)
         if media_type:
             queryset = queryset.filter(media_type=media_type)
-        return Response(MediaModerationSerializer(queryset, many=True).data)
+        queryset = queryset.order_by('-uploaded_at')
+        page_media = queryset[start:end]
+        return Response(MediaModerationSerializer(page_media, many=True).data)
 
 
 class MediaModerateSingleView(APIView):

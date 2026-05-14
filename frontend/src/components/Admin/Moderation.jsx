@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import logger from '../../utils/logger';
 import authFetch from '../../utils/authFetch';
 import ProtectedMediaPreview from '../Common/ProtectedMediaPreview';
+
+const PAGE_SIZE = 20;
 
 const AdminModeration = () => {
   const { t } = useTranslation();
@@ -13,31 +15,72 @@ const AdminModeration = () => {
   const [selectedIds, setSelectedIds] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
   const [viewMode, setViewMode] = useState('gallery'); // 'gallery' | 'table'
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const sentinelRef = useRef(null);
   const API_URL = import.meta.env.VITE_API_URL;
 
-  const fetchMedia = () => {
+  const fetchMedia = useCallback(async (pageNum, append = false) => {
     const params = new URLSearchParams(filters);
-    authFetch(`${API_URL}/api/auth/media/moderation/?${params}`)
-      .then(res => {
-        if (!res.ok) {
-          logger.error('[Moderation] Fetch failed with status:', res.status);
-        }
-        return res.json();
-      })
-      .then(data => {
-        setMedia(data);
-        setLoading(false);
-        // Reset selection when data changes
+    params.append('page', pageNum);
+    params.append('page_size', PAGE_SIZE);
+
+    try {
+      const res = await authFetch(`${API_URL}/api/auth/media/moderation/?${params}`);
+      if (!res.ok) {
+        logger.error('[Moderation] Fetch failed with status:', res.status);
+        if (!append) setMedia([]);
+        setHasMore(false);
+        return;
+      }
+      const data = await res.json();
+      const newMedia = Array.isArray(data) ? data : (data.results || []);
+      if (append) {
+        setMedia(prev => [...prev, ...newMedia]);
+      } else {
+        setMedia(newMedia);
+        // Reset selection only on fresh load (filter change)
         setSelectedIds([]);
         setSelectAll(false);
-      })
-      .catch(err => {
-        logger.error('[Moderation] Fetch error:', err);
-        setLoading(false);
-      });
-  };
+      }
+      setHasMore(newMedia.length === PAGE_SIZE);
+    } catch (err) {
+      logger.error('[Moderation] Fetch error:', err);
+      if (!append) setMedia([]);
+      setHasMore(false);
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  }, [filters, API_URL]);
 
-  useEffect(() => { fetchMedia(); }, [filters]);
+  useEffect(() => {
+    setPage(1);
+    setHasMore(true);
+    setLoading(true);
+    fetchMedia(1, false);
+  }, [filters, fetchMedia]);
+
+  useEffect(() => {
+    if (!hasMore || loadingMore) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loadingMore) {
+          setLoadingMore(true);
+          const nextPage = page + 1;
+          setPage(nextPage);
+          fetchMedia(nextPage, true);
+        }
+      },
+      { threshold: 0.1 }
+    );
+    const currentSentinel = sentinelRef.current;
+    if (currentSentinel) observer.observe(currentSentinel);
+    return () => {
+      if (currentSentinel) observer.unobserve(currentSentinel);
+    };
+  }, [hasMore, loadingMore, page, fetchMedia]);
 
   const handleApprove = (id) => {
     authFetch(`${API_URL}/api/auth/media/moderation/${id}/`, {
@@ -46,7 +89,11 @@ const AdminModeration = () => {
       body: JSON.stringify({ status: 'approved' })
     }).then(res => {
       if (!res.ok) logger.error('[Moderation] Approve failed for ID:', id);
-      if (res.ok) fetchMedia();
+      if (res.ok) {
+        // Remove the approved item from the list
+        setMedia(prev => prev.filter(item => item.id !== id));
+        setSelectedIds(prev => prev.filter(i => i !== id));
+      }
     });
   };
 
@@ -58,7 +105,11 @@ const AdminModeration = () => {
       body: JSON.stringify({ status: 'rejected' })
     }).then(res => {
       if (!res.ok) logger.error('[Moderation] Reject failed for ID:', id);
-      if (res.ok) fetchMedia();
+      if (res.ok) {
+        // Remove the rejected item from the list
+        setMedia(prev => prev.filter(item => item.id !== id));
+        setSelectedIds(prev => prev.filter(i => i !== id));
+      }
     });
   };
 
@@ -68,7 +119,9 @@ const AdminModeration = () => {
       method: 'DELETE'
     }).then(res => {
       if (res.ok) {
-        fetchMedia();
+        // Remove the deleted item from the list
+        setMedia(prev => prev.filter(item => item.id !== id));
+        setSelectedIds(prev => prev.filter(i => i !== id));
       } else {
         logger.error('[Moderation] Delete failed for ID:', id);
       }
@@ -115,7 +168,11 @@ const AdminModeration = () => {
       })
     }).then(res => {
       if (res.ok) {
-        fetchMedia();
+        // Refresh the list after bulk action
+        setPage(1);
+        setHasMore(true);
+        setLoading(true);
+        fetchMedia(1, false);
       } else {
         logger.error('[Moderation] Bulk action failed');
       }
@@ -151,7 +208,6 @@ const AdminModeration = () => {
       .then(res => res.json())
       .then(data => {
         alert(data.message || t('admin_detect_faces_success'));
-        fetchMedia();
       })
       .catch(err => {
         logger.error('[Moderation] Detect faces failed:', err);
@@ -297,6 +353,15 @@ const AdminModeration = () => {
                 ))}
               </tbody>
             </table>
+            {hasMore && (
+              <div ref={sentinelRef} className="flex justify-center py-4">
+                {loadingMore ? (
+                  <span className="text-gray-500">{t('loading_more')}</span>
+                ) : (
+                  <span className="text-gray-400">&#8203;</span>
+                )}
+              </div>
+            )}
           </div>
         ) : (
           <>
@@ -394,6 +459,15 @@ const AdminModeration = () => {
                 </div>
               ))}
             </div>
+            {hasMore && (
+              <div ref={sentinelRef} className="col-span-full flex justify-center py-4">
+                {loadingMore ? (
+                  <span className="text-gray-500">{t('loading_more')}</span>
+                ) : (
+                  <span className="text-gray-400">&#8203;</span>
+                )}
+              </div>
+            )}
           </>
         )}
       </div>
