@@ -141,6 +141,8 @@ const AdminModeration = () => {
 
   const handleBulkAction = (action) => {
     if (selectedIds.length === 0) return;
+    const confirmMsg = t(`admin_bulk_${action}_confirm`, { count: selectedIds.length });
+    if (!window.confirm(confirmMsg)) return;
     authFetch(`${API_URL}/api/auth/media/moderation/bulk/`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -187,6 +189,7 @@ const AdminModeration = () => {
       .then(res => res.json())
       .then(data => {
         alert(data.message || t('admin_detect_faces_success'));
+        setPage(1);
       })
       .catch(err => {
         logger.error('[Moderation] Detect faces failed:', err);
