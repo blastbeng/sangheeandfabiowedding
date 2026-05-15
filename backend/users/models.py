@@ -113,6 +113,13 @@ class Media(models.Model):
     class Meta:
         db_table = 'users_media'
         ordering = ['-uploaded_at']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'content_hash'],
+                name='unique_user_content_hash',
+                condition=models.Q(content_hash__isnull=False),
+            )
+        ]
 
     def __str__(self):
         return f"{self.media_type} - {self.caption or 'Untitled'} - {self.status}"

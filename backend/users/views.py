@@ -3,6 +3,7 @@ import os
 import uuid
 import base64
 import re
+import hashlib
 import requests
 import redis
 from io import BytesIO
@@ -1121,6 +1122,17 @@ class MediaUploadView(APIView):
 
         caption = request.POST.get('caption', '')
 
+        # --- Duplicate check based on content hash ---
+        file_content = file.read()
+        content_hash = hashlib.sha256(file_content).hexdigest()
+
+        if Media.objects.filter(user=request.user, content_hash=content_hash).exists():
+            return Response({
+                'duplicate': True,
+                'message': _('This file has already been uploaded.')
+            }, status=status.HTTP_200_OK)
+        # ---------------------------------------------
+
         # Temporary storage for the single file
         tmp_dir = os.path.join(django_settings.MEDIA_ROOT, 'tmp_uploads')
         os.makedirs(tmp_dir, exist_ok=True)
@@ -1129,8 +1141,7 @@ class MediaUploadView(APIView):
         tmp_path = os.path.join(tmp_dir, tmp_name)
 
         with open(tmp_path, 'wb') as dst:
-            for chunk in file.chunks():
-                dst.write(chunk)
+            dst.write(file_content)   # use the already read content
 
         media_type = 'video' if file.content_type.startswith('video') else 'image'
         file_data = {

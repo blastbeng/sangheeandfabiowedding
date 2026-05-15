@@ -17,7 +17,7 @@ const Upload = () => {
   const navigate = useNavigate();
   const API_URL = import.meta.env.VITE_API_URL;
 
-  // Per‑file status: { name, taskId, status: 'pending'|'uploading'|'success'|'error', error? }
+  // Per‑file status: { name, taskId, status: 'pending'|'uploading'|'success'|'error'|'warning', error? }
   const [fileStatuses, setFileStatuses] = useState([]);
 
   // Keep track of active polling intervals so we can clear them on unmount
@@ -144,18 +144,24 @@ const Upload = () => {
   useEffect(() => {
     if (!uploading || fileStatuses.length === 0) return;
 
-    const allDone = fileStatuses.every(fs => fs.status === 'success' || fs.status === 'error');
+    const allDone = fileStatuses.every(fs =>
+      fs.status === 'success' || fs.status === 'error' || fs.status === 'warning'
+    );
 
     if (allDone) {
       setUploading(false);
       const successCount = fileStatuses.filter(fs => fs.status === 'success').length;
       const errorCount = fileStatuses.filter(fs => fs.status === 'error').length;
+      const warningCount = fileStatuses.filter(fs => fs.status === 'warning').length;
 
-      if (errorCount === 0) {
+      if (errorCount === 0 && warningCount === 0) {
         setSuccess(`${t('upload_successful')} ${successCount} ${t('files_processed')}`);
         setTimeout(() => navigate('/my-uploads'), 2000);
+      } else if (errorCount === 0) {
+        setSuccess(`${t('upload_successful')} ${successCount} ${t('files_processed')} (${warningCount} ${warningCount === 1 ? t('duplicate') : t('duplicates')})`);
+        setTimeout(() => navigate('/my-uploads'), 2000);
       } else {
-        setError(`${t('upload_completed_with_errors')} (${successCount} ok, ${errorCount} failed)`);
+        setError(`${t('upload_completed_with_errors')} (${successCount} ok, ${errorCount} failed, ${warningCount} ${warningCount === 1 ? t('duplicate') : t('duplicates')})`);
       }
       clearPendingTasks();
       releaseWakeLock();
@@ -214,6 +220,19 @@ const Upload = () => {
         });
         const data = await res.json();
 
+        // --- Duplicate detection ---
+        if (data.duplicate) {
+          setFileStatuses(prev =>
+            prev.map(fs =>
+              fs.name === file.name
+                ? { ...fs, status: 'warning', error: data.message }
+                : fs
+            )
+          );
+          return;
+        }
+        // -------------------------
+
         if (!res.ok) {
           setFileStatuses(prev =>
             prev.map(fs =>
@@ -265,7 +284,9 @@ const Upload = () => {
 
   // ---------- progress calculation ----------
   const total = fileStatuses.length;
-  const completed = fileStatuses.filter(fs => fs.status === 'success' || fs.status === 'error').length;
+  const completed = fileStatuses.filter(fs =>
+    fs.status === 'success' || fs.status === 'error' || fs.status === 'warning'
+  ).length;
   const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
 
   // ---------- render ----------
@@ -321,6 +342,7 @@ const Upload = () => {
                     {fs.status === 'uploading' && '⏳'}
                     {fs.status === 'success' && '✅'}
                     {fs.status === 'error' && '❌'}
+                    {fs.status === 'warning' && '⚠️'}
                   </span>
                 </div>
                 {/* Per‑file progress bar */}
@@ -329,11 +351,15 @@ const Upload = () => {
                     className={`h-full rounded-full transition-all duration-500 ${
                       fs.status === 'success' ? 'bg-green-500 w-full' :
                       fs.status === 'error' ? 'bg-red-500 w-full' :
+                      fs.status === 'warning' ? 'bg-yellow-500 w-full' :
                       fs.status === 'uploading' ? 'bg-pink-400 animate-pulse w-full' :
                       'w-0'
                     }`}
                   />
                 </div>
+                {fs.status === 'warning' && fs.error && (
+                  <p className="text-xs text-yellow-700 mt-1">⚠️ {fs.error}</p>
+                )}
               </div>
             ))}
           </div>
