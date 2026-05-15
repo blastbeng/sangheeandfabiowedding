@@ -93,7 +93,7 @@ const MyUploads = () => {
       });
       if (res.ok) {
         setMessage({ type: 'success', text: t('my_uploads_delete_success') });
-        refreshUploads();
+        setFetchId(prev => prev + 1);
       } else {
         const errData = await res.json().catch(() => ({}));
         setMessage({ type: 'error', text: errData.error || t('my_uploads_delete_error') });
