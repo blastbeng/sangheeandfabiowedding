@@ -214,9 +214,10 @@ const Gallery = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {media.map((item) => {
             const uniqueFaceTags = item.face_tags
-              ? item.face_tags.filter(
-                  (tag, index, self) => index === self.findIndex(t => t.face_group_id === tag.face_group_id)
-                )
+              ? item.face_tags.filter((tag, index, self) => {
+                  const thumb = tag.thumbnail_url || '';
+                  return index === self.findIndex(t => (t.thumbnail_url || '') === thumb);
+                })
               : [];
 
             return (
@@ -270,9 +271,7 @@ const Gallery = () => {
                             onClick={(e) => {
                               e.stopPropagation();
                               setSelectedGroupIds(prev =>
-                                prev.includes(tag.face_group_id)
-                                  ? prev.filter(id => id !== tag.face_group_id)
-                                  : [...prev, tag.face_group_id]
+                                prev.includes(tag.face_group_id) ? [] : [tag.face_group_id]
                               );
                             }}
                             className={`flex-shrink-0 w-6 h-6 rounded-full overflow-hidden border-2 transition-colors ${
