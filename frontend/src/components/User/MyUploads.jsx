@@ -131,7 +131,7 @@ const MyUploads = () => {
       if (res.ok) {
         setMessage({ type: 'success', text: data.message || t('my_uploads_bulk_delete_success') });
         setSelectedIds([]);
-        refreshUploads();
+        setFetchId(prev => prev + 1); // refetch current page, stay on same page
       } else {
         setMessage({ type: 'error', text: data.error || t('my_uploads_bulk_delete_error') });
       }
