@@ -117,7 +117,7 @@ const Gallery = () => {
       {/* Face group row */}
       {activeFaceGroups.length > 0 && (
         <div className="mb-6">
-          <h3 className="text-sm font-medium text-gray-600 mb-2">{t('filter_by_person')}</h3>
+          <label className="block text-sm text-gray-600 mb-1">{t('filter_by_person')}</label>
           <div className="overflow-x-auto pb-2 scrollbar-hide">
             <div className="flex gap-3 px-2" style={{ scrollSnapType: 'x mandatory' }}>
               {activeFaceGroups.map(group => (
