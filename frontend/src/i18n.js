@@ -411,7 +411,10 @@ const resources = {
       "show": "Mostra:",
       "previous": "Precedente",
       "next": "Successivo",
-      "page_x_of_y": "Pagina {{current}} di {{total}}"
+      "page_x_of_y": "Pagina {{current}} di {{total}}",
+      "go_to_my_uploads": "Vai ai miei caricamenti",
+      "duplicate": "Duplicato",
+      "duplicates": "Duplicati"
     }
   },
   ko: {
@@ -823,7 +826,10 @@ const resources = {
       "show": "보기:",
       "previous": "이전",
       "next": "다음",
-      "page_x_of_y": "페이지 {{current}} / {{total}}"
+      "page_x_of_y": "페이지 {{current}} / {{total}}",
+      "go_to_my_uploads": "내 업로드로 이동",
+      "duplicate": "중복",
+      "duplicates": "중복"
     }
   },
   en: {
@@ -1235,7 +1241,10 @@ const resources = {
       "show": "Show:",
       "previous": "Previous",
       "next": "Next",
-      "page_x_of_y": "Page {{current}} of {{total}}"
+      "page_x_of_y": "Page {{current}} of {{total}}",
+      "go_to_my_uploads": "Go to my uploads",
+      "duplicate": "Duplicate",
+      "duplicates": "Duplicates"
     }
   }
 };
