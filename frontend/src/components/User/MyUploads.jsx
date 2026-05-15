@@ -87,6 +87,8 @@ const MyUploads = () => {
     return () => { cancelled = true; };
   }, [page, pageSize, fetchId, API_URL]);
 
+  const totalPages = totalCount !== null ? Math.ceil(totalCount / pageSize) : null;
+
   const handleDelete = async (id) => {
     if (!confirm(t('my_uploads_delete_confirm'))) return;
     try {
@@ -215,28 +217,28 @@ const MyUploads = () => {
                 </select>
               </div>
 
-              <div className="flex flex-wrap items-center gap-1">
+              <div className="flex flex-nowrap items-center gap-0.5">
                 <button
                   onClick={() => setPage(1)}
                   disabled={page === 1 || fetching}
-                  className="wedding-btn text-xs sm:text-sm px-2 py-1 disabled:opacity-50"
+                  className="wedding-btn text-xs px-1 py-0.5 disabled:opacity-50"
                 >
                   ««
                 </button>
                 <button
                   onClick={() => setPage(p => Math.max(1, p - 1))}
                   disabled={page === 1 || fetching}
-                  className="wedding-btn text-xs sm:text-sm px-2 py-1 disabled:opacity-50"
+                  className="wedding-btn text-xs px-1 py-0.5 disabled:opacity-50"
                 >
                   ‹
                 </button>
 
                 {/* Page numbers – only when totalCount is known */}
                 {totalCount !== null && (() => {
-                  const totalPages = Math.ceil(totalCount / pageSize);
+                  const tp = Math.ceil(totalCount / pageSize);
                   const maxVisible = 5;
                   let start = Math.max(1, page - Math.floor(maxVisible / 2));
-                  let end = Math.min(totalPages, start + maxVisible - 1);
+                  let end = Math.min(tp, start + maxVisible - 1);
                   if (end - start + 1 < maxVisible) {
                     start = Math.max(1, end - maxVisible + 1);
                   }
@@ -247,7 +249,7 @@ const MyUploads = () => {
                       key={p}
                       onClick={() => setPage(p)}
                       disabled={fetching}
-                      className={`px-1 sm:px-2 py-1 text-xs sm:text-sm border rounded ${
+                      className={`px-1 py-0.5 text-xs border rounded ${
                         p === page ? 'bg-pink-500 text-white border-pink-500' : ''
                       }`}
                     >
@@ -255,6 +257,12 @@ const MyUploads = () => {
                     </button>
                   ));
                 })()}
+
+                {totalPages !== null && (
+                  <span className="text-xs text-gray-600 whitespace-nowrap mx-1">
+                    {t('pagination_page_info', { current: page, total: totalPages })}
+                  </span>
+                )}
 
                 <button
                   onClick={() => setPage(p => p + 1)}
@@ -264,19 +272,19 @@ const MyUploads = () => {
                       ? page * pageSize >= totalCount
                       : uploads.length < pageSize)
                   }
-                  className="wedding-btn text-xs sm:text-sm px-2 py-1 disabled:opacity-50"
+                  className="wedding-btn text-xs px-1 py-0.5 disabled:opacity-50"
                 >
                   ›
                 </button>
                 <button
-                  onClick={() => setPage(totalCount !== null ? Math.ceil(totalCount / pageSize) : page + 1)}
+                  onClick={() => setPage(totalPages !== null ? totalPages : page + 1)}
                   disabled={
                     fetching ||
                     (totalCount !== null
                       ? page * pageSize >= totalCount
                       : uploads.length < pageSize)
                   }
-                  className="wedding-btn text-xs sm:text-sm px-2 py-1 disabled:opacity-50"
+                  className="wedding-btn text-xs px-1 py-0.5 disabled:opacity-50"
                 >
                   »»
                 </button>
