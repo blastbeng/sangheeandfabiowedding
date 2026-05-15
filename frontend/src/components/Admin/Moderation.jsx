@@ -280,7 +280,7 @@ const AdminModeration = () => {
         <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
           <div className="flex items-center gap-2">
             <label htmlFor="pageSizeSelect" className="text-sm text-gray-600">
-              {t('items_per_page')}:
+              {t('items_per_page')}
             </label>
             <select
               id="pageSizeSelect"
@@ -302,14 +302,14 @@ const AdminModeration = () => {
             <button
               onClick={() => setPage(1)}
               disabled={page === 1}
-              className="wedding-btn text-sm disabled:opacity-50"
+              className="wedding-btn text-xs sm:text-sm px-2 py-1 disabled:opacity-50"
             >
               ««
             </button>
             <button
               onClick={() => setPage(p => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="wedding-btn text-sm disabled:opacity-50"
+              className="wedding-btn text-xs sm:text-sm px-2 py-1 disabled:opacity-50"
             >
               ‹
             </button>
@@ -319,14 +319,14 @@ const AdminModeration = () => {
             <button
               onClick={() => setPage(p => Math.min(totalPages, p + 1))}
               disabled={page >= totalPages}
-              className="wedding-btn text-sm disabled:opacity-50"
+              className="wedding-btn text-xs sm:text-sm px-2 py-1 disabled:opacity-50"
             >
               ›
             </button>
             <button
               onClick={() => setPage(totalPages)}
               disabled={page >= totalPages}
-              className="wedding-btn text-sm disabled:opacity-50"
+              className="wedding-btn text-xs sm:text-sm px-2 py-1 disabled:opacity-50"
             >
               »»
             </button>

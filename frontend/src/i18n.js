@@ -408,6 +408,7 @@ const resources = {
       "admin_approve_confirm": "Sei sicuro di voler approvare questo media?",
       "admin_detect_faces_no_images": "Nessuna immagine selezionata per il rilevamento volti. Solo le immagini possono essere elaborate.",
       "items_per_page": "Elementi per pagina:",
+      "show": "Mostra:",
       "previous": "Precedente",
       "next": "Successivo",
       "page_x_of_y": "Pagina {{current}} di {{total}}"
@@ -819,6 +820,7 @@ const resources = {
       "admin_approve_confirm": "이 미디어를 승인하시겠습니까?",
       "admin_detect_faces_no_images": "얼굴 인식을 위해 선택된 이미지가 없습니다. 이미지만 처리할 수 있습니다.",
       "items_per_page": "페이지당 항목:",
+      "show": "보기:",
       "previous": "이전",
       "next": "다음",
       "page_x_of_y": "페이지 {{current}} / {{total}}"
@@ -1230,6 +1232,7 @@ const resources = {
       "admin_approve_confirm": "Are you sure you want to approve this media?",
       "admin_detect_faces_no_images": "No images selected for face detection. Only images can be processed.",
       "items_per_page": "Items per page:",
+      "show": "Show:",
       "previous": "Previous",
       "next": "Next",
       "page_x_of_y": "Page {{current}} of {{total}}"

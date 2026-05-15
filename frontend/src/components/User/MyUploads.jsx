@@ -196,7 +196,7 @@ const MyUploads = () => {
             <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
               <div className="flex items-center gap-2">
                 <label htmlFor="pageSize" className="text-sm text-gray-600">
-                  {t('show')}:
+                  {t('show')}
                 </label>
                 <select
                   id="pageSize"
@@ -215,18 +215,18 @@ const MyUploads = () => {
                 </select>
               </div>
 
-              <div className="flex items-center gap-1">
+              <div className="flex flex-wrap items-center gap-1">
                 <button
                   onClick={() => setPage(1)}
                   disabled={page === 1 || fetching}
-                  className="wedding-btn text-sm disabled:opacity-50"
+                  className="wedding-btn text-xs sm:text-sm px-2 py-1 disabled:opacity-50"
                 >
                   ««
                 </button>
                 <button
                   onClick={() => setPage(p => Math.max(1, p - 1))}
                   disabled={page === 1 || fetching}
-                  className="wedding-btn text-sm disabled:opacity-50"
+                  className="wedding-btn text-xs sm:text-sm px-2 py-1 disabled:opacity-50"
                 >
                   ‹
                 </button>
@@ -247,7 +247,7 @@ const MyUploads = () => {
                       key={p}
                       onClick={() => setPage(p)}
                       disabled={fetching}
-                      className={`px-2 py-1 text-sm border rounded ${
+                      className={`px-1 sm:px-2 py-1 text-xs sm:text-sm border rounded ${
                         p === page ? 'bg-pink-500 text-white border-pink-500' : ''
                       }`}
                     >
@@ -264,7 +264,7 @@ const MyUploads = () => {
                       ? page * pageSize >= totalCount
                       : uploads.length < pageSize)
                   }
-                  className="wedding-btn text-sm disabled:opacity-50"
+                  className="wedding-btn text-xs sm:text-sm px-2 py-1 disabled:opacity-50"
                 >
                   ›
                 </button>
@@ -276,7 +276,7 @@ const MyUploads = () => {
                       ? page * pageSize >= totalCount
                       : uploads.length < pageSize)
                   }
-                  className="wedding-btn text-sm disabled:opacity-50"
+                  className="wedding-btn text-xs sm:text-sm px-2 py-1 disabled:opacity-50"
                 >
                   »»
                 </button>
