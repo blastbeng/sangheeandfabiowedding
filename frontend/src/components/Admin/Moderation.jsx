@@ -17,6 +17,7 @@ const AdminModeration = () => {
   const [totalCount, setTotalCount] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [failedMediaIds, setFailedMediaIds] = useState(new Set());
+  const [refreshKey, setRefreshKey] = useState(0);
   const API_URL = import.meta.env.VITE_API_URL;
 
   const fetchMedia = useCallback(async (pageNum, pageSizeVal) => {
@@ -63,7 +64,7 @@ const AdminModeration = () => {
   useEffect(() => {
     setLoading(true);
     fetchMedia(page, pageSize);
-  }, [page, pageSize, fetchMedia]);
+  }, [page, pageSize, fetchMedia, refreshKey]);
 
   const handleApprove = (id) => {
     if (!window.confirm(t('admin_approve_confirm'))) return;
@@ -149,7 +150,7 @@ const AdminModeration = () => {
     }).then(res => {
       if (res.ok) {
         setPage(1);
-        // fetchMedia will be triggered by the page change effect
+        setRefreshKey(prev => prev + 1);
       } else {
         logger.error('[Moderation] Bulk action failed');
       }
@@ -186,6 +187,7 @@ const AdminModeration = () => {
       .then(data => {
         alert(data.message || t('admin_detect_faces_success'));
         setPage(1);
+        setRefreshKey(prev => prev + 1);
       })
       .catch(err => {
         logger.error('[Moderation] Detect faces failed:', err);
