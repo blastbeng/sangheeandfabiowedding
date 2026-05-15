@@ -24,20 +24,29 @@ from config.settings import (
 logger = logging.getLogger(__name__)
 
 
-def _align_face(image_array, top, right, bottom, left, target_size=256):
+def _align_face(image_array, top, right, bottom, left, target_size=256, landmarks=None):
     """
     Align a face so the eyes are horizontal, then crop and resize.
     Returns an aligned face image (numpy array) or None if alignment fails.
+    If landmarks are provided, they are used; otherwise computed.
+    Handles upside-down faces by rotating 180°.
     """
     try:
-        landmarks_list = face_recognition.face_landmarks(
-            image_array, [(top, right, bottom, left)]
-        )
-        if not landmarks_list:
-            return None
-        landmarks = landmarks_list[0]
+        if landmarks is None:
+            landmarks_list = face_recognition.face_landmarks(
+                image_array, [(top, right, bottom, left)]
+            )
+            if not landmarks_list:
+                return None
+            landmarks = landmarks_list[0]
+
         left_eye = np.mean(landmarks['left_eye'], axis=0)
         right_eye = np.mean(landmarks['right_eye'], axis=0)
+
+        # Detect upside-down face: nose tip should be below eyes (y larger)
+        eye_center_y = (left_eye[1] + right_eye[1]) / 2
+        nose_tip = np.mean(landmarks['nose_tip'], axis=0)
+        upside_down = nose_tip[1] < eye_center_y
 
         # Compute angle between eyes
         dY = right_eye[1] - left_eye[1]
@@ -47,6 +56,12 @@ def _align_face(image_array, top, right, bottom, left, target_size=256):
         # Desired position of eyes in the aligned image
         desired_left_eye = (0.35, 0.35)
         desired_right_eye = (0.65, 0.35)
+
+        if upside_down:
+            angle += 180
+            # Swap desired eye positions because after 180° rotation left/right swap
+            desired_left_eye, desired_right_eye = desired_right_eye, desired_left_eye
+
         desired_dist = desired_right_eye[0] - desired_left_eye[0]
         dist = np.sqrt(dX**2 + dY**2)
         scale = desired_dist * target_size / dist
@@ -339,8 +354,19 @@ def detect_faces_task(self, media_id, force=False):
     # Process each detected face
     faces_created = 0
     for (top, right, bottom, left) in face_locations:
+        # Get landmarks for this face (used for alignment and upside-down detection)
+        landmarks_list = face_recognition.face_landmarks(img_array, [(top, right, bottom, left)])
+        landmarks = landmarks_list[0] if landmarks_list else None
+        upside_down = False
+        if landmarks:
+            left_eye = np.mean(landmarks['left_eye'], axis=0)
+            right_eye = np.mean(landmarks['right_eye'], axis=0)
+            eye_center_y = (left_eye[1] + right_eye[1]) / 2
+            nose_tip = np.mean(landmarks['nose_tip'], axis=0)
+            upside_down = nose_tip[1] < eye_center_y
+
         # Align face (for better encoding and thumbnail)
-        aligned_face = _align_face(img_array, top, right, bottom, left)
+        aligned_face = _align_face(img_array, top, right, bottom, left, landmarks=landmarks)
         use_aligned = False
         if aligned_face is not None:
             aligned_face_uint8 = (aligned_face * 255).astype(np.uint8) if aligned_face.dtype == np.float64 else aligned_face
@@ -371,6 +397,9 @@ def detect_faces_task(self, media_id, force=False):
             face_crop = img_array[top:bottom, left:right]
             if face_crop.size == 0:
                 continue
+            # Rotate crop if face is upside down
+            if upside_down:
+                face_crop = cv2.rotate(face_crop, cv2.ROTATE_180)
             thumb_face = cv2.resize(face_crop, (160, 160))
             pil_thumb = Image.fromarray(thumb_face)
 
@@ -612,12 +641,22 @@ def detect_faces_profile_picture(self, user_id):
 
     face_location = (ymin, xmax, ymax, xmin)
 
-    # Align face (for better encoding and thumbnail)
-    aligned_face = _align_face(img_array, ymin, xmax, ymax, xmin)
+    # Get landmarks for this face
+    landmarks_list = face_recognition.face_landmarks(img_array, [face_location])
+    landmarks = landmarks_list[0] if landmarks_list else None
+    upside_down = False
+    if landmarks:
+        left_eye = np.mean(landmarks['left_eye'], axis=0)
+        right_eye = np.mean(landmarks['right_eye'], axis=0)
+        eye_center_y = (left_eye[1] + right_eye[1]) / 2
+        nose_tip = np.mean(landmarks['nose_tip'], axis=0)
+        upside_down = nose_tip[1] < eye_center_y
+
+    # Align face
+    aligned_face = _align_face(img_array, ymin, xmax, ymax, xmin, landmarks=landmarks)
     use_aligned = False
     if aligned_face is not None:
         aligned_face_uint8 = (aligned_face * 255).astype(np.uint8) if aligned_face.dtype == np.float64 else aligned_face
-        # Check if aligned face is too dark (can happen near image borders)
         if np.mean(aligned_face_uint8) < 10:
             logger.debug(f"[detect_faces_profile] Aligned face is too dark for user {user_id}, skipping alignment")
         else:
@@ -645,6 +684,8 @@ def detect_faces_profile_picture(self, user_id):
         if face_crop.size == 0:
             logger.warning(f"[detect_faces_profile] Empty face crop for user {user_id}")
             return
+        if upside_down:
+            face_crop = cv2.rotate(face_crop, cv2.ROTATE_180)
         thumb_face = cv2.resize(face_crop, (160, 160))
         pil_thumb = Image.fromarray(thumb_face)
 
