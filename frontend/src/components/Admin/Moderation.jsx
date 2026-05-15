@@ -278,19 +278,19 @@ const AdminModeration = () => {
             <option value="video">{t('admin_filter_videos')}</option>
           </select>
           {selectedIds.length > 0 && (
-            <div className="flex gap-2 ml-auto">
-              <button onClick={() => handleBulkAction('approve')} className="bg-green-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-600">
+            <div className="flex gap-2 ml-auto overflow-x-auto whitespace-nowrap max-w-full">
+              <button onClick={() => handleBulkAction('approve')} className="bg-green-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-600 flex-shrink-0">
                 {t('admin_bulk_approve', { count: selectedIds.length })}
               </button>
-              <button onClick={() => handleBulkAction('reject')} className="bg-red-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-red-600">
+              <button onClick={() => handleBulkAction('reject')} className="bg-red-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-red-600 flex-shrink-0">
                 {t('admin_bulk_reject', { count: selectedIds.length })}
               </button>
-              <button onClick={() => handleBulkAction('delete')} className="bg-gray-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-600">
+              <button onClick={() => handleBulkAction('delete')} className="bg-gray-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-600 flex-shrink-0">
                 {t('admin_bulk_delete', { count: selectedIds.length })}
               </button>
               <button
                 onClick={handleDetectFaces}
-                className="bg-purple-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-purple-600"
+                className="bg-purple-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-purple-600 flex-shrink-0"
               >
                 {t('admin_detect_faces')} ({selectedIds.length})
               </button>
