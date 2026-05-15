@@ -404,7 +404,13 @@ const resources = {
       "stop_upload": "Ferma Caricamento",
       "stop_upload_confirm": "Sei sicuro di voler fermare tutti i caricamenti? I file in corso andranno persi.",
       "May 16": "16 Maggio",
-      "Remove filter": "Rimuovi filtro"
+      "Remove filter": "Rimuovi filtro",
+      "admin_approve_confirm": "Sei sicuro di voler approvare questo media?",
+      "admin_detect_faces_no_images": "Nessuna immagine selezionata per il rilevamento volti. Solo le immagini possono essere elaborate.",
+      "items_per_page": "Elementi per pagina:",
+      "previous": "Precedente",
+      "next": "Successivo",
+      "page_x_of_y": "Pagina {{current}} di {{total}}"
     }
   },
   ko: {
@@ -809,7 +815,13 @@ const resources = {
       "stop_upload": "업로드 중지",
       "stop_upload_confirm": "모든 업로드를 중지하시겠습니까? 진행 중인 파일은 손실됩니다.",
       "May 16": "5월 16일",
-      "Remove filter": "필터 제거"
+      "Remove filter": "필터 제거",
+      "admin_approve_confirm": "이 미디어를 승인하시겠습니까?",
+      "admin_detect_faces_no_images": "얼굴 인식을 위해 선택된 이미지가 없습니다. 이미지만 처리할 수 있습니다.",
+      "items_per_page": "페이지당 항목:",
+      "previous": "이전",
+      "next": "다음",
+      "page_x_of_y": "페이지 {{current}} / {{total}}"
     }
   },
   en: {
@@ -1214,7 +1226,13 @@ const resources = {
       "stop_upload": "Stop Upload",
       "stop_upload_confirm": "Are you sure you want to stop all uploads? Any in-progress uploads will be lost.",
       "May 16": "May 16",
-      "Remove filter": "Remove filter"
+      "Remove filter": "Remove filter",
+      "admin_approve_confirm": "Are you sure you want to approve this media?",
+      "admin_detect_faces_no_images": "No images selected for face detection. Only images can be processed.",
+      "items_per_page": "Items per page:",
+      "previous": "Previous",
+      "next": "Next",
+      "page_x_of_y": "Page {{current}} of {{total}}"
     }
   }
 };
