@@ -185,29 +185,31 @@ const UserProfile = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           {media.map((item) => (
             <div key={item.id} className="gallery-item bg-white shadow-lg">
-              <div className="relative">
-                {item.media_type === 'video' ? (
-                  <video
-                    src={`${API_URL}${item.file_url}`}
-                    className="w-full h-48 object-cover"
-                    controls
-                  />
-                ) : (
-                  <img
-                    src={`${API_URL}${item.file_url}`}
-                    alt={item.caption || t('beautiful_moment')}
-                    className="w-full h-48 object-cover"
-                  />
-                )}
-              </div>
-              <div className="p-4">
-                <p className="text-gray-700 text-sm mb-2 line-clamp-2">
-                  {item.caption || t('beautiful_moment')}
-                </p>
-                <p className="text-gray-500 text-xs mt-2">
-                  📅 {new Date(item.uploaded_at).toLocaleDateString()}
-                </p>
-              </div>
+              <Link to={`/media/${item.id}`} state={{ media: item }} className="block">
+                <div className="relative">
+                  {item.media_type === 'video' ? (
+                    <video
+                      src={`${API_URL}${item.file_url}`}
+                      className="w-full h-48 object-cover"
+                      controls
+                    />
+                  ) : (
+                    <img
+                      src={`${API_URL}${item.file_url}`}
+                      alt={item.caption || t('beautiful_moment')}
+                      className="w-full h-48 object-cover"
+                    />
+                  )}
+                </div>
+                <div className="p-4">
+                  <p className="text-gray-700 text-sm mb-2 line-clamp-2">
+                    {item.caption || t('beautiful_moment')}
+                  </p>
+                  <p className="text-gray-500 text-xs mt-2">
+                    📅 {new Date(item.uploaded_at).toLocaleDateString()}
+                  </p>
+                </div>
+              </Link>
             </div>
           ))}
           {hasMoreMedia && (
