@@ -299,6 +299,13 @@ const AdminModeration = () => {
 
           <div className="flex items-center gap-2">
             <button
+              onClick={() => setPage(1)}
+              disabled={page === 1}
+              className="wedding-btn text-sm disabled:opacity-50"
+            >
+              ««
+            </button>
+            <button
               onClick={() => setPage(p => Math.max(1, p - 1))}
               disabled={page === 1}
               className="wedding-btn text-sm disabled:opacity-50"
@@ -314,6 +321,13 @@ const AdminModeration = () => {
               className="wedding-btn text-sm disabled:opacity-50"
             >
               {t('next')}
+            </button>
+            <button
+              onClick={() => setPage(totalPages)}
+              disabled={page >= totalPages}
+              className="wedding-btn text-sm disabled:opacity-50"
+            >
+              »»
             </button>
           </div>
         </div>
