@@ -6,6 +6,7 @@ import re
 import hashlib
 import requests
 import redis
+import shutil
 from io import BytesIO
 from datetime import timedelta
 from urllib.parse import quote
@@ -1644,6 +1645,35 @@ class FaceTagDetailView(APIView):
         tag.name = name
         tag.save()
         return Response(FaceTagSerializer(tag).data)
+
+
+class DeleteAllFacesView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def delete(self, request):
+        # Delete all FaceTag and FaceGroup records
+        facetag_count, _ = FaceTag.objects.all().delete()
+        facegroup_count, _ = FaceGroup.objects.all().delete()
+
+        # Delete all files in the facetags media folder
+        facetags_dir = os.path.join(django_settings.MEDIA_ROOT, 'facetags')
+        deleted_files = 0
+        if os.path.isdir(facetags_dir):
+            for filename in os.listdir(facetags_dir):
+                file_path = os.path.join(facetags_dir, filename)
+                try:
+                    if os.path.isfile(file_path) or os.path.islink(file_path):
+                        os.unlink(file_path)
+                        deleted_files += 1
+                    elif os.path.isdir(file_path):
+                        shutil.rmtree(file_path)
+                        deleted_files += 1
+                except Exception as e:
+                    logger.error(f"Failed to delete {file_path}: {e}")
+
+        return Response({
+            'message': f'Deleted {facetag_count} face tags, {facegroup_count} face groups, and {deleted_files} thumbnail files.'
+        }, status=status.HTTP_200_OK)
 
 
 # ==================== COOKIE CONSENT VIEWS ====================

@@ -195,6 +195,26 @@ const AdminModeration = () => {
       });
   };
 
+  const handleDeleteAllFaces = async () => {
+    if (!window.confirm(t('admin_delete_all_faces_confirm'))) return;
+    try {
+      const res = await authFetch(`${API_URL}/api/auth/media/moderation/delete-all-faces/`, {
+        method: 'DELETE'
+      });
+      if (res.ok) {
+        const data = await res.json();
+        alert(data.message || t('admin_delete_all_faces_success'));
+        setRefreshKey(prev => prev + 1);
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        alert(errData.detail || t('admin_delete_all_faces_error'));
+      }
+    } catch (err) {
+      logger.error('[Moderation] Delete all faces failed:', err);
+      alert(t('admin_delete_all_faces_error'));
+    }
+  };
+
   const getStatusBadge = (status) => {
     const badges = { pending: 'status-pending', approved: 'status-approved', rejected: 'status-rejected' };
     const icons = { pending: '⏳', approved: '✅', rejected: '❌' };
@@ -276,6 +296,12 @@ const AdminModeration = () => {
               </button>
             </div>
           )}
+          <button
+            onClick={handleDeleteAllFaces}
+            className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-red-700 flex-shrink-0"
+          >
+            {t('admin_delete_all_faces')}
+          </button>
         </div>
 
         {/* Pagination controls */}

@@ -429,7 +429,11 @@ const resources = {
       "too_many_attempts": "Troppi tentativi. Riprova più tardi.",
       "Resend verification email": "Invia di nuovo l'email di verifica",
       "Your account has been deactivated. Please contact the administrator.": "Il tuo account è stato disattivato. Contatta l'amministratore.",
-      "Your account has been deleted.": "Il tuo account è stato eliminato."
+      "Your account has been deleted.": "Il tuo account è stato eliminato.",
+      "admin_delete_all_faces": "🗑️ Elimina tutti i volti",
+      "admin_delete_all_faces_confirm": "Sei sicuro di voler eliminare TUTTI i tag dei volti, i gruppi e le miniature? Questa azione è irreversibile.",
+      "admin_delete_all_faces_success": "Tutti i dati dei volti e le miniature sono stati eliminati con successo.",
+      "admin_delete_all_faces_error": "Errore durante l'eliminazione dei dati dei volti."
     }
   },
   ko: {
@@ -859,7 +863,11 @@ const resources = {
       "too_many_attempts": "너무 많은 시도. 나중에 다시 시도하세요.",
       "Resend verification email": "인증 이메일 다시 보내기",
       "Your account has been deactivated. Please contact the administrator.": "계정이 비활성화되었습니다. 관리자에게 문의하세요.",
-      "Your account has been deleted.": "계정이 삭제되었습니다."
+      "Your account has been deleted.": "계정이 삭제되었습니다.",
+      "admin_delete_all_faces": "🗑️ 모든 얼굴 삭제",
+      "admin_delete_all_faces_confirm": "모든 얼굴 태그, 그룹 및 썸네일을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
+      "admin_delete_all_faces_success": "모든 얼굴 데이터와 썸네일이 성공적으로 삭제되었습니다.",
+      "admin_delete_all_faces_error": "얼굴 데이터 삭제 중 오류가 발생했습니다."
     }
   },
   en: {
@@ -1289,7 +1297,11 @@ const resources = {
       "too_many_attempts": "Too many attempts. Please try again later.",
       "Resend verification email": "Resend verification email",
       "Your account has been deactivated. Please contact the administrator.": "Your account has been deactivated. Please contact the administrator.",
-      "Your account has been deleted.": "Your account has been deleted."
+      "Your account has been deleted.": "Your account has been deleted.",
+      "admin_delete_all_faces": "🗑️ Delete All Faces",
+      "admin_delete_all_faces_confirm": "Are you sure you want to delete ALL face tags, groups, and thumbnails? This action cannot be undone.",
+      "admin_delete_all_faces_success": "All face data and thumbnails have been successfully deleted.",
+      "admin_delete_all_faces_error": "Error deleting face data."
     }
   }
 };
