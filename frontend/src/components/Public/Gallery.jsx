@@ -116,25 +116,28 @@ const Gallery = () => {
 
       {/* Face group row */}
       {activeFaceGroups.length > 0 && (
-        <div className="mb-6 overflow-x-auto pb-2 scrollbar-hide">
-          <div className="flex gap-3 px-2" style={{ scrollSnapType: 'x mandatory' }}>
-            {activeFaceGroups.map(group => (
-              <button
-                key={group.id}
-                onClick={() => setSelectedGroupId(prev => prev === group.id ? null : group.id)}
-                className={`flex flex-col items-center gap-1 flex-shrink-0 transition-transform hover:scale-105 ${
-                  selectedGroupId === group.id ? 'ring-2 ring-pink-500 rounded-full' : ''
-                }`}
-                style={{ scrollSnapAlign: 'start' }}
-              >
-                <img
-                  src={group.thumbnail_url || 'https://i.imgur.com/V4RclNb.png'}
-                  alt={group.user_display_name || ''}
-                  className="w-12 h-12 rounded-full object-contain border-2 border-white shadow-sm"
-                  onError={(e) => { e.target.src = 'https://i.imgur.com/V4RclNb.png'; }}
-                />
-              </button>
-            ))}
+        <div className="mb-6">
+          <h3 className="text-sm font-medium text-gray-600 mb-2">{t('filter_by_person')}</h3>
+          <div className="overflow-x-auto pb-2 scrollbar-hide">
+            <div className="flex gap-3 px-2" style={{ scrollSnapType: 'x mandatory' }}>
+              {activeFaceGroups.map(group => (
+                <button
+                  key={group.id}
+                  onClick={() => setSelectedGroupId(prev => prev === group.id ? null : group.id)}
+                  className={`flex flex-col items-center gap-1 flex-shrink-0 transition-transform hover:scale-105 ${
+                    selectedGroupId === group.id ? 'ring-2 ring-pink-500 rounded-full' : ''
+                  }`}
+                  style={{ scrollSnapAlign: 'start' }}
+                >
+                  <img
+                    src={group.thumbnail_url || 'https://i.imgur.com/V4RclNb.png'}
+                    alt={group.user_display_name || ''}
+                    className="w-12 h-12 rounded-full object-contain border-2 border-white shadow-sm"
+                    onError={(e) => { e.target.src = 'https://i.imgur.com/V4RclNb.png'; }}
+                  />
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       )}
