@@ -874,3 +874,44 @@ def deduplicate_faces():
 
     logger.info("[deduplicate_faces] Deduplication complete")
     return {'tags_deleted': tags_deleted, 'groups_merged': len(groups_merged)}
+
+
+@shared_task
+def clean_orphaned_facetag_files():
+    """
+    Remove JPEG/PNG files in the facetags/ directory that are not
+    referenced by any FaceTag or FaceGroup thumbnail.
+    """
+    import glob
+    from django.conf import settings as django_settings
+
+    facetags_dir = os.path.join(django_settings.MEDIA_ROOT, 'facetags')
+    if not os.path.isdir(facetags_dir):
+        logger.info("[clean_orphaned_facetag_files] facetags/ directory does not exist")
+        return 0
+
+    # Collect all filenames currently referenced in the database
+    referenced = set()
+    for tag in FaceTag.objects.exclude(thumbnail='').exclude(thumbnail__isnull=True):
+        referenced.add(os.path.basename(tag.thumbnail.name))
+    for group in FaceGroup.objects.exclude(thumbnail='').exclude(thumbnail__isnull=True):
+        referenced.add(os.path.basename(group.thumbnail.name))
+
+    # Walk the directory and delete unreferenced files
+    deleted = 0
+    for filepath in glob.glob(os.path.join(facetags_dir, '*')):
+        if os.path.isfile(filepath):
+            filename = os.path.basename(filepath)
+            if filename not in referenced:
+                try:
+                    os.remove(filepath)
+                    deleted += 1
+                    logger.info(f"[clean_orphaned_facetag_files] Deleted orphan: {filepath}")
+                except OSError as e:
+                    logger.error(f"[clean_orphaned_facetag_files] Failed to delete {filepath}: {e}")
+
+    if deleted:
+        logger.info(f"[clean_orphaned_facetag_files] Removed {deleted} orphaned files")
+    else:
+        logger.debug("[clean_orphaned_facetag_files] No orphaned files found")
+    return deleted

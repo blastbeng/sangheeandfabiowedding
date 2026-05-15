@@ -1,7 +1,7 @@
 import os
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_delete
 from django.dispatch import receiver
 from django.conf import settings as django_settings
 
@@ -287,3 +287,17 @@ def trigger_face_detection(sender, instance, created, **kwargs):
         from .tasks import detect_faces_task
         if not instance.face_detection_attempted and not instance.face_tags.exists():
             detect_faces_task.delay(instance.id)
+
+
+@receiver(pre_delete, sender=FaceTag)
+def delete_facetag_thumbnail(sender, instance, **kwargs):
+    """Remove the thumbnail file when a FaceTag is deleted."""
+    if instance.thumbnail:
+        instance.thumbnail.delete(save=False)
+
+
+@receiver(pre_delete, sender=FaceGroup)
+def delete_facegroup_thumbnail(sender, instance, **kwargs):
+    """Remove the thumbnail file when a FaceGroup is deleted."""
+    if instance.thumbnail:
+        instance.thumbnail.delete(save=False)

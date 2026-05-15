@@ -1,6 +1,7 @@
 import os
 from celery import Celery
 from celery.signals import worker_ready
+from celery.schedules import crontab
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 
@@ -16,6 +17,10 @@ app.conf.beat_schedule = {
     'backfill-content-hashes-daily': {
         'task': 'users.tasks.backfill_content_hashes',
         'schedule': 86400.0,  # every 24 hours
+    },
+    'clean-orphaned-facetag-files-daily': {
+        'task': 'users.tasks.clean_orphaned_facetag_files',
+        'schedule': crontab(hour=3, minute=0),  # daily at 3 AM
     },
 }
 
