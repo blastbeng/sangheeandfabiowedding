@@ -184,7 +184,7 @@ const Gallery = () => {
               onClick={() => setSelectedGroupId(null)}
               className="text-xs text-pink-600 underline hover:text-pink-800 ml-2"
             >
-              {t('Clear all')}
+              {t('Clear filter')}
             </button>
           </div>
         );
