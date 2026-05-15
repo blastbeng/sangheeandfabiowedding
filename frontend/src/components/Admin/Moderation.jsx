@@ -65,6 +65,7 @@ const AdminModeration = () => {
   }, [page, pageSize, fetchMedia]);
 
   const handleApprove = (id) => {
+    if (!window.confirm(t('admin_approve_confirm'))) return;
     authFetch(`${API_URL}/api/auth/media/moderation/${id}/`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -72,9 +73,7 @@ const AdminModeration = () => {
     }).then(res => {
       if (!res.ok) logger.error('[Moderation] Approve failed for ID:', id);
       if (res.ok) {
-        // Remove the approved item from the list
-        setMedia(prev => prev.filter(item => item.id !== id));
-        setSelectedIds(prev => prev.filter(i => i !== id));
+        fetchMedia(page, pageSize);
       }
     });
   };
@@ -88,9 +87,7 @@ const AdminModeration = () => {
     }).then(res => {
       if (!res.ok) logger.error('[Moderation] Reject failed for ID:', id);
       if (res.ok) {
-        // Remove the rejected item from the list
-        setMedia(prev => prev.filter(item => item.id !== id));
-        setSelectedIds(prev => prev.filter(i => i !== id));
+        fetchMedia(page, pageSize);
       }
     });
   };
@@ -101,9 +98,7 @@ const AdminModeration = () => {
       method: 'DELETE'
     }).then(res => {
       if (res.ok) {
-        // Remove the deleted item from the list
-        setMedia(prev => prev.filter(item => item.id !== id));
-        setSelectedIds(prev => prev.filter(i => i !== id));
+        fetchMedia(page, pageSize);
       } else {
         logger.error('[Moderation] Delete failed for ID:', id);
       }
