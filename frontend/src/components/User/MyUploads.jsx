@@ -1,26 +1,22 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import logger from '../../utils/logger';
 import authFetch from '../../utils/authFetch';
-
-const PAGE_SIZE = 20;
 
 const MyUploads = () => {
   const { t } = useTranslation();
   const [uploads, setUploads] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalCount, setTotalCount] = useState(null); // null = unknown
+  const [fetching, setFetching] = useState(false);
+  const [fetchId, setFetchId] = useState(0); // increment to force refetch
   const [selectedIds, setSelectedIds] = useState([]);
-  const [message, setMessage] = useState(null); // { type: 'success'|'error', text: '' }
-  const [viewMode, setViewMode] = useState('gallery'); // 'gallery' | 'table'
+  const [message, setMessage] = useState(null);
+  const [viewMode, setViewMode] = useState('gallery');
   const API_URL = import.meta.env.VITE_API_URL;
-  const sentinelRef = useRef(null);
-
-  const refreshUploads = () => setRefreshTrigger(prev => prev + 1);
 
   // Auto-dismiss messages after 4 seconds
   useEffect(() => {
@@ -30,66 +26,64 @@ const MyUploads = () => {
     }
   }, [message]);
 
-  const fetchUploads = useCallback(async (pageNum, append = false) => {
-    const params = new URLSearchParams();
-    params.append('page', pageNum);
-    params.append('page_size', PAGE_SIZE);
-
-    try {
-      const res = await authFetch(`${API_URL}/api/auth/media/my-uploads/?${params}`);
-      if (!res.ok) {
-        logger.warn('[MyUploads] Fetch failed:', res.status);
-        if (!append) setUploads([]);
-        setHasMore(false);
-        return;
-      }
-      const data = await res.json();
-      const newUploads = Array.isArray(data) ? data : (data.results || []);
-      if (append) {
-        setUploads(prev => [...prev, ...newUploads]);
-      } else {
-        setUploads(newUploads);
-      }
-      setHasMore(newUploads.length === PAGE_SIZE);
-    } catch (err) {
-      logger.error('[MyUploads] Fetch error:', err);
-      if (!append) setUploads([]);
-      setHasMore(false);
-    } finally {
-      setLoading(false);
-      setLoadingMore(false);
-    }
-  }, [API_URL]);
-
-  // Initial load and refresh
-  useEffect(() => {
+  const refreshUploads = () => {
     setPage(1);
-    setHasMore(true);
-    setLoading(true);
-    setUploads([]);
-    fetchUploads(1, false);
-  }, [refreshTrigger, fetchUploads]);
+    setFetchId(prev => prev + 1);
+  };
 
-  // Infinite scroll observer
+  // Data fetching
   useEffect(() => {
-    if (!hasMore || loadingMore) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasMore && !loadingMore) {
-          setLoadingMore(true);
-          const nextPage = page + 1;
-          setPage(nextPage);
-          fetchUploads(nextPage, true);
+    let cancelled = false;
+
+    const fetchData = async () => {
+      setFetching(true);
+      try {
+        const params = new URLSearchParams();
+        params.append('page', page);
+        params.append('page_size', pageSize);
+        const res = await authFetch(`${API_URL}/api/auth/media/my-uploads/?${params}`);
+        if (cancelled) return;
+
+        if (!res.ok) {
+          logger.warn('[MyUploads] Fetch failed:', res.status);
+          setUploads([]);
+          setTotalCount(0);
+          return;
         }
-      },
-      { threshold: 0.1 }
-    );
-    const currentSentinel = sentinelRef.current;
-    if (currentSentinel) observer.observe(currentSentinel);
-    return () => {
-      if (currentSentinel) observer.unobserve(currentSentinel);
+
+        const data = await res.json();
+        const results = Array.isArray(data) ? data : (data.results || []);
+        const count = (data && typeof data === 'object' && !Array.isArray(data))
+          ? data.count
+          : undefined;
+
+        if (!cancelled) {
+          setUploads(results);
+          if (count !== undefined) setTotalCount(count);
+          else setTotalCount(null);
+
+          // If current page is empty and not the first page, go back one page
+          if (results.length === 0 && page > 1) {
+            setPage(prev => prev - 1);
+          }
+        }
+      } catch (err) {
+        if (!cancelled) {
+          logger.error('[MyUploads] Fetch error:', err);
+          setUploads([]);
+          setTotalCount(0);
+        }
+      } finally {
+        if (!cancelled) {
+          setFetching(false);
+          setLoading(false);
+        }
+      }
     };
-  }, [hasMore, loadingMore, page, fetchUploads]);
+
+    fetchData();
+    return () => { cancelled = true; };
+  }, [page, pageSize, fetchId, API_URL]);
 
   const handleDelete = async (id) => {
     if (!confirm(t('my_uploads_delete_confirm'))) return;
@@ -179,7 +173,7 @@ const MyUploads = () => {
           </div>
         )}
 
-        {uploads.length === 0 ? (
+        {uploads.length === 0 && page === 1 ? (
           <div className="text-center py-10">
             <span className="text-6xl floating-heart inline-block">📸</span>
             <p className="mt-4 text-gray-600 text-lg">{t('my_uploads_no_uploads')}</p>
@@ -189,6 +183,97 @@ const MyUploads = () => {
           </div>
         ) : (
           <>
+            {/* Pagination */}
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+              <div className="flex items-center gap-2">
+                <label htmlFor="pageSize" className="text-sm text-gray-600">
+                  {t('show')}:
+                </label>
+                <select
+                  id="pageSize"
+                  value={pageSize}
+                  onChange={(e) => {
+                    setPageSize(Number(e.target.value));
+                    setPage(1);
+                  }}
+                  className="border border-gray-300 rounded px-2 py-1 text-sm"
+                  disabled={fetching}
+                >
+                  <option value={5}>5</option>
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                </select>
+              </div>
+
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setPage(1)}
+                  disabled={page === 1 || fetching}
+                  className="px-2 py-1 text-sm border rounded disabled:opacity-50"
+                >
+                  ««
+                </button>
+                <button
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={page === 1 || fetching}
+                  className="px-2 py-1 text-sm border rounded disabled:opacity-50"
+                >
+                  ‹
+                </button>
+
+                {/* Page numbers – only when totalCount is known */}
+                {totalCount !== null && (() => {
+                  const totalPages = Math.ceil(totalCount / pageSize);
+                  const maxVisible = 5;
+                  let start = Math.max(1, page - Math.floor(maxVisible / 2));
+                  let end = Math.min(totalPages, start + maxVisible - 1);
+                  if (end - start + 1 < maxVisible) {
+                    start = Math.max(1, end - maxVisible + 1);
+                  }
+                  const pages = [];
+                  for (let i = start; i <= end; i++) pages.push(i);
+                  return pages.map(p => (
+                    <button
+                      key={p}
+                      onClick={() => setPage(p)}
+                      disabled={fetching}
+                      className={`px-2 py-1 text-sm border rounded ${
+                        p === page ? 'bg-pink-500 text-white border-pink-500' : ''
+                      }`}
+                    >
+                      {p}
+                    </button>
+                  ));
+                })()}
+
+                <button
+                  onClick={() => setPage(p => p + 1)}
+                  disabled={
+                    fetching ||
+                    (totalCount !== null
+                      ? page * pageSize >= totalCount
+                      : uploads.length < pageSize)
+                  }
+                  className="px-2 py-1 text-sm border rounded disabled:opacity-50"
+                >
+                  ›
+                </button>
+                <button
+                  onClick={() => setPage(totalCount !== null ? Math.ceil(totalCount / pageSize) : page + 1)}
+                  disabled={
+                    fetching ||
+                    (totalCount !== null
+                      ? page * pageSize >= totalCount
+                      : uploads.length < pageSize)
+                  }
+                  className="px-2 py-1 text-sm border rounded disabled:opacity-50"
+                >
+                  »»
+                </button>
+              </div>
+            </div>
+
             {/* View mode toggle and bulk actions */}
             <div className="flex justify-between items-center mb-4">
               <div className="inline-flex rounded-md shadow-sm" role="group">
@@ -346,17 +431,6 @@ const MyUploads = () => {
                   ))}
                 </div>
               </>
-            )}
-
-            {/* Infinite scroll sentinel */}
-            {hasMore && (
-              <div ref={sentinelRef} className="flex justify-center py-4">
-                {loadingMore ? (
-                  <span className="text-gray-500">{t('loading_more')}</span>
-                ) : (
-                  <span className="text-gray-400">&#8203;</span>
-                )}
-              </div>
             )}
           </>
         )}
