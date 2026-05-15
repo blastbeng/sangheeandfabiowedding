@@ -24,7 +24,7 @@ from config.settings import (
 logger = logging.getLogger(__name__)
 
 
-def _align_face(image_array, top, right, bottom, left, target_size=160):
+def _align_face(image_array, top, right, bottom, left, target_size=256):
     """
     Align a face so the eyes are horizontal, then crop and resize.
     Returns an aligned face image (numpy array) or None if alignment fails.
@@ -341,33 +341,24 @@ def detect_faces_task(self, media_id, force=False):
     for (top, right, bottom, left) in face_locations:
         # Align face (for better encoding and thumbnail)
         aligned_face = _align_face(img_array, top, right, bottom, left)
+        use_aligned = False
         if aligned_face is not None:
-            # Use aligned face for encoding and thumbnail
             aligned_face_uint8 = (aligned_face * 255).astype(np.uint8) if aligned_face.dtype == np.float64 else aligned_face
-            encoding_result = face_recognition.face_encodings(aligned_face_uint8)
-            if not encoding_result:
-                logger.warning(f"[detect_faces] No encoding from aligned face for media {media_id}, trying original image")
-                # Fallback to original image with known location
-                encoding_result = face_recognition.face_encodings(
-                    img_array,
-                    known_face_locations=[(top, right, bottom, left)]
-                )
-                if not encoding_result:
-                    logger.warning(f"[detect_faces] No encoding generated for face in media {media_id}")
-                    continue
-                encoding = encoding_result[0]
-                # Use raw crop for thumbnail
-                face_crop = img_array[top:bottom, left:right]
-                if face_crop.size == 0:
-                    continue
-                thumb_face = cv2.resize(face_crop, (160, 160))
-                pil_thumb = Image.fromarray(thumb_face)
+            # Check if aligned face is too dark (can happen near image borders)
+            if np.mean(aligned_face_uint8) < 10:
+                logger.debug(f"[detect_faces] Aligned face is too dark for media {media_id}, skipping alignment")
             else:
-                encoding = encoding_result[0]
-                pil_thumb = Image.fromarray(aligned_face_uint8)
+                encoding_result = face_recognition.face_encodings(aligned_face_uint8)
+                if encoding_result:
+                    use_aligned = True
+                else:
+                    logger.debug(f"[detect_faces] Aligned face encoding failed for media {media_id}, falling back to original crop")
+
+        if use_aligned:
+            encoding = encoding_result[0]
+            pil_thumb = Image.fromarray(aligned_face_uint8)
         else:
-            # Alignment failed – use original image with known location
-            logger.warning(f"[detect_faces] Alignment failed for media {media_id}, using original image with known location")
+            # Fallback: use original image with known location
             encoding_result = face_recognition.face_encodings(
                 img_array,
                 known_face_locations=[(top, right, bottom, left)]
@@ -623,34 +614,24 @@ def detect_faces_profile_picture(self, user_id):
 
     # Align face (for better encoding and thumbnail)
     aligned_face = _align_face(img_array, ymin, xmax, ymax, xmin)
+    use_aligned = False
     if aligned_face is not None:
-        # Use aligned face for encoding and thumbnail
         aligned_face_uint8 = (aligned_face * 255).astype(np.uint8) if aligned_face.dtype == np.float64 else aligned_face
-        face_encodings_result = face_recognition.face_encodings(aligned_face_uint8)
-        if not face_encodings_result:
-            logger.warning(f"[detect_faces_profile] No encoding from aligned face for user {user_id}, trying original image")
-            # Fallback to original image with known location
-            face_encodings_result = face_recognition.face_encodings(
-                img_array,
-                known_face_locations=[face_location]
-            )
-            if not face_encodings_result:
-                logger.warning(f"[detect_faces_profile] No encoding generated for user {user_id}")
-                return
-            encoding = face_encodings_result[0]
-            # Use raw crop for thumbnail
-            face_crop = img_array[ymin:ymax, xmin:xmax]
-            if face_crop.size == 0:
-                logger.warning(f"[detect_faces_profile] Empty face crop for user {user_id}")
-                return
-            thumb_face = cv2.resize(face_crop, (160, 160))
-            pil_thumb = Image.fromarray(thumb_face)
+        # Check if aligned face is too dark (can happen near image borders)
+        if np.mean(aligned_face_uint8) < 10:
+            logger.debug(f"[detect_faces_profile] Aligned face is too dark for user {user_id}, skipping alignment")
         else:
-            encoding = face_encodings_result[0]
-            pil_thumb = Image.fromarray(aligned_face_uint8)
+            face_encodings_result = face_recognition.face_encodings(aligned_face_uint8)
+            if face_encodings_result:
+                use_aligned = True
+            else:
+                logger.debug(f"[detect_faces_profile] Aligned face encoding failed for user {user_id}, falling back to original crop")
+
+    if use_aligned:
+        encoding = face_encodings_result[0]
+        pil_thumb = Image.fromarray(aligned_face_uint8)
     else:
-        # Alignment failed – use original image with known location
-        logger.warning(f"[detect_faces_profile] Alignment failed for user {user_id}, using original image with known location")
+        # Fallback: use original image with known location
         face_encodings_result = face_recognition.face_encodings(
             img_array,
             known_face_locations=[face_location]
