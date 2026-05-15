@@ -113,12 +113,12 @@ const Gallery = () => {
 
       {/* Face group row */}
       {faceGroups.length > 0 && (() => {
-        // Deduplicate by thumbnail_url – keep only the first occurrence of each unique thumbnail
-        const seenThumbnails = new Set();
+        // Deduplicate by user_display_name – keep only the first occurrence of each unique user
+        const seenUsers = new Set();
         const uniqueGroups = faceGroups.filter(group => {
-          const thumb = group.thumbnail_url || '';
-          if (seenThumbnails.has(thumb)) return false;
-          seenThumbnails.add(thumb);
+          const name = group.user_display_name || '';
+          if (seenUsers.has(name)) return false;
+          seenUsers.add(name);
           return true;
         });
 
