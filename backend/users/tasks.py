@@ -374,7 +374,7 @@ def detect_faces_task(self, media_id, force=False):
         return
 
     # Remove overlapping detections (keep only the largest face in each cluster)
-    face_locations = _nms(face_locations, threshold=0.3)
+    face_locations = _nms(face_locations, threshold=0.5)
 
     logger.info(f"[detect_faces] After NMS: {len(face_locations)} face(s) kept for media {media_id}")
 
@@ -398,6 +398,14 @@ def detect_faces_task(self, media_id, force=False):
                     pass
         if encodings:
             group_centroids[group.id] = np.mean(encodings, axis=0)
+
+    # Check if the uploader has a linked FaceGroup
+    uploader_group = None
+    if media.user:
+        uploader_group = FaceGroup.objects.filter(user=media.user).first()
+    uploader_centroid = None
+    if uploader_group and uploader_group.id in group_centroids:
+        uploader_centroid = group_centroids[uploader_group.id]
 
     # Process each detected face
     faces_created = 0
@@ -464,25 +472,49 @@ def detect_faces_task(self, media_id, force=False):
         pil_thumb.save(thumb_io, format='JPEG', quality=85)
         thumb_content = thumb_io.getvalue()
 
-        # Find closest and second-closest existing groups
+        # Initialize group matching variables
         best_group_id = None
         min_distance = 0.5
         second_min_distance = float('inf')
-        for group_id, centroid in group_centroids.items():
-            distance = np.linalg.norm(encoding - centroid)
-            if distance < min_distance:
-                second_min_distance = min_distance
-                min_distance = distance
-                best_group_id = group_id
-            elif distance < second_min_distance:
-                second_min_distance = distance
 
-        # If the margin between best and second-best is too small, treat as uncertain
-        MARGIN = 0.05
-        if best_group_id is not None and (second_min_distance - min_distance) < MARGIN:
-            logger.info(f"[detect_faces] Uncertain match for media {media_id}: "
-                        f"best={min_distance:.4f}, second={second_min_distance:.4f}, margin < {MARGIN}")
-            best_group_id = None
+        # If the uploader has a linked group, check it first with a relaxed threshold
+        if uploader_centroid is not None:
+            dist_to_uploader = np.linalg.norm(encoding - uploader_centroid)
+            if dist_to_uploader < 0.55:
+                best_group_id = uploader_group.id
+                min_distance = dist_to_uploader
+                # Skip the general search – we already have a match
+                # Set second_min_distance to infinity to avoid the margin check
+                second_min_distance = float('inf')
+                logger.info(f"[detect_faces] Assigned to uploader's group {uploader_group.id} (dist={dist_to_uploader:.4f})")
+
+        # General search only if no match from uploader's group
+        if best_group_id is None:
+            for group_id, centroid in group_centroids.items():
+                distance = np.linalg.norm(encoding - centroid)
+                if distance < min_distance:
+                    second_min_distance = min_distance
+                    min_distance = distance
+                    best_group_id = group_id
+                elif distance < second_min_distance:
+                    second_min_distance = distance
+
+            # If the margin between best and second-best is too small, treat as uncertain
+            # UNLESS the best distance is already very low (strong match)
+            MARGIN = 0.05
+            if best_group_id is not None and min_distance >= 0.4 and (second_min_distance - min_distance) < MARGIN:
+                logger.info(f"[detect_faces] Uncertain match for media {media_id}: "
+                            f"best={min_distance:.4f}, second={second_min_distance:.4f}, margin < {MARGIN}")
+                best_group_id = None
+
+            # Second pass with a lower threshold if no group found yet
+            if best_group_id is None:
+                for group_id, centroid in group_centroids.items():
+                    distance = np.linalg.norm(encoding - centroid)
+                    if distance < 0.45:
+                        best_group_id = group_id
+                        logger.info(f"[detect_faces] Second-pass match for media {media_id}: group {group_id} at distance {distance:.4f}")
+                        break
 
         if best_group_id is None:
             # Create new group
@@ -493,7 +525,7 @@ def detect_faces_task(self, media_id, force=False):
         else:
             # Update centroid (moving average)
             group = FaceGroup.objects.get(id=best_group_id)
-            old_centroid = group_centroids[best_group_id]
+            old_centroid = group_centroids.get(best_group_id, encoding)
             count = group.face_tags.count()
             new_centroid = (old_centroid * count + encoding) / (count + 1)
             group_centroids[best_group_id] = new_centroid
@@ -993,7 +1025,7 @@ def deduplicate_faces():
     # Compare all group pairs using 80% ratio of pairwise distances below threshold
     group_ids = list(group_encodings.keys())
     merged_groups = set()
-    MIN_TAGS_FOR_MERGE = 3
+    MIN_TAGS_FOR_MERGE = 2
     AVG_DIST_THRESHOLD = 0.5
 
     for i in range(len(group_ids)):
@@ -1034,6 +1066,30 @@ def deduplicate_faces():
                         merged_groups.add(remove_id)
                         logger.info(f"[deduplicate_faces] Merged group {remove_id} into {keep_id} "
                                     f"(ratio={ratio:.2f}, {below_threshold}/{total_pairs} below {AVG_DIST_THRESHOLD})")
+
+    # ---------- 2b. Merge groups where one has only 1 tag ----------
+    single_tag_groups = {
+        gid: encs[0] for gid, encs in group_encodings.items() if len(encs) == 1
+    }
+    for gid1, enc1 in single_tag_groups.items():
+        if gid1 in merged_groups:
+            continue
+        for gid2, encs2 in group_encodings.items():
+            if gid2 == gid1 or gid2 in merged_groups:
+                continue
+            if len(encs2) < 2:   # only merge into a group that has at least 2 tags (more reliable)
+                continue
+            centroid2 = np.mean(encs2, axis=0)
+            dist = np.linalg.norm(enc1 - centroid2)
+            if dist < 0.4:
+                keep_id, remove_id = (gid2, gid1) if gid2 < gid1 else (gid1, gid2)
+                if (keep_id, remove_id) not in groups_merged and (remove_id, keep_id) not in groups_merged:
+                    keep_group = FaceGroup.objects.get(id=keep_id)
+                    remove_group = FaceGroup.objects.get(id=remove_id)
+                    _merge_groups(keep_group, remove_group)
+                    groups_merged.add((keep_id, remove_id))
+                    merged_groups.add(remove_id)
+                    logger.info(f"[deduplicate_faces] Merged single-tag group {remove_id} into {keep_id} (dist={dist:.4f})")
 
     # Clean up empty groups (just in case)
     empty_groups = FaceGroup.objects.annotate(

@@ -21,6 +21,9 @@ const Gallery = () => {
 
   const sentinelRef = useRef(null);
 
+  // Filter out face groups that have no tags (empty groups)
+  const activeFaceGroups = faceGroups.filter(g => g.face_count === undefined || g.face_count > 0);
+
   const fetchMedia = useCallback(async (pageNum, append = false) => {
     const params = new URLSearchParams();
     if (selectedUserId) params.append('user_id', selectedUserId);
@@ -112,10 +115,10 @@ const Gallery = () => {
       </div>
 
       {/* Face group row */}
-      {faceGroups.length > 0 && (
+      {activeFaceGroups.length > 0 && (
         <div className="mb-6 overflow-x-auto pb-2 scrollbar-hide">
           <div className="flex gap-3 px-2" style={{ scrollSnapType: 'x mandatory' }}>
-            {faceGroups.map(group => (
+            {activeFaceGroups.map(group => (
               <button
                 key={group.id}
                 onClick={() => setSelectedGroupId(prev => prev === group.id ? null : group.id)}
@@ -197,11 +200,7 @@ const Gallery = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {media.map((item) => {
             const isFailed = failedMediaIds.has(item.id);
-            const uniqueFaceTags = item.face_tags
-              ? item.face_tags.filter((tag, index, self) => {
-                  return index === self.findIndex(t => t.face_group_id === tag.face_group_id);
-                })
-              : [];
+            const faceTags = item.face_tags || [];
 
             return (
               <div key={item.id} className="gallery-item bg-white shadow-lg">
@@ -255,11 +254,11 @@ const Gallery = () => {
                   <p className="text-gray-700 text-sm mb-2 line-clamp-2">
                     {item.caption || t('beautiful_moment')}
                   </p>
-                  {item.media_type === 'image' && uniqueFaceTags.length > 0 && (
+                  {item.media_type === 'image' && faceTags.length > 0 && (
                     <div className="mt-2 flex items-center gap-1">
                       <span className="text-xs text-gray-500">{t('in_this_photo')}:</span>
                       <div className="inline-flex overflow-x-auto gap-1">
-                        {uniqueFaceTags.map(tag => (
+                        {faceTags.map(tag => (
                           <button
                             key={tag.face_group_id}
                             onClick={(e) => {
