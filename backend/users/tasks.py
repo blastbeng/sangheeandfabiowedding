@@ -1003,3 +1003,31 @@ def clean_orphaned_facetag_files():
     else:
         logger.debug("[clean_orphaned_facetag_files] No orphaned files found")
     return deleted
+
+
+@shared_task
+def cleanup_missing_cloud_files():
+    """
+    Delete Media records whose files no longer exist in Nextcloud.
+    Checks both nextcloud_file_id and original_filename against the actual
+    files present in the cloud folder.
+    """
+    client = NextcloudClient()
+    try:
+        cloud_files = client.list_files()
+    except Exception as e:
+        logger.error(f"cleanup_missing_cloud_files: failed to list Nextcloud files: {e}")
+        return
+
+    deleted_count = 0
+    # Process in batches to limit memory usage
+    for media in Media.objects.only('id', 'nextcloud_file_id', 'original_filename').iterator(chunk_size=500):
+        file_id = media.nextcloud_file_id or ''
+        orig_name = media.original_filename or ''
+        if file_id not in cloud_files and orig_name not in cloud_files:
+            logger.info(f"Deleting Media {media.id} because file is missing from Nextcloud "
+                        f"(nextcloud_file_id={file_id}, original_filename={orig_name})")
+            media.delete()  # cascades to FaceTags, etc.
+            deleted_count += 1
+
+    logger.info(f"cleanup_missing_cloud_files: deleted {deleted_count} Media records")
