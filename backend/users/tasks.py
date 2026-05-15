@@ -24,6 +24,37 @@ from config.settings import (
 logger = logging.getLogger(__name__)
 
 
+def _iou(boxA, boxB):
+    """Intersection over Union for two boxes in (top, right, bottom, left) format."""
+    # Determine intersection rectangle
+    xA = max(boxA[3], boxB[3])          # left
+    yA = max(boxA[0], boxB[0])          # top
+    xB = min(boxA[1], boxB[1])          # right
+    yB = min(boxA[2], boxB[2])          # bottom
+
+    interArea = max(0, xB - xA) * max(0, yB - yA)
+    if interArea == 0:
+        return 0.0
+
+    boxAArea = (boxA[1] - boxA[3]) * (boxA[2] - boxA[0])
+    boxBArea = (boxB[1] - boxB[3]) * (boxB[2] - boxB[0])
+    return interArea / float(boxAArea + boxBArea - interArea)
+
+
+def _nms(boxes, threshold=0.5):
+    """Simple non-maximum suppression on a list of (top, right, bottom, left) boxes."""
+    if not boxes:
+        return []
+    # Sort by area descending (largest first)
+    boxes = sorted(boxes, key=lambda b: (b[1]-b[3])*(b[2]-b[0]), reverse=True)
+    keep = []
+    while boxes:
+        current = boxes.pop(0)
+        keep.append(current)
+        boxes = [b for b in boxes if _iou(current, b) < threshold]
+    return keep
+
+
 def _is_blurry(face_image, threshold=150.0):
     """Return True if the face image is too blurry to produce a reliable encoding."""
     gray = cv2.cvtColor(face_image, cv2.COLOR_RGB2GRAY)
@@ -342,6 +373,15 @@ def detect_faces_task(self, media_id, force=False):
         media.save(update_fields=['face_detection_attempted'])
         return
 
+    # Remove overlapping detections (keep only the largest face in each cluster)
+    face_locations = _nms(face_locations, threshold=0.5)
+
+    if not face_locations:
+        logger.info(f"[detect_faces] No faces remaining after NMS in media {media_id}")
+        media.face_detection_attempted = True
+        media.save(update_fields=['face_detection_attempted'])
+        return
+
     # Load existing groups and their centroids
     existing_groups = FaceGroup.objects.prefetch_related('face_tags').all()
     group_centroids = {}
@@ -461,6 +501,11 @@ def detect_faces_task(self, media_id, force=False):
             group = FaceGroup.objects.get(id=best_group_id)
             if not group.thumbnail:
                 group.thumbnail.save(f'group_{group.id}.jpg', ContentFile(thumb_content), save=True)
+
+        # Avoid creating a duplicate FaceTag for the same media and group
+        if FaceTag.objects.filter(media=media, face_group_id=best_group_id).exists():
+            logger.info(f"[detect_faces] FaceTag already exists for media {media_id} and group {best_group_id}, skipping")
+            continue
 
         # Create FaceTag
         face_tag = FaceTag.objects.create(

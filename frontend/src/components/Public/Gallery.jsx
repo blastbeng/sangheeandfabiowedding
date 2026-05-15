@@ -218,8 +218,7 @@ const Gallery = () => {
             const isFailed = failedMediaIds.has(item.id);
             const uniqueFaceTags = item.face_tags
               ? item.face_tags.filter((tag, index, self) => {
-                  const thumb = tag.thumbnail_url || '';
-                  return index === self.findIndex(t => (t.thumbnail_url || '') === thumb);
+                  return index === self.findIndex(t => t.face_group_id === tag.face_group_id);
                 })
               : [];
 
