@@ -24,7 +24,7 @@ from config.settings import (
 logger = logging.getLogger(__name__)
 
 
-def _is_blurry(face_image, threshold=100.0):
+def _is_blurry(face_image, threshold=150.0):
     """Return True if the face image is too blurry to produce a reliable encoding."""
     gray = cv2.cvtColor(face_image, cv2.COLOR_RGB2GRAY)
     laplacian_var = cv2.Laplacian(gray, cv2.CV_64F).var()
@@ -331,7 +331,7 @@ def detect_faces_task(self, media_id, force=False):
         ymax = min(h, ymin + height + 2 * expand_h)
 
         # Skip faces that are too small
-        if (xmax - xmin) < 30 or (ymax - ymin) < 30:
+        if (xmax - xmin) < 50 or (ymax - ymin) < 50:
             continue
 
         face_locations.append((ymin, xmax, ymax, xmin))  # dlib order: top, right, bottom, left
@@ -380,7 +380,7 @@ def detect_faces_task(self, media_id, force=False):
             if np.mean(aligned_face_uint8) < 10:
                 logger.debug(f"[detect_faces] Aligned face is too dark for media {media_id}, skipping alignment")
             else:
-                encoding_result = face_recognition.face_encodings(aligned_face_uint8)
+                encoding_result = face_recognition.face_encodings(aligned_face_uint8, model="large")
                 if encoding_result:
                     use_aligned = True
                 else:
@@ -394,7 +394,8 @@ def detect_faces_task(self, media_id, force=False):
             # Fallback: use original image with known location
             encoding_result = face_recognition.face_encodings(
                 img_array,
-                known_face_locations=[(top, right, bottom, left)]
+                known_face_locations=[(top, right, bottom, left)],
+                model="large"
             )
             if not encoding_result:
                 logger.warning(f"[detect_faces] No encoding generated for face in media {media_id}")
@@ -421,14 +422,25 @@ def detect_faces_task(self, media_id, force=False):
         pil_thumb.save(thumb_io, format='JPEG', quality=85)
         thumb_content = thumb_io.getvalue()
 
-        # Find closest existing group
+        # Find closest and second-closest existing groups
         best_group_id = None
         min_distance = 0.5
+        second_min_distance = float('inf')
         for group_id, centroid in group_centroids.items():
             distance = np.linalg.norm(encoding - centroid)
             if distance < min_distance:
+                second_min_distance = min_distance
                 min_distance = distance
                 best_group_id = group_id
+            elif distance < second_min_distance:
+                second_min_distance = distance
+
+        # If the margin between best and second-best is too small, treat as uncertain
+        MARGIN = 0.05
+        if best_group_id is not None and (second_min_distance - min_distance) < MARGIN:
+            logger.info(f"[detect_faces] Uncertain match for media {media_id}: "
+                        f"best={min_distance:.4f}, second={second_min_distance:.4f}, margin < {MARGIN}")
+            best_group_id = None
 
         if best_group_id is None:
             # Create new group
@@ -648,7 +660,7 @@ def detect_faces_profile_picture(self, user_id):
     xmax = min(w, xmin + width + 2 * expand_w)
     ymax = min(h, ymin + height + 2 * expand_h)
 
-    if (xmax - xmin) < 30 or (ymax - ymin) < 30:
+    if (xmax - xmin) < 50 or (ymax - ymin) < 50:
         logger.info(f"[detect_faces_profile] Face too small for user {user_id}")
         return
 
@@ -673,7 +685,7 @@ def detect_faces_profile_picture(self, user_id):
         if np.mean(aligned_face_uint8) < 10:
             logger.debug(f"[detect_faces_profile] Aligned face is too dark for user {user_id}, skipping alignment")
         else:
-            face_encodings_result = face_recognition.face_encodings(aligned_face_uint8)
+            face_encodings_result = face_recognition.face_encodings(aligned_face_uint8, model="large")
             if face_encodings_result:
                 use_aligned = True
             else:
@@ -687,7 +699,8 @@ def detect_faces_profile_picture(self, user_id):
         # Fallback: use original image with known location
         face_encodings_result = face_recognition.face_encodings(
             img_array,
-            known_face_locations=[face_location]
+            known_face_locations=[face_location],
+            model="large"
         )
         if not face_encodings_result:
             logger.warning(f"[detect_faces_profile] No encoding generated for user {user_id}")
@@ -729,14 +742,25 @@ def detect_faces_profile_picture(self, user_id):
         if encodings_list:
             group_centroids[group.id] = np.mean(encodings_list, axis=0)
 
-    # Find closest group
+    # Find closest and second-closest existing groups
     best_group_id = None
     min_distance = 0.5
+    second_min_distance = float('inf')
     for group_id, centroid in group_centroids.items():
         distance = np.linalg.norm(encoding - centroid)
         if distance < min_distance:
+            second_min_distance = min_distance
             min_distance = distance
             best_group_id = group_id
+        elif distance < second_min_distance:
+            second_min_distance = distance
+
+    # If the margin between best and second-best is too small, treat as uncertain
+    MARGIN = 0.05
+    if best_group_id is not None and (second_min_distance - min_distance) < MARGIN:
+        logger.info(f"[detect_faces_profile] Uncertain match for user {user_id}: "
+                    f"best={min_distance:.4f}, second={second_min_distance:.4f}, margin < {MARGIN}")
+        best_group_id = None
 
     user_display_name = user.get_full_name() or user.username
 
@@ -882,7 +906,7 @@ def deduplicate_faces():
         if encodings_list:
             group_encodings[group.id] = encodings_list
 
-    # Compare all group pairs using average pairwise distance
+    # Compare all group pairs using 80% ratio of pairwise distances below threshold
     group_ids = list(group_encodings.keys())
     merged_groups = set()
     MIN_TAGS_FOR_MERGE = 3
@@ -903,25 +927,29 @@ def deduplicate_faces():
             if len(encs2) < MIN_TAGS_FOR_MERGE:
                 continue
 
-            # Compute average pairwise distance
-            total_dist = 0.0
-            count = 0
+            # Compute pairwise distances and count how many are below threshold
+            below_threshold = 0
+            total_pairs = 0
             for e1 in encs1:
                 for e2 in encs2:
-                    total_dist += np.linalg.norm(e1 - e2)
-                    count += 1
-            avg_dist = total_dist / count if count > 0 else float('inf')
+                    dist = np.linalg.norm(e1 - e2)
+                    if dist < AVG_DIST_THRESHOLD:
+                        below_threshold += 1
+                    total_pairs += 1
 
-            if avg_dist < AVG_DIST_THRESHOLD:
-                # Merge gid2 into gid1 (keep the one with smaller ID)
-                keep_id, remove_id = (gid1, gid2) if gid1 < gid2 else (gid2, gid1)
-                if (keep_id, remove_id) not in groups_merged and (remove_id, keep_id) not in groups_merged:
-                    keep_group = FaceGroup.objects.get(id=keep_id)
-                    remove_group = FaceGroup.objects.get(id=remove_id)
-                    _merge_groups(keep_group, remove_group)
-                    groups_merged.add((keep_id, remove_id))
-                    merged_groups.add(remove_id)
-                    logger.info(f"[deduplicate_faces] Merged group {remove_id} into {keep_id} (avg_dist={avg_dist:.4f})")
+            if total_pairs > 0:
+                ratio = below_threshold / total_pairs
+                if ratio >= 0.8:   # at least 80% of pairs must be close
+                    # Merge gid2 into gid1 (keep the one with smaller ID)
+                    keep_id, remove_id = (gid1, gid2) if gid1 < gid2 else (gid2, gid1)
+                    if (keep_id, remove_id) not in groups_merged and (remove_id, keep_id) not in groups_merged:
+                        keep_group = FaceGroup.objects.get(id=keep_id)
+                        remove_group = FaceGroup.objects.get(id=remove_id)
+                        _merge_groups(keep_group, remove_group)
+                        groups_merged.add((keep_id, remove_id))
+                        merged_groups.add(remove_id)
+                        logger.info(f"[deduplicate_faces] Merged group {remove_id} into {keep_id} "
+                                    f"(ratio={ratio:.2f}, {below_threshold}/{total_pairs} below {AVG_DIST_THRESHOLD})")
 
     # Clean up empty groups (just in case)
     empty_groups = FaceGroup.objects.annotate(
