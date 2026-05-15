@@ -127,13 +127,20 @@ const MyUploads = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ media_ids: selectedIds })
       });
-      const data = await res.json();
       if (res.ok) {
-        setMessage({ type: 'success', text: data.message || t('my_uploads_bulk_delete_success') });
+        let message = t('my_uploads_bulk_delete_success');
+        try {
+          const data = await res.json();
+          if (data.message) message = data.message;
+        } catch (_) {
+          // response had no JSON body (e.g., 204 No Content) – use default message
+        }
+        setMessage({ type: 'success', text: message });
         setSelectedIds([]);
-        setFetchId(prev => prev + 1); // refetch current page, stay on same page
+        setFetchId(prev => prev + 1); // reload current page
       } else {
-        setMessage({ type: 'error', text: data.error || t('my_uploads_bulk_delete_error') });
+        const errData = await res.json().catch(() => ({}));
+        setMessage({ type: 'error', text: errData.error || t('my_uploads_bulk_delete_error') });
       }
     } catch (err) {
       logger.error('[MyUploads] Bulk delete failed:', err);
