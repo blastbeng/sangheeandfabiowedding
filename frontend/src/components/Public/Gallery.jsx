@@ -112,46 +112,33 @@ const Gallery = () => {
       </div>
 
       {/* Face group row */}
-      {faceGroups.length > 0 && (() => {
-        // Deduplicate by user_display_name – keep only the first occurrence of each unique user
-        const seenUsers = new Set();
-        const uniqueGroups = faceGroups.filter(group => {
-          const name = group.user_display_name || '';
-          if (seenUsers.has(name)) return false;
-          seenUsers.add(name);
-          return true;
-        });
-
-        if (uniqueGroups.length === 0) return null;
-
-        return (
-          <div className="mb-6 overflow-x-auto pb-2 scrollbar-hide">
-            <div className="flex gap-3 px-2" style={{ scrollSnapType: 'x mandatory' }}>
-              {uniqueGroups.map(group => (
-                <button
-                  key={group.id}
-                  onClick={() => setSelectedGroupIds(prev =>
-                    prev.includes(group.id)
-                      ? prev.filter(id => id !== group.id)
-                      : [...prev, group.id]
-                  )}
-                  className={`flex flex-col items-center gap-1 flex-shrink-0 transition-transform hover:scale-105 ${
-                    selectedGroupIds.includes(group.id) ? 'ring-2 ring-pink-500 rounded-full' : ''
-                  }`}
-                  style={{ scrollSnapAlign: 'start' }}
-                >
-                  <img
-                    src={group.thumbnail_url || 'https://i.imgur.com/V4RclNb.png'}
-                    alt={group.user_display_name || ''}
-                    className="w-12 h-12 rounded-full object-contain border-2 border-white shadow-sm"
-                    onError={(e) => { e.target.src = 'https://i.imgur.com/V4RclNb.png'; }}
-                  />
-                </button>
-              ))}
-            </div>
+      {faceGroups.length > 0 && (
+        <div className="mb-6 overflow-x-auto pb-2 scrollbar-hide">
+          <div className="flex gap-3 px-2" style={{ scrollSnapType: 'x mandatory' }}>
+            {faceGroups.map(group => (
+              <button
+                key={group.id}
+                onClick={() => setSelectedGroupIds(prev =>
+                  prev.includes(group.id)
+                    ? prev.filter(id => id !== group.id)
+                    : [...prev, group.id]
+                )}
+                className={`flex flex-col items-center gap-1 flex-shrink-0 transition-transform hover:scale-105 ${
+                  selectedGroupIds.includes(group.id) ? 'ring-2 ring-pink-500 rounded-full' : ''
+                }`}
+                style={{ scrollSnapAlign: 'start' }}
+              >
+                <img
+                  src={group.thumbnail_url || 'https://i.imgur.com/V4RclNb.png'}
+                  alt={group.user_display_name || ''}
+                  className="w-12 h-12 rounded-full object-contain border-2 border-white shadow-sm"
+                  onError={(e) => { e.target.src = 'https://i.imgur.com/V4RclNb.png'; }}
+                />
+              </button>
+            ))}
           </div>
-        );
-      })()}
+        </div>
+      )}
 
       {/* Filter controls */}
       <div className="mb-6 flex flex-wrap gap-4 items-end">

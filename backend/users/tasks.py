@@ -326,7 +326,7 @@ def detect_faces_task(self, media_id, force=False):
     # Use MediaPipe for fast face detection
     try:
         with mp.solutions.face_detection.FaceDetection(
-            model_selection=1, min_detection_confidence=0.6
+            model_selection=1, min_detection_confidence=0.5
         ) as face_detection:
             results = face_detection.process(img_array)
     except Exception as e:
@@ -362,7 +362,7 @@ def detect_faces_task(self, media_id, force=False):
         ymax = min(h, ymin + height + 2 * expand_h)
 
         # Skip faces that are too small
-        if (xmax - xmin) < 50 or (ymax - ymin) < 50:
+        if (xmax - xmin) < 30 or (ymax - ymin) < 30:
             continue
 
         face_locations.append((ymin, xmax, ymax, xmin))  # dlib order: top, right, bottom, left
@@ -374,7 +374,9 @@ def detect_faces_task(self, media_id, force=False):
         return
 
     # Remove overlapping detections (keep only the largest face in each cluster)
-    face_locations = _nms(face_locations, threshold=0.5)
+    face_locations = _nms(face_locations, threshold=0.3)
+
+    logger.info(f"[detect_faces] After NMS: {len(face_locations)} face(s) kept for media {media_id}")
 
     if not face_locations:
         logger.info(f"[detect_faces] No faces remaining after NMS in media {media_id}")
@@ -453,7 +455,7 @@ def detect_faces_task(self, media_id, force=False):
             pil_thumb = Image.fromarray(thumb_face)
 
         # Blur check – skip low-quality faces that produce unreliable encodings
-        if _is_blurry(face_for_quality):
+        if _is_blurry(face_for_quality, threshold=100.0):
             logger.info(f"[detect_faces] Skipping blurry face in media {media_id}")
             continue
 
@@ -677,7 +679,7 @@ def detect_faces_profile_picture(self, user_id):
     # Detect faces with MediaPipe
     try:
         with mp.solutions.face_detection.FaceDetection(
-            model_selection=1, min_detection_confidence=0.6
+            model_selection=1, min_detection_confidence=0.5
         ) as face_detection:
             results = face_detection.process(img_array)
     except Exception as e:
@@ -705,7 +707,7 @@ def detect_faces_profile_picture(self, user_id):
     xmax = min(w, xmin + width + 2 * expand_w)
     ymax = min(h, ymin + height + 2 * expand_h)
 
-    if (xmax - xmin) < 50 or (ymax - ymin) < 50:
+    if (xmax - xmin) < 30 or (ymax - ymin) < 30:
         logger.info(f"[detect_faces_profile] Face too small for user {user_id}")
         return
 
@@ -763,7 +765,7 @@ def detect_faces_profile_picture(self, user_id):
         pil_thumb = Image.fromarray(thumb_face)
 
     # Blur check – skip low-quality faces that produce unreliable encodings
-    if _is_blurry(face_for_quality):
+    if _is_blurry(face_for_quality, threshold=100.0):
         logger.info(f"[detect_faces_profile] Skipping blurry face for user {user_id}")
         return
 
