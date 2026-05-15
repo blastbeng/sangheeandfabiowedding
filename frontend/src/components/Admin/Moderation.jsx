@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import logger from '../../utils/logger';
 import authFetch from '../../utils/authFetch';
-import ProtectedMediaPreview from '../Common/ProtectedMediaPreview';
 
 const AdminModeration = () => {
   const { t } = useTranslation();
@@ -17,6 +16,7 @@ const AdminModeration = () => {
   const [pageSize, setPageSize] = useState(10);
   const [totalCount, setTotalCount] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
+  const [failedMediaIds, setFailedMediaIds] = useState(new Set());
   const API_URL = import.meta.env.VITE_API_URL;
 
   const fetchMedia = useCallback(async (pageNum, pageSizeVal) => {
@@ -38,6 +38,7 @@ const AdminModeration = () => {
       const results = Array.isArray(data) ? data : (data.results || []);
       const count = data.count !== undefined ? data.count : results.length;
       setMedia(results);
+      setFailedMediaIds(new Set());
       setTotalCount(count);
       setTotalPages(Math.ceil(count / pageSizeVal) || 1);
       // Reset selection on fresh load
@@ -360,12 +361,28 @@ const AdminModeration = () => {
                     </td>
                     <td className="py-3">
                       <Link to={`/media/${item.id}`} state={{ media: item }}>
-                        <ProtectedMediaPreview
-                          fileUrl={`${API_URL}${item.file_url}`}
-                          mediaType={item.media_type}
-                          className="w-16 h-16 object-cover rounded-lg border-2 border-pink-200 hover:opacity-80 transition"
-                          alt="preview"
-                        />
+                        {failedMediaIds.has(item.id) ? (
+                          <div className="w-16 h-16 bg-gray-100 rounded-lg border-2 border-pink-200 flex items-center justify-center text-gray-400 text-xs">
+                            {t('file_unavailable')}
+                          </div>
+                        ) : (
+                          item.media_type === 'video' ? (
+                            <video
+                              src={`${API_URL}${item.file_url}`}
+                              className="w-16 h-16 object-cover rounded-lg border-2 border-pink-200"
+                              muted
+                              preload="metadata"
+                              onError={() => setFailedMediaIds(prev => new Set(prev).add(item.id))}
+                            />
+                          ) : (
+                            <img
+                              src={`${API_URL}${item.file_url}`}
+                              alt="preview"
+                              className="w-16 h-16 object-cover rounded-lg border-2 border-pink-200"
+                              onError={() => setFailedMediaIds(prev => new Set(prev).add(item.id))}
+                            />
+                          )
+                        )}
                       </Link>
                     </td>
                     <td className="py-3 text-gray-700">{item.user_email || t('anonymous')}</td>
@@ -420,17 +437,34 @@ const AdminModeration = () => {
                   </div>
                   {/* Media preview */}
                   <div className="aspect-w-1 aspect-h-1 bg-gray-200">
-                    {item.file_url ? (
-                      <ProtectedMediaPreview
-                        fileUrl={`${API_URL}${item.file_url}`}
-                        mediaType={item.media_type}
-                        className="object-cover w-full h-full"
-                        alt={item.caption || 'Media'}
-                      />
-                    ) : (
-                      <div className="flex items-center justify-center h-full text-gray-400">
-                        📁
+                    {failedMediaIds.has(item.id) ? (
+                      <div className="w-full aspect-square bg-gray-100 flex items-center justify-center text-gray-400">
+                        <div className="text-center">
+                          <span className="text-4xl">🖼️‍🗑️</span>
+                          <p className="text-xs mt-1">{t('file_unavailable')}</p>
+                        </div>
                       </div>
+                    ) : (
+                      item.file_url ? (
+                        item.media_type === 'video' ? (
+                          <video
+                            src={`${API_URL}${item.file_url}`}
+                            className="object-cover w-full h-full"
+                            muted
+                            preload="metadata"
+                            onError={() => setFailedMediaIds(prev => new Set(prev).add(item.id))}
+                          />
+                        ) : (
+                          <img
+                            src={`${API_URL}${item.file_url}`}
+                            alt={item.caption || 'Media'}
+                            className="object-cover w-full h-full"
+                            onError={() => setFailedMediaIds(prev => new Set(prev).add(item.id))}
+                          />
+                        )
+                      ) : (
+                        <div className="flex items-center justify-center h-full text-gray-400">📁</div>
+                      )
                     )}
                   </div>
                   {/* Info and actions */}
