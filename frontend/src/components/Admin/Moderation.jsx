@@ -1,11 +1,9 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import logger from '../../utils/logger';
 import authFetch from '../../utils/authFetch';
 import ProtectedMediaPreview from '../Common/ProtectedMediaPreview';
-
-const PAGE_SIZE = 20;
 
 const AdminModeration = () => {
   const { t } = useTranslation();
@@ -16,71 +14,55 @@ const AdminModeration = () => {
   const [selectAll, setSelectAll] = useState(false);
   const [viewMode, setViewMode] = useState('gallery'); // 'gallery' | 'table'
   const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const sentinelRef = useRef(null);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
   const API_URL = import.meta.env.VITE_API_URL;
 
-  const fetchMedia = useCallback(async (pageNum, append = false) => {
+  const fetchMedia = useCallback(async (pageNum, pageSizeVal) => {
     const params = new URLSearchParams(filters);
     params.append('page', pageNum);
-    params.append('page_size', PAGE_SIZE);
+    params.append('page_size', pageSizeVal);
 
     try {
       const res = await authFetch(`${API_URL}/api/auth/media/moderation/?${params}`);
       if (!res.ok) {
         logger.error('[Moderation] Fetch failed with status:', res.status);
-        if (!append) setMedia([]);
-        setHasMore(false);
+        setMedia([]);
+        setTotalCount(0);
+        setTotalPages(0);
         return;
       }
       const data = await res.json();
-      const newMedia = Array.isArray(data) ? data : (data.results || []);
-      if (append) {
-        setMedia(prev => [...prev, ...newMedia]);
-      } else {
-        setMedia(newMedia);
-        // Reset selection only on fresh load (filter change)
-        setSelectedIds([]);
-        setSelectAll(false);
-      }
-      setHasMore(newMedia.length === PAGE_SIZE);
+      // Support both paginated response and plain array
+      const results = Array.isArray(data) ? data : (data.results || []);
+      const count = data.count !== undefined ? data.count : results.length;
+      setMedia(results);
+      setTotalCount(count);
+      setTotalPages(Math.ceil(count / pageSizeVal) || 1);
+      // Reset selection on fresh load
+      setSelectedIds([]);
+      setSelectAll(false);
     } catch (err) {
       logger.error('[Moderation] Fetch error:', err);
-      if (!append) setMedia([]);
-      setHasMore(false);
+      setMedia([]);
+      setTotalCount(0);
+      setTotalPages(0);
     } finally {
       setLoading(false);
-      setLoadingMore(false);
     }
   }, [filters, API_URL]);
 
+  // Reset to page 1 when filters change
   useEffect(() => {
     setPage(1);
-    setHasMore(true);
-    setLoading(true);
-    fetchMedia(1, false);
-  }, [filters, fetchMedia]);
+  }, [filters]);
 
+  // Fetch whenever page, pageSize, or the fetchMedia function changes
   useEffect(() => {
-    if (!hasMore || loadingMore) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasMore && !loadingMore) {
-          setLoadingMore(true);
-          const nextPage = page + 1;
-          setPage(nextPage);
-          fetchMedia(nextPage, true);
-        }
-      },
-      { threshold: 0.1 }
-    );
-    const currentSentinel = sentinelRef.current;
-    if (currentSentinel) observer.observe(currentSentinel);
-    return () => {
-      if (currentSentinel) observer.unobserve(currentSentinel);
-    };
-  }, [hasMore, loadingMore, page, fetchMedia]);
+    setLoading(true);
+    fetchMedia(page, pageSize);
+  }, [page, pageSize, fetchMedia]);
 
   const handleApprove = (id) => {
     authFetch(`${API_URL}/api/auth/media/moderation/${id}/`, {
@@ -168,11 +150,8 @@ const AdminModeration = () => {
       })
     }).then(res => {
       if (res.ok) {
-        // Refresh the list after bulk action
         setPage(1);
-        setHasMore(true);
-        setLoading(true);
-        fetchMedia(1, false);
+        // fetchMedia will be triggered by the page change effect
       } else {
         logger.error('[Moderation] Bulk action failed');
       }
@@ -224,7 +203,7 @@ const AdminModeration = () => {
   if (loading) {
     return (
       <div className="text-center py-10">
-        <span className="text-4xl heart-decoration inline-block">💝</span>
+        <span className="text-4xl heartDecoration inline-block">💝</span>
         <p className="mt-4 text-gray-600">{t('admin_moderation_loading')}</p>
       </div>
     );
@@ -298,6 +277,49 @@ const AdminModeration = () => {
           )}
         </div>
 
+        {/* Pagination controls */}
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+          <div className="flex items-center gap-2">
+            <label htmlFor="pageSizeSelect" className="text-sm text-gray-600">
+              {t('items_per_page')}:
+            </label>
+            <select
+              id="pageSizeSelect"
+              value={pageSize}
+              onChange={(e) => {
+                setPageSize(Number(e.target.value));
+                setPage(1);
+              }}
+              className="wedding-input w-20"
+            >
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="px-3 py-1 rounded border border-gray-300 text-sm disabled:opacity-50"
+            >
+              {t('previous')}
+            </button>
+            <span className="text-sm text-gray-700">
+              {t('page_x_of_y', { current: page, total: totalPages })}
+            </span>
+            <button
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              disabled={page >= totalPages}
+              className="px-3 py-1 rounded border border-gray-300 text-sm disabled:opacity-50"
+            >
+              {t('next')}
+            </button>
+          </div>
+        </div>
+
         {viewMode === 'table' ? (
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -353,15 +375,6 @@ const AdminModeration = () => {
                 ))}
               </tbody>
             </table>
-            {hasMore && (
-              <div ref={sentinelRef} className="flex justify-center py-4">
-                {loadingMore ? (
-                  <span className="text-gray-500">{t('loading_more')}</span>
-                ) : (
-                  <span className="text-gray-400">&#8203;</span>
-                )}
-              </div>
-            )}
           </div>
         ) : (
           <>
@@ -459,15 +472,6 @@ const AdminModeration = () => {
                 </div>
               ))}
             </div>
-            {hasMore && (
-              <div ref={sentinelRef} className="col-span-full flex justify-center py-4">
-                {loadingMore ? (
-                  <span className="text-gray-500">{t('loading_more')}</span>
-                ) : (
-                  <span className="text-gray-400">&#8203;</span>
-                )}
-              </div>
-            )}
           </>
         )}
       </div>
