@@ -156,16 +156,16 @@ const Upload = () => {
 
       if (errorCount === 0 && warningCount === 0) {
         setSuccess(`${t('upload_successful')} ${successCount} ${t('files_processed')}`);
-        setTimeout(() => navigate('/my-uploads'), 2000);
       } else if (errorCount === 0) {
         setSuccess(`${t('upload_successful')} ${successCount} ${t('files_processed')} (${warningCount} ${warningCount === 1 ? t('duplicate') : t('duplicates')})`);
-        setTimeout(() => navigate('/my-uploads'), 2000);
       } else {
         setError(`${t('upload_completed_with_errors')} (${successCount} ok, ${errorCount} failed, ${warningCount} ${warningCount === 1 ? t('duplicate') : t('duplicates')})`);
       }
       clearPendingTasks();
       releaseWakeLock();
       window.removeEventListener('beforeunload', beforeUnloadHandler);
+      // Scroll to top so the user sees the final message and the new button
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }, [fileStatuses, uploading, navigate, t]);
 
@@ -298,6 +298,18 @@ const Upload = () => {
 
         {error && <div className="bg-red-50 border-2 border-red-300 text-red-700 px-4 py-3 rounded-xl mb-4">💔 {error}</div>}
         {success && <div className="bg-green-50 border-2 border-green-300 text-green-700 px-4 py-3 rounded-xl mb-4">✅ {success}</div>}
+
+        {/* "Go to my uploads" button – shown only after upload is complete */}
+        {(success || error) && !uploading && (
+          <div className="text-center mt-4">
+            <button
+              onClick={() => navigate('/my-uploads')}
+              className="wedding-btn"
+            >
+              {t('go_to_my_uploads')}
+            </button>
+          </div>
+        )}
 
         {/* Progress bar */}
         {uploading && total > 0 && (
