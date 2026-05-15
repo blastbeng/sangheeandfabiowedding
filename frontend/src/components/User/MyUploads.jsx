@@ -196,7 +196,7 @@ const MyUploads = () => {
                     setPageSize(Number(e.target.value));
                     setPage(1);
                   }}
-                  className="border border-gray-300 rounded px-2 py-1 text-sm"
+                  className="wedding-input text-sm"
                   disabled={fetching}
                 >
                   <option value={5}>5</option>
@@ -210,14 +210,14 @@ const MyUploads = () => {
                 <button
                   onClick={() => setPage(1)}
                   disabled={page === 1 || fetching}
-                  className="px-2 py-1 text-sm border rounded disabled:opacity-50"
+                  className="wedding-btn text-sm disabled:opacity-50"
                 >
                   ««
                 </button>
                 <button
                   onClick={() => setPage(p => Math.max(1, p - 1))}
                   disabled={page === 1 || fetching}
-                  className="px-2 py-1 text-sm border rounded disabled:opacity-50"
+                  className="wedding-btn text-sm disabled:opacity-50"
                 >
                   ‹
                 </button>
@@ -255,7 +255,7 @@ const MyUploads = () => {
                       ? page * pageSize >= totalCount
                       : uploads.length < pageSize)
                   }
-                  className="px-2 py-1 text-sm border rounded disabled:opacity-50"
+                  className="wedding-btn text-sm disabled:opacity-50"
                 >
                   ›
                 </button>
@@ -267,7 +267,7 @@ const MyUploads = () => {
                       ? page * pageSize >= totalCount
                       : uploads.length < pageSize)
                   }
-                  className="px-2 py-1 text-sm border rounded disabled:opacity-50"
+                  className="wedding-btn text-sm disabled:opacity-50"
                 >
                   »»
                 </button>

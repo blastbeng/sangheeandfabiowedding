@@ -306,7 +306,7 @@ const AdminModeration = () => {
             <button
               onClick={() => setPage(p => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="px-3 py-1 rounded border border-gray-300 text-sm disabled:opacity-50"
+              className="wedding-btn text-sm disabled:opacity-50"
             >
               {t('previous')}
             </button>
@@ -316,7 +316,7 @@ const AdminModeration = () => {
             <button
               onClick={() => setPage(p => Math.min(totalPages, p + 1))}
               disabled={page >= totalPages}
-              className="px-3 py-1 rounded border border-gray-300 text-sm disabled:opacity-50"
+              className="wedding-btn text-sm disabled:opacity-50"
             >
               {t('next')}
             </button>
