@@ -160,6 +160,7 @@ const resources = {
       "Search by user": "Cerca per utente",
       "Username or name...": "Nome utente o nome...",
       "Filtering by": "Filtrando per",
+      "Clear all": "Cancella tutto",
       "Clear filter": "Rimuovi filtro",
       "upload_subtitle": "Carica le tue belle foto e video del nostro giorno speciale 🌹",
       "select_photos_videos": "Seleziona Foto e Video",
@@ -315,6 +316,7 @@ const resources = {
       "filter_first_name": "Filtra nome...",
       "filter_last_name": "Filtra cognome...",
       "all": "Tutti",
+      "All users": "Tutti gli utenti",
       "email_already_exists": "Un account con questa email esiste già.",
       "username_already_taken": "Questo nome utente è già stato preso.",
       "username_invalid_characters": "Il nome utente contiene caratteri non validi. Sono ammessi solo lettere, numeri e @/./+/-/_.",
@@ -401,7 +403,8 @@ const resources = {
       "upload_do_not_close": "⚠️ Non chiudere il browser o mettere il telefono in standby fino al termine del caricamento.",
       "stop_upload": "Ferma Caricamento",
       "stop_upload_confirm": "Sei sicuro di voler fermare tutti i caricamenti? I file in corso andranno persi.",
-      "May 16": "16 Maggio"
+      "May 16": "16 Maggio",
+      "Remove filter": "Rimuovi filtro"
     }
   },
   ko: {
@@ -562,6 +565,7 @@ const resources = {
       "Search by user": "사용자 검색",
       "Username or name...": "사용자명 또는 이름...",
       "Filtering by": "필터 기준",
+      "Clear all": "모두 지우기",
       "Clear filter": "필터 지우기",
       "upload_subtitle": "우리의 특별한 날의 아름다운 사진과 동영상을 업로드하세요 🌹",
       "select_photos_videos": "사진 및 동영상 선택",
@@ -717,6 +721,7 @@ const resources = {
       "filter_first_name": "이름 필터...",
       "filter_last_name": "성 필터...",
       "all": "모두",
+      "All users": "모든 사용자",
       "email_already_exists": "이 이메일로 계정이 이미 존재합니다.",
       "username_already_taken": "이 사용자명은 이미 사용 중입니다.",
       "username_invalid_characters": "사용자명에 유효하지 않은 문자가 포함되어 있습니다. 문자, 숫자, @/./+/-/_만 사용할 수 있습니다.",
@@ -803,7 +808,8 @@ const resources = {
       "upload_do_not_close": "⚠️ 업로드가 완료될 때까지 브라우저를 닫거나 휴대폰을 대기 모드로 전환하지 마세요.",
       "stop_upload": "업로드 중지",
       "stop_upload_confirm": "모든 업로드를 중지하시겠습니까? 진행 중인 파일은 손실됩니다.",
-      "May 16": "5월 16일"
+      "May 16": "5월 16일",
+      "Remove filter": "필터 제거"
     }
   },
   en: {
@@ -964,6 +970,7 @@ const resources = {
       "Search by user": "Search by user",
       "Username or name...": "Username or name...",
       "Filtering by": "Filtering by",
+      "Clear all": "Clear all",
       "Clear filter": "Clear filter",
       "upload_subtitle": "Upload your beautiful photos and videos of our special day 🌹",
       "select_photos_videos": "Select Photos & Videos",
@@ -1119,6 +1126,7 @@ const resources = {
       "filter_first_name": "Filter first name...",
       "filter_last_name": "Filter last name...",
       "all": "All",
+      "All users": "All users",
       "email_already_exists": "An account with this email already exists.",
       "username_already_taken": "This username is already taken.",
       "username_invalid_characters": "Username contains invalid characters. Only letters, numbers, and @/./+/-/_ are allowed.",
@@ -1205,7 +1213,8 @@ const resources = {
       "upload_do_not_close": "⚠️ Do not close the browser or let your phone go to sleep until the upload finishes.",
       "stop_upload": "Stop Upload",
       "stop_upload_confirm": "Are you sure you want to stop all uploads? Any in-progress uploads will be lost.",
-      "May 16": "May 16"
+      "May 16": "May 16",
+      "Remove filter": "Remove filter"
     }
   }
 };
