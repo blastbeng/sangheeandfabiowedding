@@ -414,7 +414,21 @@ const resources = {
       "page_x_of_y": "Pagina {{current}} di {{total}}",
       "go_to_my_uploads": "Vai ai miei caricamenti",
       "duplicate": "Duplicato",
-      "duplicates": "Duplicati"
+      "duplicates": "Duplicati",
+      "loading": "Caricamento...",
+      "network_error": "Errore di rete. Controlla la connessione e riprova.",
+      "error_loading_profile": "Errore nel caricamento del profilo.",
+      "media_not_found": "Media non trovato.",
+      "back_to_gallery": "Torna alla galleria",
+      "back": "Indietro",
+      "error_loading_guests": "Impossibile caricare gli ospiti. Riprova più tardi.",
+      "retry": "Riprova",
+      "pagination_page_info": "Pagina {{current}} di {{total}}",
+      "An error occurred": "Si è verificato un errore",
+      "too_many_attempts": "Troppi tentativi. Riprova più tardi.",
+      "Resend verification email": "Invia di nuovo l'email di verifica",
+      "Your account has been deactivated. Please contact the administrator.": "Il tuo account è stato disattivato. Contatta l'amministratore.",
+      "Your account has been deleted.": "Il tuo account è stato eliminato."
     }
   },
   ko: {
@@ -829,7 +843,21 @@ const resources = {
       "page_x_of_y": "페이지 {{current}} / {{total}}",
       "go_to_my_uploads": "내 업로드로 이동",
       "duplicate": "중복",
-      "duplicates": "중복"
+      "duplicates": "중복",
+      "loading": "로딩 중...",
+      "network_error": "네트워크 오류. 연결을 확인하고 다시 시도하세요.",
+      "error_loading_profile": "프로필을 불러오는 중 오류가 발생했습니다.",
+      "media_not_found": "미디어를 찾을 수 없습니다.",
+      "back_to_gallery": "갤러리로 돌아가기",
+      "back": "뒤로",
+      "error_loading_guests": "하객을 불러오지 못했습니다. 나중에 다시 시도하세요.",
+      "retry": "다시 시도",
+      "pagination_page_info": "페이지 {{current}} / {{total}}",
+      "An error occurred": "오류가 발생했습니다",
+      "too_many_attempts": "너무 많은 시도. 나중에 다시 시도하세요.",
+      "Resend verification email": "인증 이메일 다시 보내기",
+      "Your account has been deactivated. Please contact the administrator.": "계정이 비활성화되었습니다. 관리자에게 문의하세요.",
+      "Your account has been deleted.": "계정이 삭제되었습니다."
     }
   },
   en: {
@@ -1244,7 +1272,21 @@ const resources = {
       "page_x_of_y": "Page {{current}} of {{total}}",
       "go_to_my_uploads": "Go to my uploads",
       "duplicate": "Duplicate",
-      "duplicates": "Duplicates"
+      "duplicates": "Duplicates",
+      "loading": "Loading...",
+      "network_error": "Network error. Please check your connection and try again.",
+      "error_loading_profile": "Error loading profile.",
+      "media_not_found": "Media not found.",
+      "back_to_gallery": "Back to gallery",
+      "back": "Back",
+      "error_loading_guests": "Failed to load guests. Please try again later.",
+      "retry": "Retry",
+      "pagination_page_info": "Page {{current}} of {{total}}",
+      "An error occurred": "An error occurred",
+      "too_many_attempts": "Too many attempts. Please try again later.",
+      "Resend verification email": "Resend verification email",
+      "Your account has been deactivated. Please contact the administrator.": "Your account has been deactivated. Please contact the administrator.",
+      "Your account has been deleted.": "Your account has been deleted."
     }
   }
 };
