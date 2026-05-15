@@ -51,15 +51,14 @@ def _align_face(image_array, top, right, bottom, left, target_size=256, landmark
         # Compute angle between eyes
         dY = right_eye[1] - left_eye[1]
         dX = right_eye[0] - left_eye[0]
-        angle = np.degrees(np.arctan2(dY, dX)) - 180
+        angle = np.degrees(np.arctan2(dY, dX))
 
         # Desired position of eyes in the aligned image
         desired_left_eye = (0.35, 0.35)
         desired_right_eye = (0.65, 0.35)
 
         if upside_down:
-            angle += 180
-            # Swap desired eye positions because after 180° rotation left/right swap
+            # angle already ~180° for upside-down faces; just swap desired positions
             desired_left_eye, desired_right_eye = desired_right_eye, desired_left_eye
 
         desired_dist = desired_right_eye[0] - desired_left_eye[0]
