@@ -16,6 +16,7 @@ const MyUploads = () => {
   const [selectedIds, setSelectedIds] = useState([]);
   const [message, setMessage] = useState(null);
   const [viewMode, setViewMode] = useState('gallery');
+  const [failedMediaIds, setFailedMediaIds] = useState(new Set());
   const API_URL = import.meta.env.VITE_API_URL;
 
   // Auto-dismiss messages after 4 seconds
@@ -59,6 +60,7 @@ const MyUploads = () => {
 
         if (!cancelled) {
           setUploads(results);
+          setFailedMediaIds(new Set());
           if (count !== undefined) setTotalCount(count);
           else setTotalCount(null);
 
@@ -349,9 +351,20 @@ const MyUploads = () => {
                           />
                         </td>
                         <td className="py-3">
-                          {upload.file_url ? (
-                            <img src={`${API_URL}${upload.file_url}`} alt={t('my_uploads_preview_alt')} className="w-16 h-16 object-cover rounded-lg border-2 border-pink-200" />
-                          ) : <span className="text-2xl">🎬</span>}
+                          {failedMediaIds.has(upload.id) ? (
+                            <div className="w-16 h-16 bg-gray-100 rounded-lg border-2 border-pink-200 flex items-center justify-center text-gray-400 text-xs">
+                              {t('file_unavailable')}
+                            </div>
+                          ) : (
+                            upload.file_url ? (
+                              <img
+                                src={`${API_URL}${upload.file_url}`}
+                                alt={t('my_uploads_preview_alt')}
+                                className="w-16 h-16 object-cover rounded-lg border-2 border-pink-200"
+                                onError={() => setFailedMediaIds(prev => new Set(prev).add(upload.id))}
+                              />
+                            ) : <span className="text-2xl">🎬</span>
+                          )}
                         </td>
                         <td className="py-3 text-gray-700 whitespace-nowrap">{upload.caption || '-'}</td>
                         <td className="py-3 text-gray-600 text-sm whitespace-nowrap">{new Date(upload.uploaded_at).toLocaleDateString()}</td>
@@ -377,65 +390,79 @@ const MyUploads = () => {
                   <span className="ml-2 text-sm text-gray-600">{t('select_all')}</span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                  {uploads.map((upload) => (
-                    <div
-                      key={upload.id}
-                      className={`bg-white rounded-lg shadow overflow-hidden relative cursor-pointer border-2 ${
-                        selectedIds.includes(upload.id) ? 'border-wedding-600' : 'border-transparent'
-                      }`}
-                      onClick={() => toggleSelectItem(upload.id)}
-                    >
-                      {/* Checkbox overlay */}
-                      <div className="absolute top-2 left-2 z-10">
-                        <input
-                          type="checkbox"
-                          checked={selectedIds.includes(upload.id)}
-                          onChange={() => toggleSelectItem(upload.id)}
-                          onClick={(e) => e.stopPropagation()}
-                          className="w-4 h-4 text-wedding-600 border-gray-300 rounded focus:ring-wedding-500"
-                        />
-                      </div>
-                      {/* Media preview */}
-                      <div className="aspect-w-1 aspect-h-1 bg-gray-200">
-                        {upload.file_url ? (
-                          upload.media_type === 'video' ? (
-                            <video
-                              src={`${API_URL}${upload.file_url}`}
-                              className="object-cover w-full h-full"
-                              muted
-                              preload="metadata"
-                            />
-                          ) : (
-                            <img
-                              src={`${API_URL}${upload.file_url}`}
-                              alt={upload.caption || t('beautiful_moment')}
-                              className="object-cover w-full h-full"
-                            />
-                          )
+                  {uploads.map((upload) => {
+                    const isFailed = failedMediaIds.has(upload.id);
+                    return (
+                      <div
+                        key={upload.id}
+                        className={`bg-white rounded-lg shadow overflow-hidden relative cursor-pointer border-2 ${
+                          selectedIds.includes(upload.id) ? 'border-wedding-600' : 'border-transparent'
+                        }`}
+                        onClick={() => toggleSelectItem(upload.id)}
+                      >
+                        {/* Checkbox overlay */}
+                        <div className="absolute top-2 left-2 z-10">
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.includes(upload.id)}
+                            onChange={() => toggleSelectItem(upload.id)}
+                            onClick={(e) => e.stopPropagation()}
+                            className="w-4 h-4 text-wedding-600 border-gray-300 rounded focus:ring-wedding-500"
+                          />
+                        </div>
+                        {/* Media preview */}
+                        {isFailed ? (
+                          <div className="aspect-w-1 aspect-h-1 bg-gray-100 flex items-center justify-center text-gray-400">
+                            <div className="text-center">
+                              <span className="text-4xl">🖼️‍🗑️</span>
+                              <p className="text-xs mt-1">{t('file_unavailable')}</p>
+                            </div>
+                          </div>
                         ) : (
-                          <div className="flex items-center justify-center h-full text-gray-400">🎬</div>
+                          <div className="aspect-w-1 aspect-h-1 bg-gray-200">
+                            {upload.file_url ? (
+                              upload.media_type === 'video' ? (
+                                <video
+                                  src={`${API_URL}${upload.file_url}`}
+                                  className="object-cover w-full h-full"
+                                  muted
+                                  preload="metadata"
+                                  onError={() => setFailedMediaIds(prev => new Set(prev).add(upload.id))}
+                                />
+                              ) : (
+                                <img
+                                  src={`${API_URL}${upload.file_url}`}
+                                  alt={upload.caption || t('beautiful_moment')}
+                                  className="object-cover w-full h-full"
+                                  onError={() => setFailedMediaIds(prev => new Set(prev).add(upload.id))}
+                                />
+                              )
+                            ) : (
+                              <div className="flex items-center justify-center h-full text-gray-400">🎬</div>
+                            )}
+                          </div>
                         )}
-                      </div>
-                      {/* Info and actions */}
-                      <div className="p-3">
-                        <p className="text-sm font-medium text-gray-900 truncate">
-                          {upload.caption || t('no_caption')}
-                        </p>
-                        <div className="mt-2 flex items-center justify-between">
-                          {getStatusBadge(upload.status)}
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDelete(upload.id);
-                            }}
-                            className="text-red-500 hover:text-red-700 text-sm"
-                          >
-                            {t('my_uploads_delete_button')}
-                          </button>
+                        {/* Info and actions */}
+                        <div className="p-3">
+                          <p className="text-sm font-medium text-gray-900 truncate">
+                            {upload.caption || t('no_caption')}
+                          </p>
+                          <div className="mt-2 flex items-center justify-between">
+                            {getStatusBadge(upload.status)}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDelete(upload.id);
+                              }}
+                              className="text-red-500 hover:text-red-700 text-sm"
+                            >
+                              {t('my_uploads_delete_button')}
+                            </button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </>
             )}

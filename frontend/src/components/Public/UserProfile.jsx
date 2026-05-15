@@ -16,6 +16,7 @@ const UserProfile = () => {
   const [mediaPage, setMediaPage] = useState(1);
   const [hasMoreMedia, setHasMoreMedia] = useState(true);
   const [loadingMoreMedia, setLoadingMoreMedia] = useState(false);
+  const [failedMediaIds, setFailedMediaIds] = useState(new Set());
   const sentinelRef = useRef(null);
   const API_URL = import.meta.env.VITE_API_URL;
 
@@ -39,6 +40,7 @@ const UserProfile = () => {
         setMedia(prev => [...prev, ...newMedia]);
       } else {
         setMedia(newMedia);
+        setFailedMediaIds(new Set());
       }
       setHasMoreMedia(newMedia.length === PAGE_SIZE);
     } catch (err) {
@@ -183,35 +185,49 @@ const UserProfile = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {media.map((item) => (
-            <div key={item.id} className="gallery-item bg-white shadow-lg">
-              <Link to={`/media/${item.id}`} state={{ media: item }} className="block">
-                <div className="relative">
-                  {item.media_type === 'video' ? (
-                    <video
-                      src={`${API_URL}${item.file_url}`}
-                      className="w-full h-48 object-cover"
-                      controls
-                    />
-                  ) : (
-                    <img
-                      src={`${API_URL}${item.file_url}`}
-                      alt={item.caption || t('beautiful_moment')}
-                      className="w-full h-48 object-cover"
-                    />
-                  )}
-                </div>
-                <div className="p-4">
-                  <p className="text-gray-700 text-sm mb-2 line-clamp-2">
-                    {item.caption || t('beautiful_moment')}
-                  </p>
-                  <p className="text-gray-500 text-xs mt-2">
-                    📅 {new Date(item.uploaded_at).toLocaleDateString()}
-                  </p>
-                </div>
-              </Link>
-            </div>
-          ))}
+          {media.map((item) => {
+            const isFailed = failedMediaIds.has(item.id);
+            return (
+              <div key={item.id} className="gallery-item bg-white shadow-lg">
+                {isFailed ? (
+                  <div className="w-full h-48 bg-gray-100 flex items-center justify-center text-gray-400">
+                    <div className="text-center">
+                      <span className="text-4xl">🖼️‍🗑️</span>
+                      <p className="text-xs mt-1">{t('file_unavailable')}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <Link to={`/media/${item.id}`} state={{ media: item }} className="block">
+                    <div className="relative">
+                      {item.media_type === 'video' ? (
+                        <video
+                          src={`${API_URL}${item.file_url}`}
+                          className="w-full h-48 object-cover"
+                          controls
+                          onError={() => setFailedMediaIds(prev => new Set(prev).add(item.id))}
+                        />
+                      ) : (
+                        <img
+                          src={`${API_URL}${item.file_url}`}
+                          alt={item.caption || t('beautiful_moment')}
+                          className="w-full h-48 object-cover"
+                          onError={() => setFailedMediaIds(prev => new Set(prev).add(item.id))}
+                        />
+                      )}
+                    </div>
+                    <div className="p-4">
+                      <p className="text-gray-700 text-sm mb-2 line-clamp-2">
+                        {item.caption || t('beautiful_moment')}
+                      </p>
+                      <p className="text-gray-500 text-xs mt-2">
+                        📅 {new Date(item.uploaded_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </Link>
+                )}
+              </div>
+            );
+          })}
           {hasMoreMedia && (
             <div ref={sentinelRef} className="col-span-full flex justify-center py-4">
               {loadingMoreMedia ? (

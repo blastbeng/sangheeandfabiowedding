@@ -16,6 +16,7 @@ const Gallery = () => {
   const [selectedUserId, setSelectedUserId] = useState('');
   const [faceGroups, setFaceGroups] = useState([]);
   const [selectedGroupIds, setSelectedGroupIds] = useState([]);
+  const [failedMediaIds, setFailedMediaIds] = useState(new Set());
   const API_URL = import.meta.env.VITE_API_URL;
 
   const sentinelRef = useRef(null);
@@ -37,6 +38,7 @@ const Gallery = () => {
         setMedia(prev => [...prev, ...newMedia]);
       } else {
         setMedia(newMedia);
+        setFailedMediaIds(new Set());
       }
       setHasMore(newMedia.length === PAGE_SIZE);
       setLoading(false);
@@ -213,6 +215,7 @@ const Gallery = () => {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {media.map((item) => {
+            const isFailed = failedMediaIds.has(item.id);
             const uniqueFaceTags = item.face_tags
               ? item.face_tags.filter((tag, index, self) => {
                   const thumb = tag.thumbnail_url || '';
@@ -222,22 +225,33 @@ const Gallery = () => {
 
             return (
               <div key={item.id} className="gallery-item bg-white shadow-lg">
-                <Link to={`/media/${item.id}`} state={{ media: item }} className="block relative">
-                  {item.media_type === 'video' ? (
-                    <video
-                      src={`${API_URL}${item.file_url}`}
-                      className="w-full aspect-square object-cover"
-                      muted
-                      preload="metadata"
-                    />
-                  ) : (
-                    <img
-                      src={`${API_URL}${item.file_url}`}
-                      alt={item.caption || t('beautiful_moment')}
-                      className="w-full aspect-square object-cover"
-                    />
-                  )}
-                </Link>
+                {isFailed ? (
+                  <div className="w-full aspect-square bg-gray-100 flex items-center justify-center text-gray-400">
+                    <div className="text-center">
+                      <span className="text-4xl">🖼️‍🗑️</span>
+                      <p className="text-xs mt-1">{t('file_unavailable')}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <Link to={`/media/${item.id}`} state={{ media: item }} className="block relative">
+                    {item.media_type === 'video' ? (
+                      <video
+                        src={`${API_URL}${item.file_url}`}
+                        className="w-full aspect-square object-cover"
+                        muted
+                        preload="metadata"
+                        onError={() => setFailedMediaIds(prev => new Set(prev).add(item.id))}
+                      />
+                    ) : (
+                      <img
+                        src={`${API_URL}${item.file_url}`}
+                        alt={item.caption || t('beautiful_moment')}
+                        className="w-full aspect-square object-cover"
+                        onError={() => setFailedMediaIds(prev => new Set(prev).add(item.id))}
+                      />
+                    )}
+                  </Link>
+                )}
                 <div className="p-3">
                   {/* Uploader info */}
                   {item.uploader_username && (
