@@ -24,6 +24,13 @@ from config.settings import (
 logger = logging.getLogger(__name__)
 
 
+def _is_blurry(face_image, threshold=100.0):
+    """Return True if the face image is too blurry to produce a reliable encoding."""
+    gray = cv2.cvtColor(face_image, cv2.COLOR_RGB2GRAY)
+    laplacian_var = cv2.Laplacian(gray, cv2.CV_64F).var()
+    return laplacian_var < threshold
+
+
 def _align_face(image_array, top, right, bottom, left, target_size=256, landmarks=None):
     """
     Align a face so the eyes are horizontal, then crop and resize.
@@ -288,7 +295,7 @@ def detect_faces_task(self, media_id, force=False):
     # Use MediaPipe for fast face detection
     try:
         with mp.solutions.face_detection.FaceDetection(
-            model_selection=1, min_detection_confidence=0.5
+            model_selection=1, min_detection_confidence=0.6
         ) as face_detection:
             results = face_detection.process(img_array)
     except Exception as e:
@@ -380,6 +387,7 @@ def detect_faces_task(self, media_id, force=False):
                     logger.debug(f"[detect_faces] Aligned face encoding failed for media {media_id}, falling back to original crop")
 
         if use_aligned:
+            face_for_quality = aligned_face_uint8
             encoding = encoding_result[0]
             pil_thumb = Image.fromarray(aligned_face_uint8)
         else:
@@ -399,8 +407,14 @@ def detect_faces_task(self, media_id, force=False):
             # Rotate crop if face is upside down
             if upside_down:
                 face_crop = cv2.rotate(face_crop, cv2.ROTATE_180)
+            face_for_quality = face_crop
             thumb_face = cv2.resize(face_crop, (160, 160))
             pil_thumb = Image.fromarray(thumb_face)
+
+        # Blur check – skip low-quality faces that produce unreliable encodings
+        if _is_blurry(face_for_quality):
+            logger.info(f"[detect_faces] Skipping blurry face in media {media_id}")
+            continue
 
         # Create thumbnail content
         thumb_io = BytesIO()
@@ -409,7 +423,7 @@ def detect_faces_task(self, media_id, force=False):
 
         # Find closest existing group
         best_group_id = None
-        min_distance = 0.55
+        min_distance = 0.5
         for group_id, centroid in group_centroids.items():
             distance = np.linalg.norm(encoding - centroid)
             if distance < min_distance:
@@ -606,7 +620,7 @@ def detect_faces_profile_picture(self, user_id):
     # Detect faces with MediaPipe
     try:
         with mp.solutions.face_detection.FaceDetection(
-            model_selection=1, min_detection_confidence=0.5
+            model_selection=1, min_detection_confidence=0.6
         ) as face_detection:
             results = face_detection.process(img_array)
     except Exception as e:
@@ -666,6 +680,7 @@ def detect_faces_profile_picture(self, user_id):
                 logger.debug(f"[detect_faces_profile] Aligned face encoding failed for user {user_id}, falling back to original crop")
 
     if use_aligned:
+        face_for_quality = aligned_face_uint8
         encoding = face_encodings_result[0]
         pil_thumb = Image.fromarray(aligned_face_uint8)
     else:
@@ -685,8 +700,14 @@ def detect_faces_profile_picture(self, user_id):
             return
         if upside_down:
             face_crop = cv2.rotate(face_crop, cv2.ROTATE_180)
+        face_for_quality = face_crop
         thumb_face = cv2.resize(face_crop, (160, 160))
         pil_thumb = Image.fromarray(thumb_face)
+
+    # Blur check – skip low-quality faces that produce unreliable encodings
+    if _is_blurry(face_for_quality):
+        logger.info(f"[detect_faces_profile] Skipping blurry face for user {user_id}")
+        return
 
     # Create thumbnail content
     thumb_io = BytesIO()
@@ -710,7 +731,7 @@ def detect_faces_profile_picture(self, user_id):
 
     # Find closest group
     best_group_id = None
-    min_distance = 0.55
+    min_distance = 0.5
     for group_id, centroid in group_centroids.items():
         distance = np.linalg.norm(encoding - centroid)
         if distance < min_distance:
@@ -777,7 +798,7 @@ def deduplicate_faces():
     Periodic task that removes duplicate FaceTags within the same media
     and merges duplicate FaceGroups (same person).
     """
-    THRESHOLD = 0.55
+    THRESHOLD = 0.5
     logger.info("[deduplicate_faces] Starting face deduplication")
 
     # ---------- 1. Deduplicate FaceTags within each media ----------
@@ -848,8 +869,8 @@ def deduplicate_faces():
         tag_count=Count('face_tags')
     ).filter(tag_count__gt=0)
 
-    # Build centroids
-    group_centroids = {}
+    # Build list of encodings per group
+    group_encodings = {}
     for group in groups:
         encodings_list = []
         for tag in group.face_tags.exclude(encoding__isnull=True):
@@ -859,21 +880,39 @@ def deduplicate_faces():
             except Exception:
                 pass
         if encodings_list:
-            group_centroids[group.id] = np.mean(encodings_list, axis=0)
+            group_encodings[group.id] = encodings_list
 
-    # Compare all group pairs
-    group_ids = list(group_centroids.keys())
+    # Compare all group pairs using average pairwise distance
+    group_ids = list(group_encodings.keys())
     merged_groups = set()
+    MIN_TAGS_FOR_MERGE = 3
+    AVG_DIST_THRESHOLD = 0.5
+
     for i in range(len(group_ids)):
         gid1 = group_ids[i]
         if gid1 in merged_groups:
+            continue
+        encs1 = group_encodings[gid1]
+        if len(encs1) < MIN_TAGS_FOR_MERGE:
             continue
         for j in range(i + 1, len(group_ids)):
             gid2 = group_ids[j]
             if gid2 in merged_groups:
                 continue
-            dist = np.linalg.norm(group_centroids[gid1] - group_centroids[gid2])
-            if dist < THRESHOLD:
+            encs2 = group_encodings[gid2]
+            if len(encs2) < MIN_TAGS_FOR_MERGE:
+                continue
+
+            # Compute average pairwise distance
+            total_dist = 0.0
+            count = 0
+            for e1 in encs1:
+                for e2 in encs2:
+                    total_dist += np.linalg.norm(e1 - e2)
+                    count += 1
+            avg_dist = total_dist / count if count > 0 else float('inf')
+
+            if avg_dist < AVG_DIST_THRESHOLD:
                 # Merge gid2 into gid1 (keep the one with smaller ID)
                 keep_id, remove_id = (gid1, gid2) if gid1 < gid2 else (gid2, gid1)
                 if (keep_id, remove_id) not in groups_merged and (remove_id, keep_id) not in groups_merged:
@@ -882,7 +921,7 @@ def deduplicate_faces():
                     _merge_groups(keep_group, remove_group)
                     groups_merged.add((keep_id, remove_id))
                     merged_groups.add(remove_id)
-                    logger.info(f"[deduplicate_faces] Merged group {remove_id} into {keep_id}")
+                    logger.info(f"[deduplicate_faces] Merged group {remove_id} into {keep_id} (avg_dist={avg_dist:.4f})")
 
     # Clean up empty groups (just in case)
     empty_groups = FaceGroup.objects.annotate(
