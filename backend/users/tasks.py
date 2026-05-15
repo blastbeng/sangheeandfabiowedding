@@ -474,18 +474,14 @@ def detect_faces_task(self, media_id, force=False):
 
         # Initialize group matching variables
         best_group_id = None
-        min_distance = 0.5
-        second_min_distance = float('inf')
+        min_distance = 0.55   # single relaxed threshold
 
-        # If the uploader has a linked group, check it first with a relaxed threshold
+        # If the uploader has a linked group, check it first with the same threshold
         if uploader_centroid is not None:
             dist_to_uploader = np.linalg.norm(encoding - uploader_centroid)
             if dist_to_uploader < 0.55:
                 best_group_id = uploader_group.id
                 min_distance = dist_to_uploader
-                # Skip the general search – we already have a match
-                # Set second_min_distance to infinity to avoid the margin check
-                second_min_distance = float('inf')
                 logger.info(f"[detect_faces] Assigned to uploader's group {uploader_group.id} (dist={dist_to_uploader:.4f})")
 
         # General search only if no match from uploader's group
@@ -493,28 +489,12 @@ def detect_faces_task(self, media_id, force=False):
             for group_id, centroid in group_centroids.items():
                 distance = np.linalg.norm(encoding - centroid)
                 if distance < min_distance:
-                    second_min_distance = min_distance
                     min_distance = distance
                     best_group_id = group_id
-                elif distance < second_min_distance:
-                    second_min_distance = distance
 
-            # If the margin between best and second-best is too small, treat as uncertain
-            # UNLESS the best distance is already very low (strong match)
-            MARGIN = 0.05
-            if best_group_id is not None and min_distance >= 0.4 and (second_min_distance - min_distance) < MARGIN:
-                logger.info(f"[detect_faces] Uncertain match for media {media_id}: "
-                            f"best={min_distance:.4f}, second={second_min_distance:.4f}, margin < {MARGIN}")
-                best_group_id = None
-
-            # Second pass with a lower threshold if no group found yet
-            if best_group_id is None:
-                for group_id, centroid in group_centroids.items():
-                    distance = np.linalg.norm(encoding - centroid)
-                    if distance < 0.45:
-                        best_group_id = group_id
-                        logger.info(f"[detect_faces] Second-pass match for media {media_id}: group {group_id} at distance {distance:.4f}")
-                        break
+        # No margin check – accept the closest group if below threshold
+        if best_group_id is not None and min_distance >= 0.55:
+            best_group_id = None   # closest is still too far
 
         if best_group_id is None:
             # Create new group
@@ -857,24 +837,17 @@ def detect_faces_profile_picture(self, user_id):
                 group_centroids[group.id] = np.mean(encodings_list, axis=0)
 
     if not skip_general_search:
-        # Find closest and second-closest existing groups
+        # Find closest existing group with a single relaxed threshold
         best_group_id = None
-        min_distance = 0.5
-        second_min_distance = float('inf')
+        min_distance = 0.55
         for group_id, centroid in group_centroids.items():
             distance = np.linalg.norm(encoding - centroid)
             if distance < min_distance:
-                second_min_distance = min_distance
                 min_distance = distance
                 best_group_id = group_id
-            elif distance < second_min_distance:
-                second_min_distance = distance
 
-        # If the margin between best and second-best is too small, treat as uncertain
-        MARGIN = 0.05
-        if best_group_id is not None and (second_min_distance - min_distance) < MARGIN:
-            logger.info(f"[detect_faces_profile] Uncertain match for user {user_id}: "
-                        f"best={min_distance:.4f}, second={second_min_distance:.4f}, margin < {MARGIN}")
+        # No margin check – accept the closest group if below threshold
+        if best_group_id is not None and min_distance >= 0.55:
             best_group_id = None
 
     user_display_name = user.get_full_name() or user.username
@@ -1022,11 +995,11 @@ def deduplicate_faces():
         if encodings_list:
             group_encodings[group.id] = encodings_list
 
-    # Compare all group pairs using 80% ratio of pairwise distances below threshold
+    # Compare all group pairs using ratio of pairwise distances below threshold
     group_ids = list(group_encodings.keys())
     merged_groups = set()
     MIN_TAGS_FOR_MERGE = 2
-    AVG_DIST_THRESHOLD = 0.5
+    AVG_DIST_THRESHOLD = 0.55
 
     for i in range(len(group_ids)):
         gid1 = group_ids[i]
@@ -1055,7 +1028,7 @@ def deduplicate_faces():
 
             if total_pairs > 0:
                 ratio = below_threshold / total_pairs
-                if ratio >= 0.8:   # at least 80% of pairs must be close
+                if ratio >= 0.6:   # at least 60% of pairs must be close
                     # Merge gid2 into gid1 (keep the one with smaller ID)
                     keep_id, remove_id = (gid1, gid2) if gid1 < gid2 else (gid2, gid1)
                     if (keep_id, remove_id) not in groups_merged and (remove_id, keep_id) not in groups_merged:
@@ -1081,7 +1054,7 @@ def deduplicate_faces():
                 continue
             centroid2 = np.mean(encs2, axis=0)
             dist = np.linalg.norm(enc1 - centroid2)
-            if dist < 0.4:
+            if dist < 0.5:
                 keep_id, remove_id = (gid2, gid1) if gid2 < gid1 else (gid1, gid2)
                 if (keep_id, remove_id) not in groups_merged and (remove_id, keep_id) not in groups_merged:
                     keep_group = FaceGroup.objects.get(id=keep_id)
