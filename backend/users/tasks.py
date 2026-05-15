@@ -266,37 +266,37 @@ def delete_media_task(media_id):
 def detect_faces_task(self, media_id, force=False):
     logger.info(f"[detect_faces] Called with media_id={media_id}, force={force}")
 
+    from django.db import transaction
+
     try:
-        media = Media.objects.get(id=media_id)
+        with transaction.atomic():
+            media = Media.objects.select_for_update().get(id=media_id)
+
+            if force:
+                # Clear existing face tags and reset the attempted flag
+                media.face_tags.all().delete()
+                media.face_detection_attempted = False
+                media.save(update_fields=['face_detection_attempted'])
+
+            if not force:
+                if media.status != 'approved':
+                    logger.info(f"[detect_faces] Skipping media {media_id}: status is '{media.status}', not 'approved'")
+                    return
+
+                if media.media_type != 'image':
+                    logger.info(f"[detect_faces] Skipping media {media_id}: media_type is '{media.media_type}', not 'image'")
+                    return
+
+                if media.face_detection_attempted:
+                    logger.info(f"[detect_faces] Skipping media {media_id}: face_detection_attempted is already True")
+                    return
+            else:
+                if media.media_type != 'image':
+                    logger.info(f"[detect_faces] Skipping media {media_id}: media_type is '{media.media_type}', not 'image'")
+                    return
     except Media.DoesNotExist:
         logger.warning(f"[detect_faces] Media {media_id} not found, skipping")
         return
-
-    # If force=True, clear existing face tags and reset the attempted flag
-    if force:
-        # Delete all existing face tags for this media
-        media.face_tags.all().delete()
-        media.face_detection_attempted = False
-        media.save(update_fields=['face_detection_attempted'])
-
-    if not force:
-        if media.status != 'approved':
-            logger.info(f"[detect_faces] Skipping media {media_id}: status is '{media.status}', not 'approved'")
-            return
-
-        if media.media_type != 'image':
-            logger.info(f"[detect_faces] Skipping media {media_id}: media_type is '{media.media_type}', not 'image'")
-            return
-
-        # Skip if already attempted (safety net)
-        if media.face_detection_attempted:
-            logger.info(f"[detect_faces] Skipping media {media_id}: face_detection_attempted is already True")
-            return
-    else:
-        # When forcing, still require the file to be an image
-        if media.media_type != 'image':
-            logger.info(f"[detect_faces] Skipping media {media_id}: media_type is '{media.media_type}', not 'image'")
-            return
 
     # Download file content from cloud
     content, _ = get_file_from_cloud(media)
@@ -774,40 +774,76 @@ def detect_faces_profile_picture(self, user_id):
     pil_thumb.save(thumb_io, format='JPEG', quality=85)
     thumb_content = thumb_io.getvalue()
 
-    # Load existing groups and centroids
-    existing_groups = FaceGroup.objects.prefetch_related('face_tags').all()
-    group_centroids = {}
-    for group in existing_groups:
+    # Check if user already has a FaceGroup
+    existing_user_group = FaceGroup.objects.filter(user=user).first()
+    skip_general_search = False
+    if existing_user_group:
+        # Compute centroid of that group
         encodings_list = []
-        for tag in group.face_tags.all():
-            if tag.encoding:
-                try:
-                    enc = pickle.loads(tag.encoding)
-                    encodings_list.append(enc)
-                except Exception:
-                    pass
+        for tag in existing_user_group.face_tags.exclude(encoding__isnull=True):
+            try:
+                enc = pickle.loads(tag.encoding)
+                encodings_list.append(enc)
+            except Exception:
+                pass
         if encodings_list:
-            group_centroids[group.id] = np.mean(encodings_list, axis=0)
+            centroid = np.mean(encodings_list, axis=0)
+            distance = np.linalg.norm(encoding - centroid)
+            if distance < 0.5:
+                best_group_id = existing_user_group.id
+                # Update centroid (moving average)
+                count = len(encodings_list)
+                new_centroid = (centroid * count + encoding) / (count + 1)
+                # We'll store the updated centroid for later use if needed
+                group_centroids = {best_group_id: new_centroid}
+            else:
+                # Even if distance is high, still use the user's group to avoid duplicates
+                logger.info(f"[detect_faces_profile] User {user_id} existing group {existing_user_group.id} distance {distance:.4f} > 0.5, but reusing to avoid duplicate")
+                best_group_id = existing_user_group.id
+                count = len(encodings_list)
+                new_centroid = (centroid * count + encoding) / (count + 1)
+                group_centroids = {best_group_id: new_centroid}
+        else:
+            # Group exists but has no encodings – just use it
+            best_group_id = existing_user_group.id
+            group_centroids = {best_group_id: encoding}
+        skip_general_search = True
+    else:
+        # Load existing groups and centroids (original logic)
+        existing_groups = FaceGroup.objects.prefetch_related('face_tags').all()
+        group_centroids = {}
+        for group in existing_groups:
+            encodings_list = []
+            for tag in group.face_tags.all():
+                if tag.encoding:
+                    try:
+                        enc = pickle.loads(tag.encoding)
+                        encodings_list.append(enc)
+                    except Exception:
+                        pass
+            if encodings_list:
+                group_centroids[group.id] = np.mean(encodings_list, axis=0)
 
-    # Find closest and second-closest existing groups
-    best_group_id = None
-    min_distance = 0.5
-    second_min_distance = float('inf')
-    for group_id, centroid in group_centroids.items():
-        distance = np.linalg.norm(encoding - centroid)
-        if distance < min_distance:
-            second_min_distance = min_distance
-            min_distance = distance
-            best_group_id = group_id
-        elif distance < second_min_distance:
-            second_min_distance = distance
-
-    # If the margin between best and second-best is too small, treat as uncertain
-    MARGIN = 0.05
-    if best_group_id is not None and (second_min_distance - min_distance) < MARGIN:
-        logger.info(f"[detect_faces_profile] Uncertain match for user {user_id}: "
-                    f"best={min_distance:.4f}, second={second_min_distance:.4f}, margin < {MARGIN}")
+    if not skip_general_search:
+        # Find closest and second-closest existing groups
         best_group_id = None
+        min_distance = 0.5
+        second_min_distance = float('inf')
+        for group_id, centroid in group_centroids.items():
+            distance = np.linalg.norm(encoding - centroid)
+            if distance < min_distance:
+                second_min_distance = min_distance
+                min_distance = distance
+                best_group_id = group_id
+            elif distance < second_min_distance:
+                second_min_distance = distance
+
+        # If the margin between best and second-best is too small, treat as uncertain
+        MARGIN = 0.05
+        if best_group_id is not None and (second_min_distance - min_distance) < MARGIN:
+            logger.info(f"[detect_faces_profile] Uncertain match for user {user_id}: "
+                        f"best={min_distance:.4f}, second={second_min_distance:.4f}, margin < {MARGIN}")
+            best_group_id = None
 
     user_display_name = user.get_full_name() or user.username
 
@@ -815,7 +851,8 @@ def detect_faces_profile_picture(self, user_id):
         group = FaceGroup.objects.get(id=best_group_id)
         if not group.name or group.name.strip() == '':
             group.name = user_display_name
-        group.user = user
+        if not group.user:
+            group.user = user
         group.save(update_fields=['name', 'user'])
         logger.info(f"[detect_faces_profile] Matched user {user_id} to group {best_group_id}, name='{user_display_name}'")
     else:

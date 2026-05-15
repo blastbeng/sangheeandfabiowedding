@@ -26,6 +26,10 @@ app.conf.beat_schedule = {
         'task': 'users.tasks.cleanup_missing_cloud_files',
         'schedule': crontab(minute=0, hour='*'),  # every hour
     },
+    'deduplicate-faces-every-hour': {
+        'task': 'users.tasks.deduplicate_faces',
+        'schedule': crontab(minute=0, hour='*'),  # every hour
+    },
 }
 
 app.autodiscover_tasks()
