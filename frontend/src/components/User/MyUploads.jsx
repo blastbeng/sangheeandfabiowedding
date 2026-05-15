@@ -95,7 +95,7 @@ const MyUploads = () => {
       });
       if (res.ok) {
         setMessage({ type: 'success', text: t('my_uploads_delete_success') });
-        setFetchId(prev => prev + 1);
+        refreshUploads();
       } else {
         const errData = await res.json().catch(() => ({}));
         setMessage({ type: 'error', text: errData.error || t('my_uploads_delete_error') });
@@ -139,7 +139,7 @@ const MyUploads = () => {
         }
         setMessage({ type: 'success', text: message });
         setSelectedIds([]);
-        setFetchId(prev => prev + 1); // reload current page
+        refreshUploads();
       } else {
         const errData = await res.json().catch(() => ({}));
         setMessage({ type: 'error', text: errData.error || t('my_uploads_bulk_delete_error') });
