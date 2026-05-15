@@ -310,7 +310,7 @@ const AdminModeration = () => {
               disabled={page === 1}
               className="wedding-btn text-sm disabled:opacity-50"
             >
-              {t('previous')}
+              ‹
             </button>
             <span className="text-sm text-gray-700">
               {t('page_x_of_y', { current: page, total: totalPages })}
@@ -320,7 +320,7 @@ const AdminModeration = () => {
               disabled={page >= totalPages}
               className="wedding-btn text-sm disabled:opacity-50"
             >
-              {t('next')}
+              ›
             </button>
             <button
               onClick={() => setPage(totalPages)}
