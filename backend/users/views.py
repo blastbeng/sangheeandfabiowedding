@@ -1332,10 +1332,12 @@ class PublicMediaListView(APIView):
                 Q(user__first_name__icontains=user_search) |
                 Q(user__last_name__icontains=user_search)
             )
-        face_group_id = request.query_params.get('face_group_id')
-        if face_group_id:
-            media_ids = FaceTag.objects.filter(face_group_id=face_group_id).values_list('media_id', flat=True)
-            queryset = queryset.filter(id__in=media_ids)
+        face_group_ids = request.query_params.getlist('face_group_id')
+        if face_group_ids:
+            # AND logic: media must have a FaceTag for EVERY selected group
+            for gid in face_group_ids:
+                queryset = queryset.filter(face_tags__face_group_id=gid)
+            queryset = queryset.distinct()
         serializer = PublicMediaSerializer(queryset.order_by('-uploaded_at'), many=True, context={'request': request})
         return Response(serializer.data)
 

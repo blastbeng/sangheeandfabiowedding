@@ -15,7 +15,7 @@ const Gallery = () => {
   const [users, setUsers] = useState([]);
   const [selectedUserId, setSelectedUserId] = useState('');
   const [faceGroups, setFaceGroups] = useState([]);
-  const [selectedGroupId, setSelectedGroupId] = useState(null);
+  const [selectedGroupIds, setSelectedGroupIds] = useState([]);
   const API_URL = import.meta.env.VITE_API_URL;
 
   const sentinelRef = useRef(null);
@@ -23,7 +23,9 @@ const Gallery = () => {
   const fetchMedia = useCallback(async (pageNum, append = false) => {
     const params = new URLSearchParams();
     if (selectedUserId) params.append('user_id', selectedUserId);
-    if (selectedGroupId) params.append('face_group_id', selectedGroupId);
+    if (selectedGroupIds.length > 0) {
+      selectedGroupIds.forEach(gid => params.append('face_group_id', gid));
+    }
     params.append('page', pageNum);
     params.append('page_size', PAGE_SIZE);
 
@@ -44,14 +46,14 @@ const Gallery = () => {
       setLoading(false);
       setLoadingMore(false);
     }
-  }, [selectedUserId, selectedGroupId, API_URL]);
+  }, [selectedUserId, selectedGroupIds, API_URL]);
 
   useEffect(() => {
     setPage(1);
     setHasMore(true);
     setLoading(true);
     fetchMedia(1, false);
-  }, [selectedUserId, selectedGroupId, fetchMedia]);
+  }, [selectedUserId, selectedGroupIds, fetchMedia]);
 
   useEffect(() => {
     fetch(`${API_URL}/api/auth/face-groups/`)
@@ -91,8 +93,6 @@ const Gallery = () => {
   const localeMap = { it: 'it-IT', ko: 'ko-KR', en: 'en-US' };
   const dateLocale = localeMap[i18n.language] || 'it-IT';
 
-  const selectedGroup = faceGroups.find(g => g.id === selectedGroupId);
-
   if (loading) {
     return (
       <div className="text-center py-20">
@@ -128,9 +128,13 @@ const Gallery = () => {
               {uniqueGroups.map(group => (
                 <button
                   key={group.id}
-                  onClick={() => setSelectedGroupId(prev => prev === group.id ? null : group.id)}
+                  onClick={() => setSelectedGroupIds(prev =>
+                    prev.includes(group.id)
+                      ? prev.filter(id => id !== group.id)
+                      : [...prev, group.id]
+                  )}
                   className={`flex flex-col items-center gap-1 flex-shrink-0 transition-transform hover:scale-105 ${
-                    selectedGroupId === group.id ? 'ring-2 ring-pink-500 rounded-full' : ''
+                    selectedGroupIds.includes(group.id) ? 'ring-2 ring-pink-500 rounded-full' : ''
                   }`}
                   style={{ scrollSnapAlign: 'start' }}
                 >
@@ -168,22 +172,34 @@ const Gallery = () => {
         </div>
       </div>
 
-      {selectedGroupId && (
-        <div className="mb-4 flex items-center gap-2">
-          <span className="text-sm text-gray-600">
-            {t('Filtering by')}:{' '}
-            <img
-              src={selectedGroup?.thumbnail_url || 'https://i.imgur.com/V4RclNb.png'}
-              alt=""
-              className="w-6 h-6 rounded-full object-cover inline-block align-middle border border-pink-200"
-              onError={(e) => { e.target.src = 'https://i.imgur.com/V4RclNb.png'; }}
-            />
-          </span>
+      {selectedGroupIds.length > 0 && (
+        <div className="mb-4 flex items-center gap-2 flex-wrap">
+          <span className="text-sm text-gray-600">{t('Filtering by')}:</span>
+          {selectedGroupIds.map(gid => {
+            const group = faceGroups.find(g => g.id === gid);
+            return (
+              <span key={gid} className="inline-flex items-center gap-1 bg-pink-50 rounded-full px-2 py-1">
+                <img
+                  src={group?.thumbnail_url || 'https://i.imgur.com/V4RclNb.png'}
+                  alt=""
+                  className="w-6 h-6 rounded-full object-cover border border-pink-200"
+                  onError={(e) => { e.target.src = 'https://i.imgur.com/V4RclNb.png'; }}
+                />
+                <button
+                  onClick={() => setSelectedGroupIds(prev => prev.filter(id => id !== gid))}
+                  className="text-pink-600 hover:text-pink-800 text-xs leading-none"
+                  title={t('Remove filter')}
+                >
+                  ✕
+                </button>
+              </span>
+            );
+          })}
           <button
-            onClick={() => setSelectedGroupId(null)}
-            className="text-xs text-pink-600 underline hover:text-pink-800"
+            onClick={() => setSelectedGroupIds([])}
+            className="text-xs text-pink-600 underline hover:text-pink-800 ml-2"
           >
-            {t('Clear filter')}
+            {t('Clear all')}
           </button>
         </div>
       )}
@@ -253,10 +269,14 @@ const Gallery = () => {
                             key={tag.group_id}
                             onClick={(e) => {
                               e.stopPropagation();
-                              setSelectedGroupId(prev => prev === tag.group_id ? null : tag.group_id);
+                              setSelectedGroupIds(prev =>
+                                prev.includes(tag.group_id)
+                                  ? prev.filter(id => id !== tag.group_id)
+                                  : [...prev, tag.group_id]
+                              );
                             }}
                             className={`flex-shrink-0 w-6 h-6 rounded-full overflow-hidden border-2 transition-colors ${
-                              selectedGroupId === tag.group_id ? 'border-pink-500' : 'border-white'
+                              selectedGroupIds.includes(tag.group_id) ? 'border-pink-500' : 'border-white'
                             }`}
                           >
                             <img
