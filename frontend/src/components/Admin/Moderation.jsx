@@ -330,14 +330,14 @@ const AdminModeration = () => {
             <button
               onClick={() => setPage(1)}
               disabled={page === 1}
-              className="wedding-btn text-xs px-1 py-0.5 sm:px-2 sm:py-1 disabled:opacity-50"
+              className="inline-flex items-center justify-center text-xs font-medium rounded border border-pink-300 bg-white text-pink-700 hover:bg-pink-50 disabled:opacity-50 min-w-[40px] min-h-[40px] px-2 py-1"
             >
               ««
             </button>
             <button
               onClick={() => setPage(p => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="wedding-btn text-xs px-1 py-0.5 sm:px-2 sm:py-1 disabled:opacity-50"
+              className="inline-flex items-center justify-center text-xs font-medium rounded border border-pink-300 bg-white text-pink-700 hover:bg-pink-50 disabled:opacity-50 min-w-[40px] min-h-[40px] px-2 py-1"
             >
               ‹
             </button>
@@ -347,14 +347,14 @@ const AdminModeration = () => {
             <button
               onClick={() => setPage(p => Math.min(totalPages, p + 1))}
               disabled={page >= totalPages}
-              className="wedding-btn text-xs px-1 py-0.5 sm:px-2 sm:py-1 disabled:opacity-50"
+              className="inline-flex items-center justify-center text-xs font-medium rounded border border-pink-300 bg-white text-pink-700 hover:bg-pink-50 disabled:opacity-50 min-w-[40px] min-h-[40px] px-2 py-1"
             >
               ›
             </button>
             <button
               onClick={() => setPage(totalPages)}
               disabled={page >= totalPages}
-              className="wedding-btn text-xs px-1 py-0.5 sm:px-2 sm:py-1 disabled:opacity-50"
+              className="inline-flex items-center justify-center text-xs font-medium rounded border border-pink-300 bg-white text-pink-700 hover:bg-pink-50 disabled:opacity-50 min-w-[40px] min-h-[40px] px-2 py-1"
             >
               »»
             </button>

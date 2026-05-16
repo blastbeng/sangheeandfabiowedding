@@ -221,14 +221,14 @@ const MyUploads = () => {
                 <button
                   onClick={() => setPage(1)}
                   disabled={page === 1 || fetching}
-                  className="wedding-btn text-xs px-1 py-0.5 disabled:opacity-50"
+                  className="inline-flex items-center justify-center text-xs font-medium rounded border border-pink-300 bg-white text-pink-700 hover:bg-pink-50 disabled:opacity-50 min-w-[40px] min-h-[40px] px-2 py-1"
                 >
                   ««
                 </button>
                 <button
                   onClick={() => setPage(p => Math.max(1, p - 1))}
                   disabled={page === 1 || fetching}
-                  className="wedding-btn text-xs px-1 py-0.5 disabled:opacity-50"
+                  className="inline-flex items-center justify-center text-xs font-medium rounded border border-pink-300 bg-white text-pink-700 hover:bg-pink-50 disabled:opacity-50 min-w-[40px] min-h-[40px] px-2 py-1"
                 >
                   ‹
                 </button>
@@ -249,8 +249,10 @@ const MyUploads = () => {
                       key={p}
                       onClick={() => setPage(p)}
                       disabled={fetching}
-                      className={`px-1 py-0.5 text-xs border rounded ${
-                        p === page ? 'bg-pink-500 text-white border-pink-500' : ''
+                      className={`inline-flex items-center justify-center text-xs font-medium rounded border min-w-[40px] min-h-[40px] px-2 py-1 ${
+                        p === page
+                          ? 'bg-pink-500 text-white border-pink-500'
+                          : 'bg-white text-pink-700 border-pink-300 hover:bg-pink-50'
                       }`}
                     >
                       {p}
@@ -272,7 +274,7 @@ const MyUploads = () => {
                       ? page * pageSize >= totalCount
                       : uploads.length < pageSize)
                   }
-                  className="wedding-btn text-xs px-1 py-0.5 disabled:opacity-50"
+                  className="inline-flex items-center justify-center text-xs font-medium rounded border border-pink-300 bg-white text-pink-700 hover:bg-pink-50 disabled:opacity-50 min-w-[40px] min-h-[40px] px-2 py-1"
                 >
                   ›
                 </button>
@@ -284,7 +286,7 @@ const MyUploads = () => {
                       ? page * pageSize >= totalCount
                       : uploads.length < pageSize)
                   }
-                  className="wedding-btn text-xs px-1 py-0.5 disabled:opacity-50"
+                  className="inline-flex items-center justify-center text-xs font-medium rounded border border-pink-300 bg-white text-pink-700 hover:bg-pink-50 disabled:opacity-50 min-w-[40px] min-h-[40px] px-2 py-1"
                 >
                   »»
                 </button>
