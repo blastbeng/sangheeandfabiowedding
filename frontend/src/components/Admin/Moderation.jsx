@@ -224,6 +224,26 @@ const AdminModeration = () => {
     }
   };
 
+  const handleGenerateAllFaces = async () => {
+    if (!window.confirm(t('admin_generate_all_faces_confirm'))) return;
+    try {
+      const res = await authFetch(`${API_URL}/api/auth/media/moderation/generate-all-faces/`, {
+        method: 'POST'
+      });
+      if (res.ok) {
+        const data = await res.json();
+        alert(data.message || t('admin_generate_all_faces_success'));
+        setRefreshKey(prev => prev + 1);
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        alert(errData.detail || t('admin_generate_all_faces_error'));
+      }
+    } catch (err) {
+      logger.error('[Moderation] Generate all faces failed:', err);
+      alert(t('admin_generate_all_faces_error'));
+    }
+  };
+
   const getStatusBadge = (status) => {
     const badges = { pending: 'status-pending', approved: 'status-approved', rejected: 'status-rejected' };
     const icons = { pending: '⏳', approved: '✅', rejected: '❌' };
@@ -310,6 +330,12 @@ const AdminModeration = () => {
             className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-red-700 flex-shrink-0"
           >
             {t('admin_delete_all_faces')}
+          </button>
+          <button
+            onClick={handleGenerateAllFaces}
+            className="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-purple-700 flex-shrink-0"
+          >
+            {t('admin_generate_all_faces')}
           </button>
         </div>
 

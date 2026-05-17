@@ -436,7 +436,11 @@ const resources = {
       "admin_delete_all_faces": "🗑️ Elimina tutti i volti",
       "admin_delete_all_faces_confirm": "Sei sicuro di voler eliminare TUTTI i tag dei volti, i gruppi e le miniature? Questa azione è irreversibile.",
       "admin_delete_all_faces_success": "Tutti i dati dei volti e le miniature sono stati eliminati con successo.",
-      "admin_delete_all_faces_error": "Errore durante l'eliminazione dei dati dei volti."
+      "admin_delete_all_faces_error": "Errore durante l'eliminazione dei dati dei volti.",
+      "admin_generate_all_faces": "🔄 Rigenera Tutti i Volti",
+      "admin_generate_all_faces_confirm": "Sei sicuro di voler rigenerare tutti i volti, i gruppi e le miniature per tutte le immagini approvate? L'operazione potrebbe richiedere tempo.",
+      "admin_generate_all_faces_success": "Rigenerazione volti avviata con successo!",
+      "admin_generate_all_faces_error": "Errore durante l'avvio della rigenerazione volti."
     }
   },
   ko: {
@@ -873,7 +877,11 @@ const resources = {
       "admin_delete_all_faces": "🗑️ 모든 얼굴 삭제",
       "admin_delete_all_faces_confirm": "모든 얼굴 태그, 그룹 및 썸네일을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
       "admin_delete_all_faces_success": "모든 얼굴 데이터와 썸네일이 성공적으로 삭제되었습니다.",
-      "admin_delete_all_faces_error": "얼굴 데이터 삭제 중 오류가 발생했습니다."
+      "admin_delete_all_faces_error": "얼굴 데이터 삭제 중 오류가 발생했습니다.",
+      "admin_generate_all_faces": "🔄 모든 얼굴 재생성",
+      "admin_generate_all_faces_confirm": "승인된 모든 이미지의 얼굴, 그룹 및 썸네일을 재생성하시겠습니까? 시간이 걸릴 수 있습니다.",
+      "admin_generate_all_faces_success": "얼굴 재생성 작업이 시작되었습니다!",
+      "admin_generate_all_faces_error": "얼굴 재생성 작업 시작 중 오류가 발생했습니다."
     }
   },
   en: {
@@ -1310,7 +1318,11 @@ const resources = {
       "admin_delete_all_faces": "🗑️ Delete All Faces",
       "admin_delete_all_faces_confirm": "Are you sure you want to delete ALL face tags, groups, and thumbnails? This action cannot be undone.",
       "admin_delete_all_faces_success": "All face data and thumbnails have been successfully deleted.",
-      "admin_delete_all_faces_error": "Error deleting face data."
+      "admin_delete_all_faces_error": "Error deleting face data.",
+      "admin_generate_all_faces": "🔄 Generate All Faces",
+      "admin_generate_all_faces_confirm": "Are you sure you want to regenerate all faces, face groups, and thumbnails for all approved images? This may take a while.",
+      "admin_generate_all_faces_success": "Face regeneration task started successfully!",
+      "admin_generate_all_faces_error": "Error starting face regeneration task."
     }
   }
 };
