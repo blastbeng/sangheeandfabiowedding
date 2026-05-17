@@ -1320,6 +1320,17 @@ class MediaFileView(APIView):
         return HttpResponse(content, content_type=content_type)
 
 
+class MediaThumbnailView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, media_id):
+        from .thumbnails import get_thumbnail
+        data = get_thumbnail(media_id)
+        if data is None:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        return HttpResponse(data, content_type='image/jpeg')
+
+
 class PublicMediaListView(APIView):
     permission_classes = [AllowAny]
 

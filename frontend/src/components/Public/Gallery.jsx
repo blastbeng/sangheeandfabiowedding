@@ -216,21 +216,16 @@ const Gallery = () => {
                   </div>
                 ) : (
                   <Link to={`/media/${item.id}`} state={{ media: item }} className="block relative">
-                    {item.media_type === 'video' ? (
-                      <video
-                        src={`${API_URL}${item.file_url}`}
-                        className="w-full aspect-square object-cover"
-                        muted
-                        preload="metadata"
-                        onError={() => setFailedMediaIds(prev => new Set(prev).add(item.id))}
-                      />
-                    ) : (
-                      <img
-                        src={`${API_URL}${item.file_url}`}
-                        alt={item.caption || t('beautiful_moment')}
-                        className="w-full aspect-square object-cover"
-                        onError={() => setFailedMediaIds(prev => new Set(prev).add(item.id))}
-                      />
+                    <img
+                      src={`${API_URL}/api/auth/media/${item.id}/thumbnail/`}
+                      alt={item.caption || t('beautiful_moment')}
+                      className="w-full aspect-square object-cover"
+                      onError={() => setFailedMediaIds(prev => new Set(prev).add(item.id))}
+                    />
+                    {item.media_type === 'video' && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/20 hover:bg-black/40 transition-colors">
+                        <div className="text-white text-5xl drop-shadow-lg">▶</div>
+                      </div>
                     )}
                   </Link>
                 )}
