@@ -18,6 +18,7 @@ from .views import (
     CustomTokenRefreshView,
     MediaDetectFacesView,
     DeleteAllFacesView,
+    RegenerateAllFacesView,
     MediaThumbnailView,
 )
 
@@ -48,6 +49,7 @@ urlpatterns = [
     path('media/moderation/bulk/', MediaBulkModerationView.as_view(), name='media-moderation-bulk'),
     path('media/moderation/detect-faces/', MediaDetectFacesView.as_view(), name='media-detect-faces'),
     path('media/moderation/delete-all-faces/', DeleteAllFacesView.as_view(), name='delete-all-faces'),
+    path('media/moderation/generate-all-faces/', RegenerateAllFacesView.as_view(), name='media-generate-all-faces'),
     path('media/<int:media_id>/file/', MediaFileView.as_view(), name='media-file'),
     path('media/public/', PublicMediaListView.as_view(), name='media-public'),
     path('users/public/', PublicUserListView.as_view(), name='public-user-list'),

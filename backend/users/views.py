@@ -44,7 +44,7 @@ from .serializers import (
     CookieConsentSerializer
 )
 from .cloud_clients import get_file_from_cloud, NextcloudClient
-from .tasks import upload_media_task, delete_media_task, detect_faces_task
+from .tasks import upload_media_task, delete_media_task, detect_faces_task, backfill_faces_periodic
 from .utils import process_profile_picture
 from .rate_limit import check_rate_limit, record_failed_attempt
 
@@ -1697,6 +1697,51 @@ class DeleteAllFacesView(APIView):
         return Response({
             'message': f'Deleted {facetag_count} face tags, {facegroup_count} face groups, and {deleted_files} thumbnail files.'
         }, status=status.HTTP_200_OK)
+
+
+class RegenerateAllFacesView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def post(self, request):
+        """
+        Delete all existing face data, reset detection flags,
+        and queue a full backfill of face detection for all approved images.
+        """
+        # 1. Delete all FaceTags and FaceGroups (signals will delete their thumbnails)
+        facetag_count, _ = FaceTag.objects.all().delete()
+        facegroup_count, _ = FaceGroup.objects.all().delete()
+
+        # 2. Remove any leftover files in the facetags/ directory
+        facetags_dir = os.path.join(django_settings.MEDIA_ROOT, 'facetags')
+        deleted_files = 0
+        if os.path.isdir(facetags_dir):
+            for filename in os.listdir(facetags_dir):
+                file_path = os.path.join(facetags_dir, filename)
+                try:
+                    if os.path.isfile(file_path) or os.path.islink(file_path):
+                        os.unlink(file_path)
+                        deleted_files += 1
+                    elif os.path.isdir(file_path):
+                        shutil.rmtree(file_path)
+                        deleted_files += 1
+                except Exception as e:
+                    logger.error(f"Failed to delete {file_path}: {e}")
+
+        # 3. Reset face_detection_attempted for all approved images
+        updated = Media.objects.filter(
+            status='approved', media_type='image'
+        ).update(face_detection_attempted=False)
+
+        # 4. Queue the backfill task to re-detect faces on all those images
+        backfill_faces_periodic.delay()
+
+        return Response(
+            {'message': f'Face regeneration started. Deleted {facetag_count} face tags, '
+                        f'{facegroup_count} face groups, and {deleted_files} leftover files. '
+                        f'Reset {updated} images for re-detection. '
+                        f'This may take several minutes.'},
+            status=status.HTTP_200_OK
+        )
 
 
 # ==================== COOKIE CONSENT VIEWS ====================
