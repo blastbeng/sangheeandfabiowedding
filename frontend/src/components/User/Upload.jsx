@@ -382,7 +382,7 @@ const Upload = () => {
           <>
             <div className="mb-6">
               <label htmlFor="file-upload" className="block text-gray-700 text-sm font-bold mb-2">📸 {t('select_photos_videos')}</label>
-              <input id="file-upload" type="file" multiple accept="image/*" onChange={handleFileSelect} className="wedding-input w-full py-4" />
+              <input id="file-upload" type="file" multiple accept="image/*,video/*" onChange={handleFileSelect} className="wedding-input w-full py-4" />
               <p className="text-sm text-gray-500 mt-2">✨ {t('supported_formats')}</p>
 
               {/* General upload size notice */}
