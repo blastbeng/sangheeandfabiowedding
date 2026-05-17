@@ -4,7 +4,7 @@ import logging
 from io import BytesIO
 
 from django.core.cache import cache
-from PIL import Image
+from PIL import Image, ImageOps
 import cv2
 
 from .models import Media
@@ -31,6 +31,7 @@ def generate_thumbnail(media: Media) -> bytes | None:
     try:
         if media.media_type == 'image':
             img = Image.open(BytesIO(content))
+            img = ImageOps.exif_transpose(img)
             img = img.convert('RGB')
             img.thumbnail(THUMBNAIL_SIZE, Image.LANCZOS)
             buf = BytesIO()
