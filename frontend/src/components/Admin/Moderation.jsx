@@ -305,63 +305,6 @@ const AdminModeration = () => {
           </button>
         </div>
 
-        {/* Pagination controls */}
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
-          <div className="flex items-center gap-2">
-            <label htmlFor="pageSizeSelect" className="text-sm text-gray-600">
-              {t('items_per_page')}
-            </label>
-            <select
-              id="pageSizeSelect"
-              value={pageSize}
-              onChange={(e) => {
-                setPageSize(Number(e.target.value));
-                setPage(1);
-              }}
-              className="wedding-input w-20"
-            >
-              <option value={10}>10</option>
-              <option value={20}>20</option>
-              <option value={50}>50</option>
-              <option value={100}>100</option>
-            </select>
-          </div>
-
-          <div className="flex items-center gap-1 sm:gap-2">
-            <button
-              onClick={() => setPage(1)}
-              disabled={page === 1}
-              className="inline-flex items-center justify-center text-xs font-medium rounded border border-pink-300 bg-white text-pink-700 hover:bg-pink-50 disabled:opacity-50 min-w-[40px] min-h-[40px] px-2 py-1"
-            >
-              ««
-            </button>
-            <button
-              onClick={() => setPage(p => Math.max(1, p - 1))}
-              disabled={page === 1}
-              className="inline-flex items-center justify-center text-xs font-medium rounded border border-pink-300 bg-white text-pink-700 hover:bg-pink-50 disabled:opacity-50 min-w-[40px] min-h-[40px] px-2 py-1"
-            >
-              ‹
-            </button>
-            <span className="text-sm text-gray-700">
-              {t('page_x_of_y', { current: page, total: totalPages })}
-            </span>
-            <button
-              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-              disabled={page >= totalPages}
-              className="inline-flex items-center justify-center text-xs font-medium rounded border border-pink-300 bg-white text-pink-700 hover:bg-pink-50 disabled:opacity-50 min-w-[40px] min-h-[40px] px-2 py-1"
-            >
-              ›
-            </button>
-            <button
-              onClick={() => setPage(totalPages)}
-              disabled={page >= totalPages}
-              className="inline-flex items-center justify-center text-xs font-medium rounded border border-pink-300 bg-white text-pink-700 hover:bg-pink-50 disabled:opacity-50 min-w-[40px] min-h-[40px] px-2 py-1"
-            >
-              »»
-            </button>
-          </div>
-        </div>
-
         {viewMode === 'table' ? (
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -539,6 +482,63 @@ const AdminModeration = () => {
             </div>
           </>
         )}
+
+        {/* Pagination controls */}
+        <div className="flex flex-wrap items-center justify-between gap-4 mt-4">
+          <div className="flex items-center gap-2">
+            <label htmlFor="pageSizeSelect" className="text-sm text-gray-600">
+              {t('items_per_page')}
+            </label>
+            <select
+              id="pageSizeSelect"
+              value={pageSize}
+              onChange={(e) => {
+                setPageSize(Number(e.target.value));
+                setPage(1);
+              }}
+              className="wedding-input w-20"
+            >
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+          </div>
+
+          <div className="flex items-center gap-1 sm:gap-2">
+            <button
+              onClick={() => setPage(1)}
+              disabled={page === 1}
+              className="inline-flex items-center justify-center text-xs font-medium rounded border border-pink-300 bg-white text-pink-700 hover:bg-pink-50 disabled:opacity-50 min-w-[40px] min-h-[40px] px-2 py-1"
+            >
+              ««
+            </button>
+            <button
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="inline-flex items-center justify-center text-xs font-medium rounded border border-pink-300 bg-white text-pink-700 hover:bg-pink-50 disabled:opacity-50 min-w-[40px] min-h-[40px] px-2 py-1"
+            >
+              ‹
+            </button>
+            <span className="text-sm text-gray-700">
+              {t('page_x_of_y', { current: page, total: totalPages })}
+            </span>
+            <button
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              disabled={page >= totalPages}
+              className="inline-flex items-center justify-center text-xs font-medium rounded border border-pink-300 bg-white text-pink-700 hover:bg-pink-50 disabled:opacity-50 min-w-[40px] min-h-[40px] px-2 py-1"
+            >
+              ›
+            </button>
+            <button
+              onClick={() => setPage(totalPages)}
+              disabled={page >= totalPages}
+              className="inline-flex items-center justify-center text-xs font-medium rounded border border-pink-300 bg-white text-pink-700 hover:bg-pink-50 disabled:opacity-50 min-w-[40px] min-h-[40px] px-2 py-1"
+            >
+              »»
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -195,105 +195,6 @@ const MyUploads = () => {
           </div>
         ) : (
           <>
-            {/* Pagination */}
-            <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
-              <div className="flex items-center gap-2">
-                <label htmlFor="pageSize" className="text-sm text-gray-600">
-                  {t('show')}
-                </label>
-                <select
-                  id="pageSize"
-                  value={pageSize}
-                  onChange={(e) => {
-                    setPageSize(Number(e.target.value));
-                    setPage(1);
-                  }}
-                  className="wedding-input text-sm"
-                  disabled={fetching}
-                >
-                  <option value={5}>5</option>
-                  <option value={10}>10</option>
-                  <option value={20}>20</option>
-                  <option value={50}>50</option>
-                </select>
-              </div>
-
-              <div className="flex flex-nowrap items-center gap-0.5">
-                <button
-                  onClick={() => setPage(1)}
-                  disabled={page === 1 || fetching}
-                  className="inline-flex items-center justify-center text-xs font-medium rounded border border-pink-300 bg-white text-pink-700 hover:bg-pink-50 disabled:opacity-50 min-w-[40px] min-h-[40px] px-2 py-1"
-                >
-                  ««
-                </button>
-                <button
-                  onClick={() => setPage(p => Math.max(1, p - 1))}
-                  disabled={page === 1 || fetching}
-                  className="inline-flex items-center justify-center text-xs font-medium rounded border border-pink-300 bg-white text-pink-700 hover:bg-pink-50 disabled:opacity-50 min-w-[40px] min-h-[40px] px-2 py-1"
-                >
-                  ‹
-                </button>
-
-                {/* Page numbers – only when totalCount is known */}
-                {totalCount !== null && (() => {
-                  const tp = Math.ceil(totalCount / pageSize);
-                  const maxVisible = 5;
-                  let start = Math.max(1, page - Math.floor(maxVisible / 2));
-                  let end = Math.min(tp, start + maxVisible - 1);
-                  if (end - start + 1 < maxVisible) {
-                    start = Math.max(1, end - maxVisible + 1);
-                  }
-                  const pages = [];
-                  for (let i = start; i <= end; i++) pages.push(i);
-                  return pages.map(p => (
-                    <button
-                      key={p}
-                      onClick={() => setPage(p)}
-                      disabled={fetching}
-                      className={`inline-flex items-center justify-center text-xs font-medium rounded border min-w-[40px] min-h-[40px] px-2 py-1 ${
-                        p === page
-                          ? 'bg-pink-500 text-white border-pink-500'
-                          : 'bg-white text-pink-700 border-pink-300 hover:bg-pink-50'
-                      }`}
-                    >
-                      {p}
-                    </button>
-                  ));
-                })()}
-
-                {totalPages !== null && (
-                  <span className="text-xs text-gray-600 whitespace-nowrap mx-1">
-                    {t('pagination_page_info', { current: page, total: totalPages })}
-                  </span>
-                )}
-
-                <button
-                  onClick={() => setPage(p => p + 1)}
-                  disabled={
-                    fetching ||
-                    (totalCount !== null
-                      ? page * pageSize >= totalCount
-                      : uploads.length < pageSize)
-                  }
-                  className="inline-flex items-center justify-center text-xs font-medium rounded border border-pink-300 bg-white text-pink-700 hover:bg-pink-50 disabled:opacity-50 min-w-[40px] min-h-[40px] px-2 py-1"
-                >
-                  ›
-                </button>
-                <button
-                  onClick={() => setPage(totalPages !== null ? totalPages : page + 1)}
-                  disabled={
-                    fetching ||
-                    (totalCount !== null
-                      ? page * pageSize >= totalCount
-                      : uploads.length < pageSize)
-                  }
-                  className="inline-flex items-center justify-center text-xs font-medium rounded border border-pink-300 bg-white text-pink-700 hover:bg-pink-50 disabled:opacity-50 min-w-[40px] min-h-[40px] px-2 py-1"
-                >
-                  »»
-                </button>
-              </div>
-            </div>
-
             {/* View mode toggle and bulk actions */}
             <div className="flex justify-between items-center mb-4">
               <div className="inline-flex rounded-md shadow-sm" role="group">
@@ -472,6 +373,76 @@ const MyUploads = () => {
                 </div>
               </>
             )}
+
+            {/* Pagination */}
+            <div className="flex flex-wrap items-center justify-between gap-2 mt-4">
+              <div className="flex items-center gap-2">
+                <label htmlFor="pageSize" className="text-sm text-gray-600">
+                  {t('show')}
+                </label>
+                <select
+                  id="pageSize"
+                  value={pageSize}
+                  onChange={(e) => {
+                    setPageSize(Number(e.target.value));
+                    setPage(1);
+                  }}
+                  className="wedding-input text-sm"
+                  disabled={fetching}
+                >
+                  <option value={5}>5</option>
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                </select>
+              </div>
+
+              <div className="flex flex-nowrap items-center gap-0.5">
+                <button
+                  onClick={() => setPage(1)}
+                  disabled={page === 1 || fetching}
+                  className="inline-flex items-center justify-center text-xs font-medium rounded border border-pink-300 bg-white text-pink-700 hover:bg-pink-50 disabled:opacity-50 min-w-[40px] min-h-[40px] px-2 py-1"
+                >
+                  ««
+                </button>
+                <button
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={page === 1 || fetching}
+                  className="inline-flex items-center justify-center text-xs font-medium rounded border border-pink-300 bg-white text-pink-700 hover:bg-pink-50 disabled:opacity-50 min-w-[40px] min-h-[40px] px-2 py-1"
+                >
+                  ‹
+                </button>
+                {totalCount !== null && (
+                  <span className="text-sm text-gray-700">
+                    {t('page_x_of_y', { current: page, total: totalPages })}
+                  </span>
+                )}
+                <button
+                  onClick={() => setPage(p => p + 1)}
+                  disabled={
+                    fetching ||
+                    (totalCount !== null
+                      ? page * pageSize >= totalCount
+                      : uploads.length < pageSize)
+                  }
+                  className="inline-flex items-center justify-center text-xs font-medium rounded border border-pink-300 bg-white text-pink-700 hover:bg-pink-50 disabled:opacity-50 min-w-[40px] min-h-[40px] px-2 py-1"
+                >
+                  ›
+                </button>
+                <button
+                  onClick={() => setPage(totalPages !== null ? totalPages : page + 1)}
+                  disabled={
+                    fetching ||
+                    (totalCount !== null
+                      ? page * pageSize >= totalCount
+                      : uploads.length < pageSize)
+                  }
+                  className="inline-flex items-center justify-center text-xs font-medium rounded border border-pink-300 bg-white text-pink-700 hover:bg-pink-50 disabled:opacity-50 min-w-[40px] min-h-[40px] px-2 py-1"
+                >
+                  »»
+                </button>
+              </div>
+            </div>
           </>
         )}
       </div>
