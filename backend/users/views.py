@@ -1191,11 +1191,16 @@ class MyUploadsView(APIView):
     def get(self, request):
         page = int(request.query_params.get('page', 1))
         page_size = int(request.query_params.get('page_size', 20))
+        queryset = Media.objects.filter(user=request.user).order_by('-uploaded_at')
+        total_count = queryset.count()
         start = (page - 1) * page_size
         end = start + page_size
-        media = Media.objects.filter(user=request.user).order_by('-uploaded_at')
-        page_media = media[start:end]
-        return Response(MediaSerializer(page_media, many=True).data)
+        page_media = queryset[start:end]
+        serializer = MediaSerializer(page_media, many=True)
+        return Response({
+            'count': total_count,
+            'results': serializer.data,
+        })
 
 
 class MediaModerationView(APIView):
