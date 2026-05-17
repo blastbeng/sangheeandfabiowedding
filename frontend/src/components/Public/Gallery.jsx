@@ -26,9 +26,6 @@ const Gallery = () => {
   const hasRestoredScroll = useRef(false);
   const faceRowRef = useRef(null);
 
-  // Filter out face groups that have no tags (empty groups)
-  const activeFaceGroups = faceGroups.filter(g => g.face_count === undefined || g.face_count > 0);
-
   const scrollFaceRow = (direction) => {
     if (faceRowRef.current) {
       faceRowRef.current.scrollBy({
@@ -174,7 +171,7 @@ const Gallery = () => {
       </div>
 
       {/* Face group row */}
-      {activeFaceGroups.length > 0 && (
+      {faceGroups.length > 0 && (
         <div className="mb-6">
           <label className="block text-sm text-gray-600 mb-1">{t('filter_by_person')}</label>
           <div className="flex items-center gap-1">
@@ -193,7 +190,7 @@ const Gallery = () => {
               className="flex gap-3 overflow-x-auto pb-2 flex-1"
               style={{ scrollSnapType: 'x mandatory', scrollbarWidth: 'thin' }}
             >
-              {activeFaceGroups.map(group => (
+              {faceGroups.map(group => (
                 <button
                   key={group.id}
                   onClick={() => setSelectedGroupId(prev => prev === group.id ? null : group.id)}
