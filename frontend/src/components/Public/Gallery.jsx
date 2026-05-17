@@ -23,7 +23,6 @@ const Gallery = () => {
   const API_URL = import.meta.env.VITE_API_URL;
 
   const sentinelRef = useRef(null);
-  const skipInitialFetch = useRef(false);
   const hasRestoredScroll = useRef(false);
   const faceRowRef = useRef(null);
 
@@ -69,20 +68,19 @@ const Gallery = () => {
     }
   }, [selectedUserId, selectedGroupId, API_URL]);
 
-  // Restoration effect
+  // Restoration effect – only restore filters and scroll position, NOT media data
   useEffect(() => {
     const saved = sessionStorage.getItem(STORAGE_KEY);
     if (saved) {
       try {
         const state = JSON.parse(saved);
-        if (state.media) setMedia(state.media);
-        if (state.page) setPage(state.page);
-        if (state.hasMore !== undefined) setHasMore(state.hasMore);
         if (state.selectedUserId) setSelectedUserId(state.selectedUserId);
         if (state.selectedGroupId) setSelectedGroupId(state.selectedGroupId);
-        setLoading(false);
-        skipInitialFetch.current = true;
-        hasRestoredScroll.current = true;
+        if (state.scrollY !== undefined) {
+          hasRestoredScroll.current = true;
+          // Store scrollY in a ref so we can use it after media loads
+          window.__galleryScrollY = state.scrollY;
+        }
       } catch (e) {
         // ignore corrupted data
       }
@@ -92,45 +90,34 @@ const Gallery = () => {
   // Scroll restoration effect
   useEffect(() => {
     if (hasRestoredScroll.current && media.length > 0) {
-      const saved = sessionStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        try {
-          const state = JSON.parse(saved);
-          if (state.scrollY !== undefined) {
-            window.scrollTo(0, state.scrollY);
-          }
-        } catch (e) {}
+      const scrollY = window.__galleryScrollY;
+      if (scrollY !== undefined) {
+        window.scrollTo(0, scrollY);
+        delete window.__galleryScrollY;
       }
       hasRestoredScroll.current = false;
     }
   }, [media]);
 
-  // Fetch media effect (modified to skip if restored)
+  // Fetch media effect – always fetch on mount and when filters change
   useEffect(() => {
-    if (skipInitialFetch.current) {
-      skipInitialFetch.current = false;
-      return;
-    }
     setPage(1);
     setHasMore(true);
     setLoading(true);
     fetchMedia(1, false);
   }, [selectedUserId, selectedGroupId, fetchMedia]);
 
-  // Cleanup effect to save state on unmount
+  // Save only filters and scroll position on unmount (not media data)
   useEffect(() => {
     return () => {
       const state = {
-        media,
-        page,
-        hasMore,
         selectedUserId,
         selectedGroupId,
         scrollY: window.scrollY,
       };
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     };
-  }, [media, page, hasMore, selectedUserId, selectedGroupId]);
+  }, [selectedUserId, selectedGroupId]);
 
   useEffect(() => {
     fetch(`${API_URL}/api/auth/face-groups/`)
