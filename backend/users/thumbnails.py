@@ -12,10 +12,10 @@ from .cloud_clients import get_file_from_cloud
 
 logger = logging.getLogger(__name__)
 
-THUMBNAIL_SIZE = (800, 800)   # max width/height
-JPEG_QUALITY = 90
+THUMBNAIL_SIZE = (1200, 1200)   # max width/height
+JPEG_QUALITY = 95
 CACHE_TIMEOUT = 60 * 60 * 24 * 7  # 7 days
-CACHE_KEY_PREFIX = "media_thumbnail:v2"
+CACHE_KEY_PREFIX = "media_thumbnail:v3"
 
 
 def generate_thumbnail(media: Media) -> bytes | None:
