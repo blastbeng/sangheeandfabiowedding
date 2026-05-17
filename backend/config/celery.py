@@ -22,10 +22,10 @@ app.conf.beat_schedule = {
         'task': 'users.tasks.clean_orphaned_facetag_files',
         'schedule': crontab(hour=3, minute=0),  # daily at 3 AM
     },
-    'cleanup-missing-cloud-files-every-hour': {
-        'task': 'users.tasks.cleanup_missing_cloud_files',
-        'schedule': crontab(minute=0, hour='*'),  # every hour
-    },
+    # 'cleanup-missing-cloud-files-every-hour': {
+    #     'task': 'users.tasks.cleanup_missing_cloud_files',
+    #     'schedule': crontab(minute=0, hour='*'),  # every hour
+    # },
     'deduplicate-faces-every-hour': {
         'task': 'users.tasks.deduplicate_faces',
         'schedule': crontab(minute=0, hour='*'),  # every hour
