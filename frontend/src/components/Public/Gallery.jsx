@@ -19,14 +19,25 @@ const Gallery = () => {
   const [faceGroups, setFaceGroups] = useState([]);
   const [selectedGroupId, setSelectedGroupId] = useState(null);
   const [failedMediaIds, setFailedMediaIds] = useState(new Set());
+  const [faceGroupsVersion, setFaceGroupsVersion] = useState(0);
   const API_URL = import.meta.env.VITE_API_URL;
 
   const sentinelRef = useRef(null);
   const skipInitialFetch = useRef(false);
   const hasRestoredScroll = useRef(false);
+  const faceRowRef = useRef(null);
 
   // Filter out face groups that have no tags (empty groups)
   const activeFaceGroups = faceGroups.filter(g => g.face_count === undefined || g.face_count > 0);
+
+  const scrollFaceRow = (direction) => {
+    if (faceRowRef.current) {
+      faceRowRef.current.scrollBy({
+        left: direction * 200,
+        behavior: 'smooth',
+      });
+    }
+  };
 
   const fetchMedia = useCallback(async (pageNum, append = false) => {
     const params = new URLSearchParams();
@@ -46,6 +57,7 @@ const Gallery = () => {
       } else {
         setMedia(newMedia);
         setFailedMediaIds(new Set());
+        setFaceGroupsVersion(v => v + 1);
       }
       setHasMore(newMedia.length === PAGE_SIZE);
       setLoading(false);
@@ -125,7 +137,7 @@ const Gallery = () => {
       .then(res => res.json())
       .then(data => setFaceGroups(data))
       .catch(err => logger.error('[Gallery] Failed to fetch face groups:', err));
-  }, []);
+  }, [faceGroupsVersion]);
 
   useEffect(() => {
     fetch(`${API_URL}/api/auth/users/public/`)
@@ -178,8 +190,22 @@ const Gallery = () => {
       {activeFaceGroups.length > 0 && (
         <div className="mb-6">
           <label className="block text-sm text-gray-600 mb-1">{t('filter_by_person')}</label>
-          <div className="overflow-x-auto pb-2 scrollbar-hide">
-            <div className="flex gap-3 px-2" style={{ scrollSnapType: 'x mandatory' }}>
+          <div className="flex items-center gap-1">
+            {/* Left arrow */}
+            <button
+              onClick={() => scrollFaceRow(-1)}
+              className="flex-shrink-0 w-8 h-8 rounded-full bg-white shadow flex items-center justify-center text-gray-500 hover:text-pink-600"
+              aria-label="Scroll left"
+            >
+              ‹
+            </button>
+
+            {/* Scrollable row – now with a visible scrollbar */}
+            <div
+              ref={faceRowRef}
+              className="flex gap-3 overflow-x-auto pb-2 flex-1"
+              style={{ scrollSnapType: 'x mandatory', scrollbarWidth: 'thin' }}
+            >
               {activeFaceGroups.map(group => (
                 <button
                   key={group.id}
@@ -192,12 +218,21 @@ const Gallery = () => {
                   <img
                     src={group.thumbnail_url || 'https://i.imgur.com/V4RclNb.png'}
                     alt={group.user_display_name || ''}
-                    className="w-12 h-12 rounded-full object-contain border-2 border-white shadow-sm"
+                    className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm"
                     onError={(e) => { e.target.src = 'https://i.imgur.com/V4RclNb.png'; }}
                   />
                 </button>
               ))}
             </div>
+
+            {/* Right arrow */}
+            <button
+              onClick={() => scrollFaceRow(1)}
+              className="flex-shrink-0 w-8 h-8 rounded-full bg-white shadow flex items-center justify-center text-gray-500 hover:text-pink-600"
+              aria-label="Scroll right"
+            >
+              ›
+            </button>
           </div>
         </div>
       )}

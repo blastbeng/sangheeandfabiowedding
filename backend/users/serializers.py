@@ -3,6 +3,7 @@ import os
 from rest_framework import serializers
 from django.conf import settings
 from django.contrib.auth.password_validation import validate_password
+from django.contrib.staticfiles.storage import staticfiles_storage
 from django.utils.translation import gettext_lazy as _
 from .models import CustomUser, Media, SiteSettings, FaceGroup, FaceTag, CookieConsent
 from .profanity_words import contains_profanity
@@ -388,15 +389,22 @@ class FaceGroupSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'thumbnail_url', 'user_id', 'user_display_name']
 
     def get_thumbnail_url(self, obj):
-        if not obj.thumbnail:
-            return None
+        if obj.thumbnail:
+            try:
+                request = self.context.get('request')
+                if request:
+                    return request.build_absolute_uri(obj.thumbnail.url)
+                return obj.thumbnail.url
+            except Exception as e:
+                logger.error(f"Failed to get thumbnail URL for FaceGroup {obj.id}: {e}")
+        # Fallback to a static default image served by the backend
         try:
+            url = staticfiles_storage.url('images/default_face_thumbnail.png')
             request = self.context.get('request')
             if request:
-                return request.build_absolute_uri(obj.thumbnail.url)
-            return obj.thumbnail.url
-        except Exception as e:
-            logger.error(f"Failed to get thumbnail URL for FaceGroup {obj.id}: {e}")
+                return request.build_absolute_uri(url)
+            return url
+        except Exception:
             return None
 
     def get_user_display_name(self, obj):
