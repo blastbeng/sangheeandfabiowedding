@@ -326,7 +326,7 @@ def detect_faces_task(self, media_id, force=False):
     # Use MediaPipe for fast face detection
     try:
         with mp.solutions.face_detection.FaceDetection(
-            model_selection=1, min_detection_confidence=0.5
+            model_selection=0, min_detection_confidence=0.4
         ) as face_detection:
             results = face_detection.process(img_array)
     except Exception as e:
@@ -362,7 +362,7 @@ def detect_faces_task(self, media_id, force=False):
         ymax = min(h, ymin + height + 2 * expand_h)
 
         # Skip faces that are too small
-        if (xmax - xmin) < 30 or (ymax - ymin) < 30:
+        if (xmax - xmin) < 20 or (ymax - ymin) < 20:
             continue
 
         face_locations.append((ymin, xmax, ymax, xmin))  # dlib order: top, right, bottom, left
@@ -374,7 +374,7 @@ def detect_faces_task(self, media_id, force=False):
         return
 
     # Remove overlapping detections (keep only the largest face in each cluster)
-    face_locations = _nms(face_locations, threshold=0.5)
+    face_locations = _nms(face_locations, threshold=0.3)
 
     logger.info(f"[detect_faces] After NMS: {len(face_locations)} face(s) kept for media {media_id}")
 
@@ -407,8 +407,8 @@ def detect_faces_task(self, media_id, force=False):
     if uploader_group and uploader_group.id in group_centroids:
         uploader_centroid = group_centroids[uploader_group.id]
 
-    # Process each detected face
-    faces_created = 0
+    # First pass: compute encodings, thumbnails, and initial group assignments
+    face_data = []
     for (top, right, bottom, left) in face_locations:
         # Get landmarks for this face (used for alignment and upside-down detection)
         landmarks_list = face_recognition.face_landmarks(img_array, [(top, right, bottom, left)])
@@ -463,7 +463,7 @@ def detect_faces_task(self, media_id, force=False):
             pil_thumb = Image.fromarray(thumb_face)
 
         # Blur check – skip low-quality faces that produce unreliable encodings
-        if _is_blurry(face_for_quality, threshold=100.0):
+        if _is_blurry(face_for_quality, threshold=50.0):
             logger.info(f"[detect_faces] Skipping blurry face in media {media_id}")
             continue
 
@@ -474,12 +474,12 @@ def detect_faces_task(self, media_id, force=False):
 
         # Initialize group matching variables
         best_group_id = None
-        min_distance = 0.55   # single relaxed threshold
+        min_distance = 0.6   # single relaxed threshold
 
         # If the uploader has a linked group, check it first with the same threshold
         if uploader_centroid is not None:
             dist_to_uploader = np.linalg.norm(encoding - uploader_centroid)
-            if dist_to_uploader < 0.55:
+            if dist_to_uploader < 0.6:
                 best_group_id = uploader_group.id
                 min_distance = dist_to_uploader
                 logger.info(f"[detect_faces] Assigned to uploader's group {uploader_group.id} (dist={dist_to_uploader:.4f})")
@@ -493,7 +493,7 @@ def detect_faces_task(self, media_id, force=False):
                     best_group_id = group_id
 
         # No margin check – accept the closest group if below threshold
-        if best_group_id is not None and min_distance >= 0.55:
+        if best_group_id is not None and min_distance >= 0.6:
             best_group_id = None   # closest is still too far
 
         if best_group_id is None:
@@ -510,6 +510,35 @@ def detect_faces_task(self, media_id, force=False):
             new_centroid = (old_centroid * count + encoding) / (count + 1)
             group_centroids[best_group_id] = new_centroid
 
+        face_data.append({
+            'encoding': encoding,
+            'group_id': best_group_id,
+            'thumb_content': thumb_content,
+        })
+
+    # Second pass: immediate deduplication within the same media
+    # If two faces in the same photo are very close, force them into the same group
+    for i in range(len(face_data)):
+        for j in range(i + 1, len(face_data)):
+            dist = np.linalg.norm(face_data[i]['encoding'] - face_data[j]['encoding'])
+            if dist < 0.5:
+                gid_i = face_data[i]['group_id']
+                gid_j = face_data[j]['group_id']
+                if gid_i != gid_j:
+                    # Choose the group with more existing FaceTags (or lower ID if equal)
+                    count_i = FaceTag.objects.filter(face_group_id=gid_i).count()
+                    count_j = FaceTag.objects.filter(face_group_id=gid_j).count()
+                    if count_i >= count_j:
+                        face_data[j]['group_id'] = gid_i
+                    else:
+                        face_data[i]['group_id'] = gid_j
+
+    # Third pass: create FaceTags
+    faces_created = 0
+    for fd in face_data:
+        best_group_id = fd['group_id']
+        thumb_content = fd['thumb_content']
+
         # Ensure the face group has a thumbnail (for groups created before this fix)
         if best_group_id:
             group = FaceGroup.objects.get(id=best_group_id)
@@ -525,7 +554,7 @@ def detect_faces_task(self, media_id, force=False):
         face_tag = FaceTag.objects.create(
             media=media,
             face_group_id=best_group_id,
-            encoding=pickle.dumps(encoding),
+            encoding=pickle.dumps(fd['encoding']),
         )
         face_tag.thumbnail.save(f'face_{face_tag.id}.jpg', ContentFile(thumb_content), save=True)
         faces_created += 1
@@ -691,7 +720,7 @@ def detect_faces_profile_picture(self, user_id):
     # Detect faces with MediaPipe
     try:
         with mp.solutions.face_detection.FaceDetection(
-            model_selection=1, min_detection_confidence=0.5
+            model_selection=0, min_detection_confidence=0.4
         ) as face_detection:
             results = face_detection.process(img_array)
     except Exception as e:
@@ -719,7 +748,7 @@ def detect_faces_profile_picture(self, user_id):
     xmax = min(w, xmin + width + 2 * expand_w)
     ymax = min(h, ymin + height + 2 * expand_h)
 
-    if (xmax - xmin) < 30 or (ymax - ymin) < 30:
+    if (xmax - xmin) < 20 or (ymax - ymin) < 20:
         logger.info(f"[detect_faces_profile] Face too small for user {user_id}")
         return
 
@@ -777,7 +806,7 @@ def detect_faces_profile_picture(self, user_id):
         pil_thumb = Image.fromarray(thumb_face)
 
     # Blur check – skip low-quality faces that produce unreliable encodings
-    if _is_blurry(face_for_quality, threshold=100.0):
+    if _is_blurry(face_for_quality, threshold=50.0):
         logger.info(f"[detect_faces_profile] Skipping blurry face for user {user_id}")
         return
 
@@ -801,7 +830,7 @@ def detect_faces_profile_picture(self, user_id):
         if encodings_list:
             centroid = np.mean(encodings_list, axis=0)
             distance = np.linalg.norm(encoding - centroid)
-            if distance < 0.5:
+            if distance < 0.6:
                 best_group_id = existing_user_group.id
                 # Update centroid (moving average)
                 count = len(encodings_list)
@@ -810,7 +839,7 @@ def detect_faces_profile_picture(self, user_id):
                 group_centroids = {best_group_id: new_centroid}
             else:
                 # Even if distance is high, still use the user's group to avoid duplicates
-                logger.info(f"[detect_faces_profile] User {user_id} existing group {existing_user_group.id} distance {distance:.4f} > 0.5, but reusing to avoid duplicate")
+                logger.info(f"[detect_faces_profile] User {user_id} existing group {existing_user_group.id} distance {distance:.4f} > 0.6, but reusing to avoid duplicate")
                 best_group_id = existing_user_group.id
                 count = len(encodings_list)
                 new_centroid = (centroid * count + encoding) / (count + 1)
@@ -839,7 +868,7 @@ def detect_faces_profile_picture(self, user_id):
     if not skip_general_search:
         # Find closest existing group with a single relaxed threshold
         best_group_id = None
-        min_distance = 0.55
+        min_distance = 0.6
         for group_id, centroid in group_centroids.items():
             distance = np.linalg.norm(encoding - centroid)
             if distance < min_distance:
@@ -847,7 +876,7 @@ def detect_faces_profile_picture(self, user_id):
                 best_group_id = group_id
 
         # No margin check – accept the closest group if below threshold
-        if best_group_id is not None and min_distance >= 0.55:
+        if best_group_id is not None and min_distance >= 0.6:
             best_group_id = None
 
     user_display_name = user.get_full_name() or user.username
@@ -999,7 +1028,7 @@ def deduplicate_faces():
     group_ids = list(group_encodings.keys())
     merged_groups = set()
     MIN_TAGS_FOR_MERGE = 2
-    AVG_DIST_THRESHOLD = 0.55
+    AVG_DIST_THRESHOLD = 0.6
 
     for i in range(len(group_ids)):
         gid1 = group_ids[i]
@@ -1028,7 +1057,7 @@ def deduplicate_faces():
 
             if total_pairs > 0:
                 ratio = below_threshold / total_pairs
-                if ratio >= 0.6:   # at least 60% of pairs must be close
+                if ratio >= 0.5:   # at least 50% of pairs must be close
                     # Merge gid2 into gid1 (keep the one with smaller ID)
                     keep_id, remove_id = (gid1, gid2) if gid1 < gid2 else (gid2, gid1)
                     if (keep_id, remove_id) not in groups_merged and (remove_id, keep_id) not in groups_merged:
@@ -1054,7 +1083,7 @@ def deduplicate_faces():
                 continue
             centroid2 = np.mean(encs2, axis=0)
             dist = np.linalg.norm(enc1 - centroid2)
-            if dist < 0.5:
+            if dist < 0.6:
                 keep_id, remove_id = (gid2, gid1) if gid2 < gid1 else (gid1, gid2)
                 if (keep_id, remove_id) not in groups_merged and (remove_id, keep_id) not in groups_merged:
                     keep_group = FaceGroup.objects.get(id=keep_id)
