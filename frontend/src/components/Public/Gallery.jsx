@@ -2,6 +2,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import logger from '../../utils/logger';
+import ThumbnailImage from '../Common/ThumbnailImage';
 
 const PAGE_SIZE = 20;
 
@@ -216,17 +217,14 @@ const Gallery = () => {
                   </div>
                 ) : (
                   <Link to={`/media/${item.id}`} state={{ media: item }} className="block relative">
-                    <img
-                      src={`${API_URL}/api/auth/media/${item.id}/thumbnail/`}
+                    <ThumbnailImage
+                      mediaId={item.id}
+                      apiUrl={API_URL}
                       alt={item.caption || t('beautiful_moment')}
                       className="w-full aspect-square object-cover"
-                      onError={() => setFailedMediaIds(prev => new Set(prev).add(item.id))}
+                      mediaType={item.media_type}
+                      onFinalError={(id) => setFailedMediaIds(prev => new Set(prev).add(id))}
                     />
-                    {item.media_type === 'video' && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/20 hover:bg-black/40 transition-colors">
-                        <div className="text-white text-5xl drop-shadow-lg">▶</div>
-                      </div>
-                    )}
                   </Link>
                 )}
                 <div className="p-3">

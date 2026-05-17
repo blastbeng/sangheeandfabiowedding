@@ -2,6 +2,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import logger from '../../utils/logger';
+import ThumbnailImage from '../Common/ThumbnailImage';
 
 const PAGE_SIZE = 20;
 
@@ -198,33 +199,24 @@ const UserProfile = () => {
                   </div>
                 ) : (
                   <Link to={`/media/${item.id}`} state={{ media: item }} className="block">
-                    <div className="relative">
-                      {item.media_type === 'video' ? (
-                        <video
-                          src={`${API_URL}${item.file_url}`}
-                          className="w-full h-48 object-cover"
-                          controls
-                          onError={() => setFailedMediaIds(prev => new Set(prev).add(item.id))}
-                        />
-                      ) : (
-                        <img
-                          src={`${API_URL}${item.file_url}`}
-                          alt={item.caption || t('beautiful_moment')}
-                          className="w-full h-48 object-cover"
-                          onError={() => setFailedMediaIds(prev => new Set(prev).add(item.id))}
-                        />
-                      )}
-                    </div>
-                    <div className="p-4">
-                      <p className="text-gray-700 text-sm mb-2 line-clamp-2">
-                        {item.caption || t('beautiful_moment')}
-                      </p>
-                      <p className="text-gray-500 text-xs mt-2">
-                        📅 {new Date(item.uploaded_at).toLocaleDateString()}
-                      </p>
-                    </div>
+                    <ThumbnailImage
+                      mediaId={item.id}
+                      apiUrl={API_URL}
+                      alt={item.caption || t('beautiful_moment')}
+                      className="w-full h-48 object-cover"
+                      mediaType={item.media_type}
+                      onFinalError={(id) => setFailedMediaIds(prev => new Set(prev).add(id))}
+                    />
                   </Link>
                 )}
+                <div className="p-4">
+                  <p className="text-gray-700 text-sm mb-2 line-clamp-2">
+                    {item.caption || t('beautiful_moment')}
+                  </p>
+                  <p className="text-gray-500 text-xs mt-2">
+                    📅 {new Date(item.uploaded_at).toLocaleDateString()}
+                  </p>
+                </div>
               </div>
             );
           })}
