@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 const MAX_RETRIES = 10;
 const RETRY_DELAY = 2000; // 2 seconds
 
-const ThumbnailImage = ({ mediaId, apiUrl, alt, className, mediaType, onFinalError }) => {
+const ThumbnailImage = ({ mediaId, apiUrl, alt, className, mediaType, onFinalError, src, fallbackSrc }) => {
   const [status, setStatus] = useState('loading'); // 'loading' | 'loaded' | 'error'
   const [retryCount, setRetryCount] = useState(0);
   const [imgSrc, setImgSrc] = useState(null);
@@ -20,18 +20,18 @@ const ThumbnailImage = ({ mediaId, apiUrl, alt, className, mediaType, onFinalErr
     return () => { mountedRef.current = false; };
   }, []);
 
-  // Reset state when mediaId changes (defensive, shouldn't happen with unique keys)
+  // Reset state when mediaId or src changes
   useEffect(() => {
     setStatus('loading');
     setRetryCount(0);
     setImgSrc(null);
-  }, [mediaId]);
+  }, [mediaId, src]);
 
   useEffect(() => {
     if (status === 'loaded' || status === 'error') return;
 
     let timer = null;
-    const url = `${apiUrl}/api/auth/media/${mediaId}/thumbnail/?retry=${retryCount}`;
+    const url = src || `${apiUrl}/api/auth/media/${mediaId}/thumbnail/?retry=${retryCount}`;
     const img = new Image();
 
     img.onload = () => {
@@ -60,7 +60,7 @@ const ThumbnailImage = ({ mediaId, apiUrl, alt, className, mediaType, onFinalErr
     return () => {
       if (timer) clearTimeout(timer);
     };
-  }, [retryCount, apiUrl, mediaId, status]);
+  }, [retryCount, apiUrl, mediaId, status, src]);
 
   if (status === 'loading') {
     return (
@@ -71,6 +71,9 @@ const ThumbnailImage = ({ mediaId, apiUrl, alt, className, mediaType, onFinalErr
   }
 
   if (status === 'error') {
+    if (fallbackSrc) {
+      return <img src={fallbackSrc} alt={alt} className={className} />;
+    }
     return null; // parent will show failed placeholder via onFinalError
   }
 
