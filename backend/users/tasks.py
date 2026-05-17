@@ -326,7 +326,7 @@ def detect_faces_task(self, media_id, force=False):
     # Use MediaPipe for fast face detection
     try:
         with mp.solutions.face_detection.FaceDetection(
-            model_selection=0, min_detection_confidence=0.4
+            model_selection=1, min_detection_confidence=0.4
         ) as face_detection:
             results = face_detection.process(img_array)
     except Exception as e:
@@ -463,7 +463,7 @@ def detect_faces_task(self, media_id, force=False):
             pil_thumb = Image.fromarray(thumb_face)
 
         # Blur check – skip low-quality faces that produce unreliable encodings
-        if _is_blurry(face_for_quality, threshold=50.0):
+        if _is_blurry(face_for_quality, threshold=30.0):
             logger.info(f"[detect_faces] Skipping blurry face in media {media_id}")
             continue
 
@@ -720,7 +720,7 @@ def detect_faces_profile_picture(self, user_id):
     # Detect faces with MediaPipe
     try:
         with mp.solutions.face_detection.FaceDetection(
-            model_selection=0, min_detection_confidence=0.4
+            model_selection=1, min_detection_confidence=0.4
         ) as face_detection:
             results = face_detection.process(img_array)
     except Exception as e:
@@ -806,7 +806,7 @@ def detect_faces_profile_picture(self, user_id):
         pil_thumb = Image.fromarray(thumb_face)
 
     # Blur check – skip low-quality faces that produce unreliable encodings
-    if _is_blurry(face_for_quality, threshold=50.0):
+    if _is_blurry(face_for_quality, threshold=30.0):
         logger.info(f"[detect_faces_profile] Skipping blurry face for user {user_id}")
         return
 
