@@ -463,7 +463,7 @@ def detect_faces_task(self, media_id, force=False):
             pil_thumb = Image.fromarray(thumb_face)
 
         # Blur check – skip low-quality faces that produce unreliable encodings
-        if _is_blurry(face_for_quality, threshold=30.0):
+        if _is_blurry(face_for_quality, threshold=100.0):
             logger.info(f"[detect_faces] Skipping blurry face in media {media_id}")
             continue
 
@@ -806,7 +806,7 @@ def detect_faces_profile_picture(self, user_id):
         pil_thumb = Image.fromarray(thumb_face)
 
     # Blur check – skip low-quality faces that produce unreliable encodings
-    if _is_blurry(face_for_quality, threshold=30.0):
+    if _is_blurry(face_for_quality, threshold=100.0):
         logger.info(f"[detect_faces_profile] Skipping blurry face for user {user_id}")
         return
 
