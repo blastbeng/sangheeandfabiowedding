@@ -1,9 +1,11 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import logger from '../../utils/logger';
 import authFetch from '../../utils/authFetch';
 import ThumbnailImage from '../Common/ThumbnailImage';
+
+const PAGE_SIZE = 20;
 
 const AdminModeration = () => {
   const { t } = useTranslation();
@@ -19,6 +21,7 @@ const AdminModeration = () => {
   const [totalPages, setTotalPages] = useState(0);
   const [refreshKey, setRefreshKey] = useState(0);
   const [failedMediaIds, setFailedMediaIds] = useState(new Set());
+  const listTopRef = useRef(null);
   const API_URL = import.meta.env.VITE_API_URL;
 
   const fetchMedia = useCallback(async (pageNum, pageSizeVal) => {
@@ -66,6 +69,11 @@ const AdminModeration = () => {
     setLoading(true);
     fetchMedia(page, pageSize);
   }, [page, pageSize, fetchMedia, refreshKey]);
+
+  // Scroll to top of list when page changes
+  useEffect(() => {
+    listTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [page]);
 
   const handleApprove = (id) => {
     if (!window.confirm(t('admin_approve_confirm'))) return;
@@ -305,183 +313,242 @@ const AdminModeration = () => {
           </button>
         </div>
 
-        {viewMode === 'table' ? (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b-2 border-pink-200">
-                  <th className="text-left py-3 text-pink-600">
-                    <input type="checkbox" checked={selectAll} onChange={toggleSelectAll} />
-                  </th>
-                  <th className="text-left py-3 text-pink-600">{t('admin_mod_col_preview')}</th>
-                  <th className="text-left py-3 text-pink-600">{t('admin_mod_col_user')}</th>
-                  <th className="text-left py-3 text-pink-600">{t('admin_mod_col_caption')}</th>
-                  <th className="text-left py-3 text-pink-600">{t('admin_mod_col_date')}</th>
-                  <th className="text-left py-3 text-pink-600">{t('admin_mod_col_status')}</th>
-                  <th className="text-left py-3 text-pink-600">{t('admin_mod_col_actions')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {media.map((item) => (
-                  <tr key={item.id} className="border-b border-pink-100 hover:bg-pink-50">
-                    <td className="py-3">
+        {/* Top pagination controls */}
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+          <div className="flex items-center gap-2">
+            <label htmlFor="pageSizeSelectTop" className="text-sm text-gray-600">
+              {t('items_per_page')}
+            </label>
+            <select
+              id="pageSizeSelectTop"
+              value={pageSize}
+              onChange={(e) => {
+                setPageSize(Number(e.target.value));
+                setPage(1);
+              }}
+              className="wedding-input w-20"
+            >
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+          </div>
+
+          <div className="flex items-center gap-1 sm:gap-2">
+            <button
+              onClick={() => setPage(1)}
+              disabled={page === 1}
+              className="inline-flex items-center justify-center text-xs font-medium rounded border border-pink-300 bg-white text-pink-700 hover:bg-pink-50 disabled:opacity-50 min-w-[40px] min-h-[40px] px-2 py-1"
+            >
+              ««
+            </button>
+            <button
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="inline-flex items-center justify-center text-xs font-medium rounded border border-pink-300 bg-white text-pink-700 hover:bg-pink-50 disabled:opacity-50 min-w-[40px] min-h-[40px] px-2 py-1"
+            >
+              ‹
+            </button>
+            <span className="text-sm text-gray-700">
+              {t('page_x_of_y', { current: page, total: totalPages })}
+            </span>
+            <button
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              disabled={page >= totalPages}
+              className="inline-flex items-center justify-center text-xs font-medium rounded border border-pink-300 bg-white text-pink-700 hover:bg-pink-50 disabled:opacity-50 min-w-[40px] min-h-[40px] px-2 py-1"
+            >
+              ›
+            </button>
+            <button
+              onClick={() => setPage(totalPages)}
+              disabled={page >= totalPages}
+              className="inline-flex items-center justify-center text-xs font-medium rounded border border-pink-300 bg-white text-pink-700 hover:bg-pink-50 disabled:opacity-50 min-w-[40px] min-h-[40px] px-2 py-1"
+            >
+              »»
+            </button>
+          </div>
+        </div>
+
+        <div ref={listTopRef}>
+          {viewMode === 'table' ? (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b-2 border-pink-200">
+                    <th className="text-left py-3 text-pink-600">
+                      <input type="checkbox" checked={selectAll} onChange={toggleSelectAll} />
+                    </th>
+                    <th className="text-left py-3 text-pink-600">{t('admin_mod_col_preview')}</th>
+                    <th className="text-left py-3 text-pink-600">{t('admin_mod_col_user')}</th>
+                    <th className="text-left py-3 text-pink-600">{t('admin_mod_col_caption')}</th>
+                    <th className="text-left py-3 text-pink-600">{t('admin_mod_col_date')}</th>
+                    <th className="text-left py-3 text-pink-600">{t('admin_mod_col_status')}</th>
+                    <th className="text-left py-3 text-pink-600">{t('admin_mod_col_actions')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {media.map((item) => (
+                    <tr key={item.id} className="border-b border-pink-100 hover:bg-pink-50">
+                      <td className="py-3">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.includes(item.id)}
+                          onChange={() => toggleSelectItem(item.id)}
+                        />
+                      </td>
+                      <td className="py-3">
+                        <Link to={`/media/${item.id}`} state={{ media: item }}>
+                          {item.file_url ? (
+                            failedMediaIds.has(item.id) ? (
+                              <div className="w-16 h-16 bg-gray-100 rounded-lg border-2 border-pink-200 flex items-center justify-center text-gray-400 text-xs">
+                                {t('file_unavailable')}
+                              </div>
+                            ) : (
+                              <ThumbnailImage
+                                mediaId={item.id}
+                                apiUrl={API_URL}
+                                alt="preview"
+                                className="w-16 h-16 object-cover rounded-lg border-2 border-pink-200"
+                                mediaType={item.media_type}
+                                onFinalError={(id) => setFailedMediaIds(prev => new Set(prev).add(id))}
+                              />
+                            )
+                          ) : (
+                            <div className="w-16 h-16 bg-gray-100 rounded-lg border-2 border-pink-200 flex items-center justify-center text-gray-400 text-xs">
+                              {t('file_unavailable')}
+                            </div>
+                          )}
+                        </Link>
+                      </td>
+                      <td className="py-3 text-gray-700">{item.user_email || t('anonymous')}</td>
+                      <td className="py-3 text-gray-600 text-sm">{item.caption || '-'}</td>
+                      <td className="py-3 text-gray-600 text-sm">{new Date(item.uploaded_at).toLocaleDateString()}</td>
+                      <td className="py-3">{getStatusBadge(item.status)}</td>
+                      <td className="py-3">
+                        <div className="flex gap-2">
+                          {item.status === 'pending' && (
+                            <>
+                              <button onClick={() => handleApprove(item.id)} className="bg-green-500 text-white px-3 py-1 rounded-lg text-sm hover:bg-green-600">{t('admin_approve')}</button>
+                              <button onClick={() => handleReject(item.id)} className="bg-red-500 text-white px-3 py-1 rounded-lg text-sm hover:bg-red-600">{t('admin_reject')}</button>
+                            </>
+                          )}
+                          <button onClick={() => handleDelete(item.id)} className="bg-gray-500 text-white px-3 py-1 rounded-lg text-sm hover:bg-gray-600">{t('admin_delete')}</button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <>
+              {/* Select All for gallery mode */}
+              <div className="flex items-center mb-2">
+                <input
+                  type="checkbox"
+                  checked={selectAll}
+                  onChange={toggleSelectAll}
+                  className="w-4 h-4 text-wedding-600 border-gray-300 rounded focus:ring-wedding-500"
+                />
+                <span className="ml-2 text-sm text-gray-600">{t('select_all')}</span>
+              </div>
+              {/* Gallery grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {media.map(item => (
+                  <div
+                    key={item.id}
+                    className="bg-white rounded-lg shadow overflow-hidden relative cursor-pointer"
+                    onClick={() => toggleSelectItem(item.id)}
+                  >
+                    {/* Checkbox for bulk selection */}
+                    <div className="absolute top-2 left-2 z-10">
                       <input
                         type="checkbox"
                         checked={selectedIds.includes(item.id)}
                         onChange={() => toggleSelectItem(item.id)}
+                        onClick={(e) => e.stopPropagation()}
+                        className="w-4 h-4 text-wedding-600 border-gray-300 rounded focus:ring-wedding-500"
                       />
-                    </td>
-                    <td className="py-3">
-                      <Link to={`/media/${item.id}`} state={{ media: item }}>
-                        {item.file_url ? (
-                          failedMediaIds.has(item.id) ? (
-                            <div className="w-16 h-16 bg-gray-100 rounded-lg border-2 border-pink-200 flex items-center justify-center text-gray-400 text-xs">
-                              {t('file_unavailable')}
+                    </div>
+                    {/* Media preview */}
+                    <div className="aspect-w-1 aspect-h-1 bg-gray-200">
+                      {item.file_url ? (
+                        failedMediaIds.has(item.id) ? (
+                          <div className="flex items-center justify-center h-full text-gray-400">
+                            <div className="text-center">
+                              <span className="text-4xl">🖼️‍🗑️</span>
+                              <p className="text-xs mt-1">{t('file_unavailable')}</p>
                             </div>
-                          ) : (
-                            <ThumbnailImage
-                              mediaId={item.id}
-                              apiUrl={API_URL}
-                              alt="preview"
-                              className="w-16 h-16 object-cover rounded-lg border-2 border-pink-200"
-                              mediaType={item.media_type}
-                              onFinalError={(id) => setFailedMediaIds(prev => new Set(prev).add(id))}
-                            />
-                          )
+                          </div>
                         ) : (
-                          <div className="w-16 h-16 bg-gray-100 rounded-lg border-2 border-pink-200 flex items-center justify-center text-gray-400 text-xs">
-                            {t('file_unavailable')}
-                          </div>
-                        )}
-                      </Link>
-                    </td>
-                    <td className="py-3 text-gray-700">{item.user_email || t('anonymous')}</td>
-                    <td className="py-3 text-gray-600 text-sm">{item.caption || '-'}</td>
-                    <td className="py-3 text-gray-600 text-sm">{new Date(item.uploaded_at).toLocaleDateString()}</td>
-                    <td className="py-3">{getStatusBadge(item.status)}</td>
-                    <td className="py-3">
-                      <div className="flex gap-2">
-                        {item.status === 'pending' && (
-                          <>
-                            <button onClick={() => handleApprove(item.id)} className="bg-green-500 text-white px-3 py-1 rounded-lg text-sm hover:bg-green-600">{t('admin_approve')}</button>
-                            <button onClick={() => handleReject(item.id)} className="bg-red-500 text-white px-3 py-1 rounded-lg text-sm hover:bg-red-600">{t('admin_reject')}</button>
-                          </>
-                        )}
-                        <button onClick={() => handleDelete(item.id)} className="bg-gray-500 text-white px-3 py-1 rounded-lg text-sm hover:bg-gray-600">{t('admin_delete')}</button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <>
-            {/* Select All for gallery mode */}
-            <div className="flex items-center mb-2">
-              <input
-                type="checkbox"
-                checked={selectAll}
-                onChange={toggleSelectAll}
-                className="w-4 h-4 text-wedding-600 border-gray-300 rounded focus:ring-wedding-500"
-              />
-              <span className="ml-2 text-sm text-gray-600">{t('select_all')}</span>
-            </div>
-            {/* Gallery grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {media.map(item => (
-                <div
-                  key={item.id}
-                  className="bg-white rounded-lg shadow overflow-hidden relative cursor-pointer"
-                  onClick={() => toggleSelectItem(item.id)}
-                >
-                  {/* Checkbox for bulk selection */}
-                  <div className="absolute top-2 left-2 z-10">
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.includes(item.id)}
-                      onChange={() => toggleSelectItem(item.id)}
-                      onClick={(e) => e.stopPropagation()}
-                      className="w-4 h-4 text-wedding-600 border-gray-300 rounded focus:ring-wedding-500"
-                    />
-                  </div>
-                  {/* Media preview */}
-                  <div className="aspect-w-1 aspect-h-1 bg-gray-200">
-                    {item.file_url ? (
-                      failedMediaIds.has(item.id) ? (
-                        <div className="flex items-center justify-center h-full text-gray-400">
-                          <div className="text-center">
-                            <span className="text-4xl">🖼️‍🗑️</span>
-                            <p className="text-xs mt-1">{t('file_unavailable')}</p>
-                          </div>
-                        </div>
+                          <ThumbnailImage
+                            mediaId={item.id}
+                            apiUrl={API_URL}
+                            alt={item.caption || 'Media'}
+                            className="object-cover w-full h-full"
+                            mediaType={item.media_type}
+                            onFinalError={(id) => setFailedMediaIds(prev => new Set(prev).add(id))}
+                          />
+                        )
                       ) : (
-                        <ThumbnailImage
-                          mediaId={item.id}
-                          apiUrl={API_URL}
-                          alt={item.caption || 'Media'}
-                          className="object-cover w-full h-full"
-                          mediaType={item.media_type}
-                          onFinalError={(id) => setFailedMediaIds(prev => new Set(prev).add(id))}
-                        />
-                      )
-                    ) : (
-                      <div className="flex items-center justify-center h-full text-gray-400">📁</div>
-                    )}
-                  </div>
-                  {/* Info and actions */}
-                  <div className="p-3">
-                    <p className="text-sm font-medium text-gray-900 truncate">
-                      {item.caption || t('no_caption')}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {item.username || item.user__username || t('unknown')}
-                    </p>
-                    <div className="mt-2 flex items-center justify-between">
-                      {getStatusBadge(item.status)}
-                      <div className="flex space-x-1">
-                        {item.status !== 'approved' && (
+                        <div className="flex items-center justify-center h-full text-gray-400">📁</div>
+                      )}
+                    </div>
+                    {/* Info and actions */}
+                    <div className="p-3">
+                      <p className="text-sm font-medium text-gray-900 truncate">
+                        {item.caption || t('no_caption')}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {item.username || item.user__username || t('unknown')}
+                      </p>
+                      <div className="mt-2 flex items-center justify-between">
+                        {getStatusBadge(item.status)}
+                        <div className="flex space-x-1">
+                          {item.status !== 'approved' && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleApprove(item.id);
+                              }}
+                              className="text-green-600 hover:text-green-800 text-xs px-2 py-1 rounded border border-green-300"
+                              title={t('approve')}
+                            >
+                              ✅
+                            </button>
+                          )}
+                          {item.status !== 'rejected' && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleReject(item.id);
+                              }}
+                              className="text-yellow-600 hover:text-yellow-800 text-xs px-2 py-1 rounded border border-yellow-300"
+                              title={t('reject')}
+                            >
+                              ❌
+                            </button>
+                          )}
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleApprove(item.id);
+                              handleDelete(item.id);
                             }}
-                            className="text-green-600 hover:text-green-800 text-xs px-2 py-1 rounded border border-green-300"
-                            title={t('approve')}
+                            className="text-red-600 hover:text-red-800 text-xs px-2 py-1 rounded border border-red-300"
+                            title={t('delete')}
                           >
-                            ✅
+                            🗑️
                           </button>
-                        )}
-                        {item.status !== 'rejected' && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleReject(item.id);
-                            }}
-                            className="text-yellow-600 hover:text-yellow-800 text-xs px-2 py-1 rounded border border-yellow-300"
-                            title={t('reject')}
-                          >
-                            ❌
-                          </button>
-                        )}
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDelete(item.id);
-                          }}
-                          className="text-red-600 hover:text-red-800 text-xs px-2 py-1 rounded border border-red-300"
-                          title={t('delete')}
-                        >
-                          🗑️
-                        </button>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
+                ))}
+              </div>
+            </>
+          )}
+        </div>
 
         {/* Pagination controls */}
         <div className="flex flex-wrap items-center justify-between gap-4 mt-4">
