@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import logger from '../../utils/logger';
 import authFetch from '../../utils/authFetch';
-import ProtectedMediaPreview from '../Common/ProtectedMediaPreview';
+import ThumbnailImage from '../Common/ThumbnailImage';
 
 const AdminModeration = () => {
   const { t } = useTranslation();
@@ -18,6 +18,7 @@ const AdminModeration = () => {
   const [totalCount, setTotalCount] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [failedMediaIds, setFailedMediaIds] = useState(new Set());
   const API_URL = import.meta.env.VITE_API_URL;
 
   const fetchMedia = useCallback(async (pageNum, pageSizeVal) => {
@@ -39,6 +40,7 @@ const AdminModeration = () => {
       const results = Array.isArray(data) ? data : (data.results || []);
       const count = data.count !== undefined ? data.count : results.length;
       setMedia(results);
+      setFailedMediaIds(new Set());
       setTotalCount(count);
       setTotalPages(Math.ceil(count / pageSizeVal) || 1);
       // Reset selection on fresh load
@@ -389,12 +391,20 @@ const AdminModeration = () => {
                     <td className="py-3">
                       <Link to={`/media/${item.id}`} state={{ media: item }}>
                         {item.file_url ? (
-                          <ProtectedMediaPreview
-                            fileUrl={`${API_URL}${item.file_url}`}
-                            mediaType={item.media_type}
-                            className="w-16 h-16 object-cover rounded-lg border-2 border-pink-200"
-                            alt="preview"
-                          />
+                          failedMediaIds.has(item.id) ? (
+                            <div className="w-16 h-16 bg-gray-100 rounded-lg border-2 border-pink-200 flex items-center justify-center text-gray-400 text-xs">
+                              {t('file_unavailable')}
+                            </div>
+                          ) : (
+                            <ThumbnailImage
+                              mediaId={item.id}
+                              apiUrl={API_URL}
+                              alt="preview"
+                              className="w-16 h-16 object-cover rounded-lg border-2 border-pink-200"
+                              mediaType={item.media_type}
+                              onFinalError={(id) => setFailedMediaIds(prev => new Set(prev).add(id))}
+                            />
+                          )
                         ) : (
                           <div className="w-16 h-16 bg-gray-100 rounded-lg border-2 border-pink-200 flex items-center justify-center text-gray-400 text-xs">
                             {t('file_unavailable')}
@@ -455,12 +465,23 @@ const AdminModeration = () => {
                   {/* Media preview */}
                   <div className="aspect-w-1 aspect-h-1 bg-gray-200">
                     {item.file_url ? (
-                      <ProtectedMediaPreview
-                        fileUrl={`${API_URL}${item.file_url}`}
-                        mediaType={item.media_type}
-                        className="object-cover w-full h-full"
-                        alt={item.caption || 'Media'}
-                      />
+                      failedMediaIds.has(item.id) ? (
+                        <div className="flex items-center justify-center h-full text-gray-400">
+                          <div className="text-center">
+                            <span className="text-4xl">🖼️‍🗑️</span>
+                            <p className="text-xs mt-1">{t('file_unavailable')}</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <ThumbnailImage
+                          mediaId={item.id}
+                          apiUrl={API_URL}
+                          alt={item.caption || 'Media'}
+                          className="object-cover w-full h-full"
+                          mediaType={item.media_type}
+                          onFinalError={(id) => setFailedMediaIds(prev => new Set(prev).add(id))}
+                        />
+                      )
                     ) : (
                       <div className="flex items-center justify-center h-full text-gray-400">📁</div>
                     )}

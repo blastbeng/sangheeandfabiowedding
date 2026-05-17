@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import logger from '../../utils/logger';
 import authFetch from '../../utils/authFetch';
-import ProtectedMediaPreview from '../Common/ProtectedMediaPreview';
+import ThumbnailImage from '../Common/ThumbnailImage';
 
 const MyUploads = () => {
   const { t } = useTranslation();
@@ -17,6 +17,7 @@ const MyUploads = () => {
   const [selectedIds, setSelectedIds] = useState([]);
   const [message, setMessage] = useState(null);
   const [viewMode, setViewMode] = useState('gallery');
+  const [failedMediaIds, setFailedMediaIds] = useState(new Set());
   const API_URL = import.meta.env.VITE_API_URL;
 
   // Auto-dismiss messages after 4 seconds
@@ -60,6 +61,7 @@ const MyUploads = () => {
 
         if (!cancelled) {
           setUploads(results);
+          setFailedMediaIds(new Set());
           if (count !== undefined) setTotalCount(count);
           else setTotalCount(null);
 
@@ -361,12 +363,20 @@ const MyUploads = () => {
                         </td>
                         <td className="py-3">
                           {upload.file_url ? (
-                            <ProtectedMediaPreview
-                              fileUrl={`${API_URL}${upload.file_url}`}
-                              mediaType={upload.media_type}
-                              className="w-16 h-16 object-cover rounded-lg border-2 border-pink-200"
-                              alt={t('my_uploads_preview_alt')}
-                            />
+                            failedMediaIds.has(upload.id) ? (
+                              <div className="w-16 h-16 bg-gray-100 rounded-lg border-2 border-pink-200 flex items-center justify-center text-gray-400 text-xs">
+                                {t('file_unavailable')}
+                              </div>
+                            ) : (
+                              <ThumbnailImage
+                                mediaId={upload.id}
+                                apiUrl={API_URL}
+                                alt={t('my_uploads_preview_alt')}
+                                className="w-16 h-16 object-cover rounded-lg border-2 border-pink-200"
+                                mediaType={upload.media_type}
+                                onFinalError={(id) => setFailedMediaIds(prev => new Set(prev).add(id))}
+                              />
+                            )
                           ) : (
                             <div className="w-16 h-16 bg-gray-100 rounded-lg border-2 border-pink-200 flex items-center justify-center text-gray-400 text-xs">
                               {t('file_unavailable')}
@@ -418,12 +428,23 @@ const MyUploads = () => {
                       {/* Media preview */}
                       <div className="aspect-w-1 aspect-h-1 bg-gray-200">
                         {upload.file_url ? (
-                          <ProtectedMediaPreview
-                            fileUrl={`${API_URL}${upload.file_url}`}
-                            mediaType={upload.media_type}
-                            className="object-cover w-full h-full"
-                            alt={upload.caption || t('beautiful_moment')}
-                          />
+                          failedMediaIds.has(upload.id) ? (
+                            <div className="flex items-center justify-center h-full text-gray-400">
+                              <div className="text-center">
+                                <span className="text-4xl">🖼️‍🗑️</span>
+                                <p className="text-xs mt-1">{t('file_unavailable')}</p>
+                              </div>
+                            </div>
+                          ) : (
+                            <ThumbnailImage
+                              mediaId={upload.id}
+                              apiUrl={API_URL}
+                              alt={upload.caption || t('beautiful_moment')}
+                              className="object-cover w-full h-full"
+                              mediaType={upload.media_type}
+                              onFinalError={(id) => setFailedMediaIds(prev => new Set(prev).add(id))}
+                            />
+                          )
                         ) : (
                           <div className="flex items-center justify-center h-full text-gray-400">🎬</div>
                         )}
