@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import coupleImage from '../../static/images/SangHeeAndFabio.png';
-import ThumbnailImage from '../Common/ThumbnailImage';
 
 const Home = ({ isAuthenticated }) => {
   const { t } = useTranslation();
@@ -13,9 +12,8 @@ const Home = ({ isAuthenticated }) => {
         {/* Couple Photo */}
         <div className="mb-10 flex justify-center">
           <div className="photo-frame rounded-3xl overflow-hidden w-64 h-64 md:w-80 md:h-80 shadow-xl border-4 border-wedding-azure">
-            <ThumbnailImage
+            <img
               src={coupleImage}
-              fallbackSrc="https://via.placeholder.com/400x400?text=Sang+Hee+%26+Fabio"
               alt="Sang Hee & Fabio"
               className="w-full h-full object-cover"
             />
