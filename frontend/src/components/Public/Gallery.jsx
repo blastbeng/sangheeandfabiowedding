@@ -5,6 +5,7 @@ import logger from '../../utils/logger';
 import ThumbnailImage from '../Common/ThumbnailImage';
 
 const PAGE_SIZE = 20;
+const STORAGE_KEY = 'galleryScrollState';
 
 const Gallery = () => {
   const { t, i18n } = useTranslation();
@@ -21,6 +22,8 @@ const Gallery = () => {
   const API_URL = import.meta.env.VITE_API_URL;
 
   const sentinelRef = useRef(null);
+  const skipInitialFetch = useRef(false);
+  const hasRestoredScroll = useRef(false);
 
   // Filter out face groups that have no tags (empty groups)
   const activeFaceGroups = faceGroups.filter(g => g.face_count === undefined || g.face_count > 0);
@@ -54,12 +57,68 @@ const Gallery = () => {
     }
   }, [selectedUserId, selectedGroupId, API_URL]);
 
+  // Restoration effect
   useEffect(() => {
+    const saved = sessionStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        const state = JSON.parse(saved);
+        if (state.media) setMedia(state.media);
+        if (state.page) setPage(state.page);
+        if (state.hasMore !== undefined) setHasMore(state.hasMore);
+        if (state.selectedUserId) setSelectedUserId(state.selectedUserId);
+        if (state.selectedGroupId) setSelectedGroupId(state.selectedGroupId);
+        setLoading(false);
+        skipInitialFetch.current = true;
+        hasRestoredScroll.current = true;
+      } catch (e) {
+        // ignore corrupted data
+      }
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Scroll restoration effect
+  useEffect(() => {
+    if (hasRestoredScroll.current && media.length > 0) {
+      const saved = sessionStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        try {
+          const state = JSON.parse(saved);
+          if (state.scrollY !== undefined) {
+            window.scrollTo(0, state.scrollY);
+          }
+        } catch (e) {}
+      }
+      hasRestoredScroll.current = false;
+    }
+  }, [media]);
+
+  // Fetch media effect (modified to skip if restored)
+  useEffect(() => {
+    if (skipInitialFetch.current) {
+      skipInitialFetch.current = false;
+      return;
+    }
     setPage(1);
     setHasMore(true);
     setLoading(true);
     fetchMedia(1, false);
   }, [selectedUserId, selectedGroupId, fetchMedia]);
+
+  // Cleanup effect to save state on unmount
+  useEffect(() => {
+    return () => {
+      const state = {
+        media,
+        page,
+        hasMore,
+        selectedUserId,
+        selectedGroupId,
+        scrollY: window.scrollY,
+      };
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    };
+  }, [media, page, hasMore, selectedUserId, selectedGroupId]);
 
   useEffect(() => {
     fetch(`${API_URL}/api/auth/face-groups/`)
