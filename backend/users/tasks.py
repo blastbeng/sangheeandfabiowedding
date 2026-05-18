@@ -12,7 +12,7 @@ import face_recognition
 import mediapipe as mp
 import numpy as np
 import pickle
-from PIL import Image
+from PIL import Image, ImageOps
 from io import BytesIO
 
 from .models import Media, CustomUser, FaceTag, FaceGroup
@@ -315,9 +315,9 @@ def detect_faces_task(self, media_id, force=False):
 
     logger.info(f"[detect_faces] Downloaded content for media {media_id} ({len(content)} bytes)")
 
-    # Load image with PIL and convert to RGB numpy array
+    # Load image with PIL and convert to RGB numpy array, applying EXIF orientation
     try:
-        pil_image = Image.open(BytesIO(content)).convert('RGB')
+        pil_image = ImageOps.exif_transpose(Image.open(BytesIO(content))).convert('RGB')
         img_array = np.array(pil_image)
     except Exception as e:
         logger.error(f"[detect_faces] Cannot load image for media {media_id}: {e}")
@@ -677,7 +677,7 @@ def detect_faces_profile_picture(self, user_id):
     import mediapipe as mp
     import numpy as np
     import pickle
-    from PIL import Image
+    from PIL import Image, ImageOps
     from io import BytesIO
 
     logger.info(f"[detect_faces_profile] Starting for user {user_id}")
@@ -700,9 +700,9 @@ def detect_faces_profile_picture(self, user_id):
         logger.error(f"[detect_faces_profile] Cannot read profile picture for user {user_id}: {e}")
         return
 
-    # Load image
+    # Load image, applying EXIF orientation
     try:
-        pil_image = Image.open(BytesIO(content)).convert('RGB')
+        pil_image = ImageOps.exif_transpose(Image.open(BytesIO(content))).convert('RGB')
         img_array = np.array(pil_image)
     except Exception as e:
         logger.error(f"[detect_faces_profile] Cannot load image for user {user_id}: {e}")

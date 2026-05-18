@@ -1598,7 +1598,7 @@ class MediaDetectFacesView(APIView):
 
     def post(self, request):
         media_ids = request.data.get('media_ids', [])
-        force = True   # This endpoint always forces re-detection
+        force = request.data.get('force', False)   # safe default: do NOT delete existing tags
 
         logger.info(f"[MediaDetectFacesView] force={force}, media_ids={media_ids}")
 
