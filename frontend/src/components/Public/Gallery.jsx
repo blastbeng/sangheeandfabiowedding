@@ -18,6 +18,7 @@ const Gallery = () => {
   const [selectedUserId, setSelectedUserId] = useState('');
   const [faceGroups, setFaceGroups] = useState([]);
   const [selectedGroupId, setSelectedGroupId] = useState(null);
+  const [selectedMediaType, setSelectedMediaType] = useState('all');
   const [failedMediaIds, setFailedMediaIds] = useState(new Set());
   const [faceGroupsVersion, setFaceGroupsVersion] = useState(0);
   const API_URL = import.meta.env.VITE_API_URL;
@@ -41,6 +42,7 @@ const Gallery = () => {
     if (selectedGroupId) {
       params.append('face_group_id', selectedGroupId);
     }
+    if (selectedMediaType !== 'all') params.append('media_type', selectedMediaType);
     params.append('page', pageNum);
     params.append('page_size', PAGE_SIZE);
 
@@ -63,7 +65,7 @@ const Gallery = () => {
       setLoading(false);
       setLoadingMore(false);
     }
-  }, [selectedUserId, selectedGroupId, API_URL]);
+  }, [selectedUserId, selectedGroupId, selectedMediaType, API_URL]);
 
   // Restoration effect – only restore filters and scroll position, NOT media data
   useEffect(() => {
@@ -73,6 +75,7 @@ const Gallery = () => {
         const state = JSON.parse(saved);
         if (state.selectedUserId) setSelectedUserId(state.selectedUserId);
         if (state.selectedGroupId) setSelectedGroupId(state.selectedGroupId);
+        if (state.selectedMediaType) setSelectedMediaType(state.selectedMediaType);
         if (state.scrollY !== undefined) {
           hasRestoredScroll.current = true;
           // Store scrollY in a ref so we can use it after media loads
@@ -102,7 +105,7 @@ const Gallery = () => {
     setHasMore(true);
     setLoading(true);
     fetchMedia(1, false);
-  }, [selectedUserId, selectedGroupId, fetchMedia]);
+  }, [selectedUserId, selectedGroupId, selectedMediaType, fetchMedia]);
 
   // Save only filters and scroll position on unmount (not media data)
   useEffect(() => {
@@ -110,11 +113,12 @@ const Gallery = () => {
       const state = {
         selectedUserId,
         selectedGroupId,
+        selectedMediaType,
         scrollY: window.scrollY,
       };
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     };
-  }, [selectedUserId, selectedGroupId]);
+  }, [selectedUserId, selectedGroupId, selectedMediaType]);
 
   useEffect(() => {
     fetch(`${API_URL}/api/auth/face-groups/`)
@@ -223,6 +227,18 @@ const Gallery = () => {
 
       {/* Filter controls */}
       <div className="mb-6 flex flex-wrap gap-4 items-end">
+        <div>
+          <label className="block text-sm text-gray-600 mb-1">{t('filter_by_type')}</label>
+          <select
+            value={selectedMediaType}
+            onChange={e => setSelectedMediaType(e.target.value)}
+            className="wedding-input"
+          >
+            <option value="all">{t('filter_all_types')}</option>
+            <option value="image">{t('filter_photos')}</option>
+            <option value="video">{t('filter_videos')}</option>
+          </select>
+        </div>
         <div>
           <label className="block text-sm text-gray-600 mb-1">{t('Search by user')}</label>
           <select
