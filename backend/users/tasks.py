@@ -55,7 +55,7 @@ def _nms(boxes, threshold=0.5):
     return keep
 
 
-def _is_blurry(face_image, threshold=150.0):
+def _is_blurry(face_image, threshold=30.0):
     """Return True if the face image is too blurry to produce a reliable encoding."""
     gray = cv2.cvtColor(face_image, cv2.COLOR_RGB2GRAY)
     laplacian_var = cv2.Laplacian(gray, cv2.CV_64F).var()
@@ -326,7 +326,7 @@ def detect_faces_task(self, media_id, force=False):
     # Use MediaPipe for fast face detection
     try:
         with mp.solutions.face_detection.FaceDetection(
-            model_selection=1, min_detection_confidence=0.4
+            model_selection=1, min_detection_confidence=0.3
         ) as face_detection:
             results = face_detection.process(img_array)
     except Exception as e:
@@ -343,7 +343,7 @@ def detect_faces_task(self, media_id, force=False):
     logger.info(f"[detect_faces] MediaPipe found {len(results.detections)} face(s) in media {media_id}")
 
     # Extract face locations in dlib format (top, right, bottom, left)
-    # Expand boxes by 20% and filter out tiny faces
+    # Expand boxes by 10% and filter out tiny faces
     face_locations = []
     h, w, _ = img_array.shape
     for detection in results.detections:
@@ -353,9 +353,9 @@ def detect_faces_task(self, media_id, force=False):
         width = int(bbox.width * w)
         height = int(bbox.height * h)
 
-        # Expand box by 20% to include more context
-        expand_w = int(width * 0.2)
-        expand_h = int(height * 0.2)
+        # Expand box by 10% to include a little more context
+        expand_w = int(width * 0.1)
+        expand_h = int(height * 0.1)
         xmin = max(0, xmin - expand_w)
         ymin = max(0, ymin - expand_h)
         xmax = min(w, xmin + width + 2 * expand_w)
@@ -373,8 +373,8 @@ def detect_faces_task(self, media_id, force=False):
         media.save(update_fields=['face_detection_attempted'])
         return
 
-    # Remove overlapping detections (keep only the largest face in each cluster)
-    face_locations = _nms(face_locations, threshold=0.3)
+    # MediaPipe already performs NMS internally – no additional suppression needed
+    # face_locations = _nms(face_locations, threshold=0.3)
 
     logger.info(f"[detect_faces] After NMS: {len(face_locations)} face(s) kept for media {media_id}")
 
@@ -463,7 +463,7 @@ def detect_faces_task(self, media_id, force=False):
             pil_thumb = Image.fromarray(thumb_face)
 
         # Blur check – skip low-quality faces that produce unreliable encodings
-        if _is_blurry(face_for_quality, threshold=50.0):
+        if _is_blurry(face_for_quality, threshold=30.0):
             logger.info(f"[detect_faces] Skipping blurry face in media {media_id}")
             continue
 
@@ -711,7 +711,7 @@ def detect_faces_profile_picture(self, user_id):
     # Detect faces with MediaPipe
     try:
         with mp.solutions.face_detection.FaceDetection(
-            model_selection=1, min_detection_confidence=0.4
+            model_selection=1, min_detection_confidence=0.3
         ) as face_detection:
             results = face_detection.process(img_array)
     except Exception as e:
@@ -731,9 +731,9 @@ def detect_faces_profile_picture(self, user_id):
     width = int(bbox.width * w)
     height = int(bbox.height * h)
 
-    # Expand box by 20%
-    expand_w = int(width * 0.2)
-    expand_h = int(height * 0.2)
+    # Expand box by 10%
+    expand_w = int(width * 0.1)
+    expand_h = int(height * 0.1)
     xmin = max(0, xmin - expand_w)
     ymin = max(0, ymin - expand_h)
     xmax = min(w, xmin + width + 2 * expand_w)
@@ -797,7 +797,7 @@ def detect_faces_profile_picture(self, user_id):
         pil_thumb = Image.fromarray(thumb_face)
 
     # Blur check – skip low-quality faces that produce unreliable encodings
-    if _is_blurry(face_for_quality, threshold=50.0):
+    if _is_blurry(face_for_quality, threshold=30.0):
         logger.info(f"[detect_faces_profile] Skipping blurry face for user {user_id}")
         return
 
