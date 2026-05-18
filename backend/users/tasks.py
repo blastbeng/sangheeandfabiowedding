@@ -399,14 +399,6 @@ def detect_faces_task(self, media_id, force=False):
         if encodings:
             group_centroids[group.id] = np.mean(encodings, axis=0)
 
-    # Check if the uploader has a linked FaceGroup
-    uploader_group = None
-    if media.user:
-        uploader_group = FaceGroup.objects.filter(user=media.user).first()
-    uploader_centroid = None
-    if uploader_group and uploader_group.id in group_centroids:
-        uploader_centroid = group_centroids[uploader_group.id]
-
     # First pass: compute encodings, thumbnails, and initial group assignments
     face_data = []
     for (top, right, bottom, left) in face_locations:
@@ -476,21 +468,12 @@ def detect_faces_task(self, media_id, force=False):
         best_group_id = None
         min_distance = 0.6   # single relaxed threshold
 
-        # If the uploader has a linked group, check it first with the same threshold
-        if uploader_centroid is not None:
-            dist_to_uploader = np.linalg.norm(encoding - uploader_centroid)
-            if dist_to_uploader < 0.6:
-                best_group_id = uploader_group.id
-                min_distance = dist_to_uploader
-                logger.info(f"[detect_faces] Assigned to uploader's group {uploader_group.id} (dist={dist_to_uploader:.4f})")
-
-        # General search only if no match from uploader's group
-        if best_group_id is None:
-            for group_id, centroid in group_centroids.items():
-                distance = np.linalg.norm(encoding - centroid)
-                if distance < min_distance:
-                    min_distance = distance
-                    best_group_id = group_id
+        # General search: find closest existing group
+        for group_id, centroid in group_centroids.items():
+            distance = np.linalg.norm(encoding - centroid)
+            if distance < min_distance:
+                min_distance = distance
+                best_group_id = group_id
 
         # No margin check – accept the closest group if below threshold
         if best_group_id is not None and min_distance >= 0.6:
