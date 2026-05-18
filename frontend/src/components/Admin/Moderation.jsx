@@ -21,6 +21,10 @@ const AdminModeration = () => {
   const [totalPages, setTotalPages] = useState(0);
   const [refreshKey, setRefreshKey] = useState(0);
   const [failedMediaIds, setFailedMediaIds] = useState(new Set());
+  const [showChangeUploaderModal, setShowChangeUploaderModal] = useState(false);
+  const [changeUploaderMediaId, setChangeUploaderMediaId] = useState(null); // null = bulk mode
+  const [selectedNewUserId, setSelectedNewUserId] = useState('');
+  const [usersList, setUsersList] = useState([]);
   const listTopRef = useRef(null);
   const API_URL = import.meta.env.VITE_API_URL;
 
@@ -243,6 +247,73 @@ const AdminModeration = () => {
     }
   };
 
+  const fetchUsersList = async () => {
+    try {
+      const res = await authFetch(`${API_URL}/api/auth/admin/users/`);
+      if (res.ok) {
+        const data = await res.json();
+        setUsersList(data);
+      }
+    } catch (err) {
+      logger.error('[Moderation] Failed to fetch users:', err);
+    }
+  };
+
+  const openChangeUploaderSingle = (mediaId) => {
+    setChangeUploaderMediaId(mediaId);
+    setShowChangeUploaderModal(true);
+    fetchUsersList();
+  };
+
+  const openChangeUploaderBulk = () => {
+    if (selectedIds.length === 0) return;
+    setChangeUploaderMediaId(null); // indicates bulk
+    setShowChangeUploaderModal(true);
+    fetchUsersList();
+  };
+
+  const handleChangeUploader = async () => {
+    if (!selectedNewUserId) return;
+    try {
+      if (changeUploaderMediaId) {
+        // Single media
+        const res = await authFetch(`${API_URL}/api/auth/media/moderation/${changeUploaderMediaId}/`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ new_user: selectedNewUserId })
+        });
+        if (res.ok) {
+          fetchMedia(page, pageSize);
+        } else {
+          const err = await res.json();
+          alert(err.error || 'Failed to change uploader.');
+        }
+      } else {
+        // Bulk
+        const res = await authFetch(`${API_URL}/api/auth/media/moderation/bulk/`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            media_ids: selectedIds,
+            action: 'change_uploader',
+            user_id: selectedNewUserId
+          })
+        });
+        if (res.ok) {
+          setPage(1);
+          setRefreshKey(prev => prev + 1);
+        } else {
+          const err = await res.json();
+          alert(err.error || 'Failed to change uploader.');
+        }
+      }
+      setShowChangeUploaderModal(false);
+      setSelectedNewUserId('');
+    } catch (err) {
+      logger.error('[Moderation] Change uploader failed:', err);
+    }
+  };
+
   const getStatusBadge = (status) => {
     const badges = { pending: 'status-pending', approved: 'status-approved', rejected: 'status-rejected' };
     const icons = { pending: '⏳', approved: '✅', rejected: '❌' };
@@ -321,6 +392,12 @@ const AdminModeration = () => {
                 className="bg-purple-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-purple-600 flex-shrink-0"
               >
                 {t('admin_detect_faces')} ({selectedIds.length})
+              </button>
+              <button
+                onClick={openChangeUploaderBulk}
+                className="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-600 flex-shrink-0"
+              >
+                {t('admin_change_uploader')} ({selectedIds.length})
               </button>
             </div>
           )}
@@ -458,6 +535,9 @@ const AdminModeration = () => {
                               <button onClick={() => handleReject(item.id)} className="bg-red-500 text-white px-3 py-1 rounded-lg text-sm hover:bg-red-600">{t('admin_reject')}</button>
                             </>
                           )}
+                          <button onClick={() => openChangeUploaderSingle(item.id)} className="bg-blue-500 text-white px-3 py-1 rounded-lg text-sm hover:bg-blue-600" title={t('admin_change_uploader')}>
+                            👤
+                          </button>
                           <button onClick={() => handleDelete(item.id)} className="bg-gray-500 text-white px-3 py-1 rounded-lg text-sm hover:bg-gray-600">{t('admin_delete')}</button>
                         </div>
                       </td>
@@ -558,6 +638,16 @@ const AdminModeration = () => {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
+                              openChangeUploaderSingle(item.id);
+                            }}
+                            className="text-blue-600 hover:text-blue-800 text-xs px-2 py-1 rounded border border-blue-300"
+                            title={t('admin_change_uploader')}
+                          >
+                            👤
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
                               handleDelete(item.id);
                             }}
                             className="text-red-600 hover:text-red-800 text-xs px-2 py-1 rounded border border-red-300"
@@ -632,6 +722,44 @@ const AdminModeration = () => {
           </div>
         </div>
       </div>
+
+      {/* Change Uploader Modal */}
+      {showChangeUploaderModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <h3 className="text-lg font-semibold mb-4">
+              {changeUploaderMediaId ? t('admin_change_uploader_single') : t('admin_change_uploader_bulk')}
+            </h3>
+            <select
+              value={selectedNewUserId}
+              onChange={(e) => setSelectedNewUserId(e.target.value)}
+              className="wedding-input w-full mb-4"
+            >
+              <option value="">{t('admin_select_user')}</option>
+              {usersList.map(u => (
+                <option key={u.id} value={u.id}>
+                  {u.username} ({u.email})
+                </option>
+              ))}
+            </select>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setShowChangeUploaderModal(false)}
+                className="px-4 py-2 bg-gray-300 rounded-lg"
+              >
+                {t('cancel')}
+              </button>
+              <button
+                onClick={handleChangeUploader}
+                disabled={!selectedNewUserId}
+                className="px-4 py-2 bg-blue-500 text-white rounded-lg disabled:opacity-50"
+              >
+                {t('confirm')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

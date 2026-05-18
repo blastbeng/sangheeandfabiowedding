@@ -17,6 +17,7 @@ from django.contrib.auth import get_user_model, login, logout, authenticate
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.staticfiles.storage import staticfiles_storage
 from django.core.exceptions import ValidationError
+from django.db import IntegrityError
 from django.db.models import Q, Count
 from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
@@ -1238,6 +1239,18 @@ class MediaModerateSingleView(APIView):
         media = get_object_or_404(Media, id=media_id)
         serializer = MediaModerationSerializer(media, data=request.data, partial=True)
         if serializer.is_valid():
+            # Handle uploader change
+            new_user = serializer.validated_data.pop('new_user', None)
+            if new_user:
+                try:
+                    media.user = new_user
+                    media.save()
+                except IntegrityError:
+                    return Response(
+                        {'error': 'This file already exists for the selected user.'},
+                        status=status.HTTP_409_CONFLICT
+                    )
+            # Continue with normal moderation update
             serializer.save(reviewed_by=request.user, reviewed_at=timezone.now())
             if media.status == 'approved':
                 detect_faces_task.delay(media.id)
@@ -1570,6 +1583,32 @@ class MediaBulkModerationView(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         media_ids = serializer.validated_data['media_ids']
         action = serializer.validated_data['action']
+
+        if action == 'change_uploader':
+            user_id = request.data.get('user_id')
+            if not user_id:
+                return Response({'error': 'user_id is required for change_uploader action.'},
+                                status=status.HTTP_400_BAD_REQUEST)
+            try:
+                new_user = User.objects.get(id=user_id)
+            except User.DoesNotExist:
+                return Response({'error': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+            updated = 0
+            skipped = 0
+            for media in Media.objects.filter(id__in=media_ids):
+                try:
+                    media.user = new_user
+                    media.save()
+                    updated += 1
+                except IntegrityError:
+                    skipped += 1
+            return Response({
+                'message': f'{updated} media items reassigned to {new_user.username}. {skipped} skipped due to duplicates.',
+                'updated_count': updated,
+                'skipped_count': skipped
+            })
+
         media_items = Media.objects.filter(id__in=media_ids)
         updated_count = 0
         for media in media_items:

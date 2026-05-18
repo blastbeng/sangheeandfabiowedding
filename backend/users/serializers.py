@@ -253,12 +253,17 @@ class MediaModerationSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source='user.username', read_only=True)
     user_email = serializers.EmailField(source='user.email', read_only=True)
     file_url = serializers.SerializerMethodField()
+    new_user = serializers.PrimaryKeyRelatedField(
+        queryset=CustomUser.objects.all(),
+        write_only=True,
+        required=False
+    )
 
     class Meta:
         model = Media
         fields = ('id', 'user', 'username', 'user_email', 'file', 'media_type',
                   'caption', 'uploaded_at', 'status', 'reviewed_at',
-                  'reviewed_by', 'view_count', 'file_url')
+                  'reviewed_by', 'view_count', 'file_url', 'new_user')
         read_only_fields = ('user', 'uploaded_at', 'reviewed_by', 'file_url')
 
     def get_file_url(self, obj):
@@ -366,7 +371,7 @@ class BulkModerationSerializer(serializers.Serializer):
     media_ids = serializers.ListField(
         child=serializers.IntegerField(), min_length=1
     )
-    action = serializers.ChoiceField(choices=['approve', 'reject', 'delete'])
+    action = serializers.ChoiceField(choices=['approve', 'reject', 'delete', 'change_uploader'])
 
 
 class AdminDashboardSerializer(serializers.Serializer):
