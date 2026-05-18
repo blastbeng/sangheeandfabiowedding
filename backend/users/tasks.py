@@ -578,8 +578,8 @@ def detect_faces_task(self, media_id, force=False):
 def backfill_faces_periodic():
     """
     Periodic task: queue face detection for all approved images
-    that have not been attempted yet, and also clean up images
-    that have face tags with missing group thumbnails.
+    that have not been attempted yet, and also fix face groups
+    that have missing thumbnails.
     """
     from .models import Media, FaceGroup
     from django.db.models import Q
@@ -595,26 +595,17 @@ def backfill_faces_periodic():
         detect_faces_task.delay(media.id)
         count += 1
 
-    # 2. Cleanup: images that have face tags but the group thumbnail is missing
-    broken = Media.objects.filter(
-        status='approved',
-        media_type='image',
-        face_detection_attempted=True,
-    ).filter(
-        Q(face_tags__isnull=False) &
-        Q(face_tags__face_group__thumbnail__isnull=True) |
-        Q(face_tags__face_group__thumbnail='')
-    ).distinct()
+    # 2. Fix missing group thumbnails without deleting tags
+    broken_groups = FaceGroup.objects.filter(
+        Q(thumbnail__isnull=True) | Q(thumbnail='')
+    ).filter(face_tags__isnull=False).distinct()
 
-    for media in broken:
-        # Delete the broken face tags (they reference missing files)
-        media.face_tags.all().delete()
-        # Reset the flag so the image will be re-processed
-        media.face_detection_attempted = False
-        media.save(update_fields=['face_detection_attempted'])
-        # Queue face detection
-        detect_faces_task.delay(media.id)
-        count += 1
+    for group in broken_groups:
+        first_tag = group.face_tags.first()
+        if first_tag and first_tag.thumbnail:
+            group.thumbnail = first_tag.thumbnail
+            group.save()
+            logger.info(f'[backfill] Fixed missing thumbnail for group {group.id}')
 
     if count > 0:
         logger.info(f'[backfill] Queued face detection for {count} media items.')
@@ -940,7 +931,7 @@ def deduplicate_faces():
     Periodic task that removes duplicate FaceTags within the same media
     and merges duplicate FaceGroups (same person).
     """
-    THRESHOLD = 0.5
+    THRESHOLD = 0.4               # stricter: only merge very close tags within same media
     logger.info("[deduplicate_faces] Starting face deduplication")
 
     # ---------- 1. Deduplicate FaceTags within each media ----------
@@ -1027,8 +1018,8 @@ def deduplicate_faces():
     # Compare all group pairs using ratio of pairwise distances below threshold
     group_ids = list(group_encodings.keys())
     merged_groups = set()
-    MIN_TAGS_FOR_MERGE = 2
-    AVG_DIST_THRESHOLD = 0.6
+    MIN_TAGS_FOR_MERGE = 3   # only merge groups that have at least 3 tags
+    AVG_DIST_THRESHOLD = 0.5  # stricter: groups must be more similar
 
     for i in range(len(group_ids)):
         gid1 = group_ids[i]
@@ -1057,7 +1048,7 @@ def deduplicate_faces():
 
             if total_pairs > 0:
                 ratio = below_threshold / total_pairs
-                if ratio >= 0.5:   # at least 50% of pairs must be close
+                if ratio >= 0.8:   # require 80% of pairwise distances to be below threshold
                     # Merge gid2 into gid1 (keep the one with smaller ID)
                     keep_id, remove_id = (gid1, gid2) if gid1 < gid2 else (gid2, gid1)
                     if (keep_id, remove_id) not in groups_merged and (remove_id, keep_id) not in groups_merged:
@@ -1079,11 +1070,11 @@ def deduplicate_faces():
         for gid2, encs2 in group_encodings.items():
             if gid2 == gid1 or gid2 in merged_groups:
                 continue
-            if len(encs2) < 2:   # only merge into a group that has at least 2 tags (more reliable)
+            if len(encs2) < 3:   # only merge into a group that has at least 3 tags
                 continue
             centroid2 = np.mean(encs2, axis=0)
             dist = np.linalg.norm(enc1 - centroid2)
-            if dist < 0.6:
+            if dist < 0.5:        # stricter for single-tag groups
                 keep_id, remove_id = (gid2, gid1) if gid2 < gid1 else (gid1, gid2)
                 if (keep_id, remove_id) not in groups_merged and (remove_id, keep_id) not in groups_merged:
                     keep_group = FaceGroup.objects.get(id=keep_id)
