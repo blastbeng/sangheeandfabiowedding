@@ -1386,6 +1386,9 @@ class PublicMediaListView(APIView):
             for gid in face_group_ids:
                 queryset = queryset.filter(face_tags__face_group_id=gid)
             queryset = queryset.distinct()
+        media_type = request.query_params.get('media_type')
+        if media_type and media_type != 'all':
+            queryset = queryset.filter(media_type=media_type)
         serializer = PublicMediaSerializer(queryset.order_by('-uploaded_at'), many=True, context={'request': request})
         return Response(serializer.data)
 
