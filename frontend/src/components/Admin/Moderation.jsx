@@ -188,8 +188,7 @@ const AdminModeration = () => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        media_ids: imageMedia.map(m => m.id),
-        force: true
+        media_ids: imageMedia.map(m => m.id)
       })
     })
       .then(res => res.json())
