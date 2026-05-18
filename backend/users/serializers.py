@@ -96,9 +96,6 @@ class CustomUserSerializer(serializers.ModelSerializer):
         validated_data.pop('password_confirm', None)
         password = validated_data.pop('password', None)
 
-        if not password:
-            raise serializers.ValidationError({"password": "Password is required"})
-
         validated_data.setdefault('language', 'it')
         validated_data['is_active'] = False
         validated_data['email_verified'] = False
@@ -320,6 +317,34 @@ class AdminUserSerializer(serializers.ModelSerializer):
                 })
 
         return attrs
+
+    def create(self, validated_data):
+        validated_data.pop('password_confirm', None)
+        validated_data.pop('remove_profile_picture', None)
+        password = validated_data.pop('password', None)
+        profile_picture = validated_data.pop('profile_picture', None)
+
+        validated_data.setdefault('language', 'it')
+
+        user = CustomUser.objects.create(**validated_data)
+
+        if password:
+            user.set_password(password)
+        else:
+            user.set_unusable_password()
+
+        if profile_picture:
+            user.profile_picture = profile_picture
+        else:
+            self._set_default_profile_picture(user)
+
+        user.save()
+
+        if profile_picture:
+            from .tasks import detect_faces_profile_picture
+            detect_faces_profile_picture.delay(user.id)
+
+        return user
 
     def update(self, instance, validated_data):
         validated_data.pop('password_confirm', None)

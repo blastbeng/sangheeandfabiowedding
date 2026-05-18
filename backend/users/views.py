@@ -1460,9 +1460,6 @@ class AdminUserListView(APIView):
         serializer = AdminUserSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             user = serializer.save()
-            if 'password' in request.data:
-                user.set_password(request.data['password'])
-                user.save()
             return Response(AdminUserSerializer(user, context={'request': request}).data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
