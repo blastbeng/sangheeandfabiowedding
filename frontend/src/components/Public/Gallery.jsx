@@ -471,7 +471,7 @@ const Gallery = () => {
         </div>
       ) : (
         /* Grid mode: 3-column Instagram-style grid with varying sizes */
-        <div className="grid grid-cols-3 gap-1 auto-rows-[150px] grid-flow-dense">
+        <div className="grid grid-cols-3 gap-0 auto-rows-[150px] grid-flow-dense">
           {sortedMedia.map((item) => {
             const isFailed = failedMediaIds.has(item.id);
             return (
