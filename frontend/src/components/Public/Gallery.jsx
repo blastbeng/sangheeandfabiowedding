@@ -70,22 +70,39 @@ const Gallery = () => {
 
   const sortedMedia = useMemo(() => {
     if (viewMode !== 'grid') return media;
-    return [...media].sort((a, b) => {
-      const aGroups = (a.face_tags || []).map(t => t.face_group_id).sort((x, y) => x - y);
-      const bGroups = (b.face_tags || []).map(t => t.face_group_id).sort((x, y) => x - y);
-      const aKey = aGroups.join(',');
-      const bKey = bGroups.join(',');
-      if (aKey === bKey) return 0;
-      // Items without faces go to the end
-      if (aGroups.length === 0 && bGroups.length > 0) return 1;
-      if (bGroups.length === 0 && aGroups.length > 0) return -1;
-      // Sort by first face group id
-      const aFirst = aGroups[0] || Infinity;
-      const bFirst = bGroups[0] || Infinity;
-      if (aFirst !== bFirst) return aFirst - bFirst;
-      // Then by number of groups (more groups later)
-      return aGroups.length - bGroups.length;
-    });
+
+    // Separate videos and photos
+    const videos = media.filter(item => item.media_type === 'video');
+    const photos = media.filter(item => item.media_type === 'image');
+
+    // Sort a group by face similarity (existing logic)
+    const sortByFaces = (items) => {
+      return [...items].sort((a, b) => {
+        const aGroups = (a.face_tags || []).map(t => t.face_group_id).sort((x, y) => x - y);
+        const bGroups = (b.face_tags || []).map(t => t.face_group_id).sort((x, y) => x - y);
+        const aKey = aGroups.join(',');
+        const bKey = bGroups.join(',');
+        if (aKey === bKey) return 0;
+        if (aGroups.length === 0 && bGroups.length > 0) return 1;
+        if (bGroups.length === 0 && aGroups.length > 0) return -1;
+        const aFirst = aGroups[0] || Infinity;
+        const bFirst = bGroups[0] || Infinity;
+        if (aFirst !== bFirst) return aFirst - bFirst;
+        return aGroups.length - bGroups.length;
+      });
+    };
+
+    const sortedVideos = sortByFaces(videos);
+    const sortedPhotos = sortByFaces(photos);
+
+    // Videos first, then photos
+    const combined = [...sortedVideos, ...sortedPhotos];
+
+    // Assign sizes: every 6th item gets 'large' (span 2 rows)
+    return combined.map((item, index) => ({
+      ...item,
+      gridSize: index % 6 === 0 ? 'large' : 'normal',
+    }));
   }, [media, viewMode]);
 
   // Restoration effect – only restore filters and scroll position, NOT media data
@@ -439,16 +456,20 @@ const Gallery = () => {
           )}
         </div>
       ) : (
-        /* Grid mode: 3-column square thumbnails, no captions */
-        <div className="grid grid-cols-3 gap-1">
+        /* Grid mode: 3-column Instagram-style grid with varying sizes */
+        <div className="grid grid-cols-3 gap-1 auto-rows-[150px]">
           {sortedMedia.map((item) => {
             const isFailed = failedMediaIds.has(item.id);
+            const isLarge = item.gridSize === 'large';
             return (
               <Link
                 key={item.id}
                 to={`/media/${item.id}`}
                 state={{ media: item }}
-                className="block relative aspect-square bg-gray-100"
+                className={`block relative bg-gray-100 ${
+                  isLarge ? 'row-span-2' : ''
+                }`}
+                style={isLarge ? { aspectRatio: 'auto' } : { aspectRatio: '1/1' }}
               >
                 {isFailed ? (
                   <div className="w-full h-full flex items-center justify-center text-gray-400">
