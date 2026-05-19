@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import logger from '../../utils/logger';
@@ -21,6 +21,7 @@ const Gallery = () => {
   const [selectedMediaType, setSelectedMediaType] = useState('all');
   const [failedMediaIds, setFailedMediaIds] = useState(new Set());
   const [faceGroupsVersion, setFaceGroupsVersion] = useState(0);
+  const [viewMode, setViewMode] = useState('gallery'); // 'gallery' | 'grid'
   const API_URL = import.meta.env.VITE_API_URL;
 
   const sentinelRef = useRef(null);
@@ -66,6 +67,26 @@ const Gallery = () => {
       setLoadingMore(false);
     }
   }, [selectedUserId, selectedGroupId, selectedMediaType, API_URL]);
+
+  const sortedMedia = useMemo(() => {
+    if (viewMode !== 'grid') return media;
+    return [...media].sort((a, b) => {
+      const aGroups = (a.face_tags || []).map(t => t.face_group_id).sort((x, y) => x - y);
+      const bGroups = (b.face_tags || []).map(t => t.face_group_id).sort((x, y) => x - y);
+      const aKey = aGroups.join(',');
+      const bKey = bGroups.join(',');
+      if (aKey === bKey) return 0;
+      // Items without faces go to the end
+      if (aGroups.length === 0 && bGroups.length > 0) return 1;
+      if (bGroups.length === 0 && aGroups.length > 0) return -1;
+      // Sort by first face group id
+      const aFirst = aGroups[0] || Infinity;
+      const bFirst = bGroups[0] || Infinity;
+      if (aFirst !== bFirst) return aFirst - bFirst;
+      // Then by number of groups (more groups later)
+      return aGroups.length - bGroups.length;
+    });
+  }, [media, viewMode]);
 
   // Restoration effect – only restore filters and scroll position, NOT media data
   useEffect(() => {
@@ -174,119 +195,149 @@ const Gallery = () => {
         <p className="text-gray-600 italic">{t('gallery_subtitle')}</p>
       </div>
 
-      {/* Face group row */}
-      {faceGroups.length > 0 && (
-        <div className="mb-6">
-          <label className="block text-sm text-gray-600 mb-1">{t('filter_by_person')}</label>
-          <div className="flex items-center gap-1">
-            {/* Left arrow */}
-            <button
-              onClick={() => scrollFaceRow(-1)}
-              className="flex-shrink-0 w-8 h-8 rounded-full bg-white shadow flex items-center justify-center text-gray-500 hover:text-pink-600"
-              aria-label="Scroll left"
-            >
-              ‹
-            </button>
-
-            {/* Scrollable row – now with a visible scrollbar */}
-            <div
-              ref={faceRowRef}
-              className="flex gap-3 overflow-x-auto pb-2 flex-1"
-              style={{ scrollSnapType: 'x mandatory', scrollbarWidth: 'thin' }}
-            >
-              {faceGroups.map(group => (
-                <button
-                  key={group.id}
-                  onClick={() => setSelectedGroupId(prev => prev === group.id ? null : group.id)}
-                  className={`flex flex-col items-center gap-1 flex-shrink-0 transition-transform hover:scale-105 ${
-                    selectedGroupId === group.id ? 'ring-2 ring-pink-500 rounded-full' : ''
-                  }`}
-                  style={{ scrollSnapAlign: 'start' }}
-                >
-                  <img
-                    src={group.thumbnail_url || 'https://i.imgur.com/V4RclNb.png'}
-                    alt={group.user_display_name || ''}
-                    className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm"
-                    onError={(e) => { e.target.src = 'https://i.imgur.com/V4RclNb.png'; }}
-                  />
-                </button>
-              ))}
-            </div>
-
-            {/* Right arrow */}
-            <button
-              onClick={() => scrollFaceRow(1)}
-              className="flex-shrink-0 w-8 h-8 rounded-full bg-white shadow flex items-center justify-center text-gray-500 hover:text-pink-600"
-              aria-label="Scroll right"
-            >
-              ›
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Filter controls */}
-      <div className="mb-6 flex flex-wrap gap-4 items-end">
-        <div>
-          <label className="block text-sm text-gray-600 mb-1">{t('filter_by_type')}</label>
-          <select
-            value={selectedMediaType}
-            onChange={e => setSelectedMediaType(e.target.value)}
-            className="wedding-input"
+      {/* View mode toggle */}
+      <div className="flex justify-center mb-4">
+        <div className="inline-flex rounded-lg border border-gray-200 bg-white shadow-sm">
+          <button
+            onClick={() => setViewMode('gallery')}
+            className={`px-4 py-2 text-sm font-medium rounded-l-lg transition-colors ${
+              viewMode === 'gallery'
+                ? 'bg-pink-500 text-white'
+                : 'text-gray-600 hover:bg-gray-50'
+            }`}
           >
-            <option value="all">{t('filter_all_types')}</option>
-            <option value="image">{t('filter_photos')}</option>
-            <option value="video">{t('filter_videos')}</option>
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm text-gray-600 mb-1">{t('Search by user')}</label>
-          <select
-            value={selectedUserId}
-            onChange={e => setSelectedUserId(e.target.value)}
-            className="wedding-input"
+            {t('gallery_mode') || 'Gallery'}
+          </button>
+          <button
+            onClick={() => setViewMode('grid')}
+            className={`px-4 py-2 text-sm font-medium rounded-r-lg transition-colors ${
+              viewMode === 'grid'
+                ? 'bg-pink-500 text-white'
+                : 'text-gray-600 hover:bg-gray-50'
+            }`}
           >
-            <option value="">{t('All users')}</option>
-            {users.map(user => (
-              <option key={user.id} value={user.id}>
-                {user.first_name || user.last_name
-                  ? `${user.first_name || ''} ${user.last_name || ''}`.trim()
-                  : user.username}
-              </option>
-            ))}
-          </select>
+            {t('grid_mode') || 'Grid'}
+          </button>
         </div>
       </div>
 
-      {selectedGroupId && (() => {
-        const group = faceGroups.find(g => g.id === selectedGroupId);
-        return (
-          <div className="mb-4 flex items-center gap-2 flex-wrap">
-            <span className="text-sm text-gray-600">{t('Filtering by')}:</span>
-            <span className="inline-flex items-center gap-1 bg-pink-50 rounded-full px-2 py-1">
-              <img
-                src={group?.thumbnail_url || 'https://i.imgur.com/V4RclNb.png'}
-                alt=""
-                className="w-6 h-6 rounded-full object-cover border border-pink-200"
-                onError={(e) => { e.target.src = 'https://i.imgur.com/V4RclNb.png'; }}
-              />
-              <button
-                onClick={() => setSelectedGroupId(null)}
-                className="text-pink-600 hover:text-pink-800 text-xs leading-none"
-                title={t('Remove filter')}
+      {viewMode === 'gallery' && (
+        <>
+          {/* Face group row */}
+          {faceGroups.length > 0 && (
+            <div className="mb-6">
+              <label className="block text-sm text-gray-600 mb-1">{t('filter_by_person')}</label>
+              <div className="flex items-center gap-1">
+                {/* Left arrow */}
+                <button
+                  onClick={() => scrollFaceRow(-1)}
+                  className="flex-shrink-0 w-8 h-8 rounded-full bg-white shadow flex items-center justify-center text-gray-500 hover:text-pink-600"
+                  aria-label="Scroll left"
+                >
+                  ‹
+                </button>
+
+                {/* Scrollable row – now with a visible scrollbar */}
+                <div
+                  ref={faceRowRef}
+                  className="flex gap-3 overflow-x-auto pb-2 flex-1"
+                  style={{ scrollSnapType: 'x mandatory', scrollbarWidth: 'thin' }}
+                >
+                  {faceGroups.map(group => (
+                    <button
+                      key={group.id}
+                      onClick={() => setSelectedGroupId(prev => prev === group.id ? null : group.id)}
+                      className={`flex flex-col items-center gap-1 flex-shrink-0 transition-transform hover:scale-105 ${
+                        selectedGroupId === group.id ? 'ring-2 ring-pink-500 rounded-full' : ''
+                      }`}
+                      style={{ scrollSnapAlign: 'start' }}
+                    >
+                      <img
+                        src={group.thumbnail_url || 'https://i.imgur.com/V4RclNb.png'}
+                        alt={group.user_display_name || ''}
+                        className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm"
+                        onError={(e) => { e.target.src = 'https://i.imgur.com/V4RclNb.png'; }}
+                      />
+                    </button>
+                  ))}
+                </div>
+
+                {/* Right arrow */}
+                <button
+                  onClick={() => scrollFaceRow(1)}
+                  className="flex-shrink-0 w-8 h-8 rounded-full bg-white shadow flex items-center justify-center text-gray-500 hover:text-pink-600"
+                  aria-label="Scroll right"
+                >
+                  ›
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Filter controls */}
+          <div className="mb-6 flex flex-wrap gap-4 items-end">
+            <div>
+              <label className="block text-sm text-gray-600 mb-1">{t('filter_by_type')}</label>
+              <select
+                value={selectedMediaType}
+                onChange={e => setSelectedMediaType(e.target.value)}
+                className="wedding-input"
               >
-                ✕
-              </button>
-            </span>
-            <button
-              onClick={() => setSelectedGroupId(null)}
-              className="text-xs text-pink-600 underline hover:text-pink-800 ml-2"
-            >
-              {t('Clear filter')}
-            </button>
+                <option value="all">{t('filter_all_types')}</option>
+                <option value="image">{t('filter_photos')}</option>
+                <option value="video">{t('filter_videos')}</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm text-gray-600 mb-1">{t('Search by user')}</label>
+              <select
+                value={selectedUserId}
+                onChange={e => setSelectedUserId(e.target.value)}
+                className="wedding-input"
+              >
+                <option value="">{t('All users')}</option>
+                {users.map(user => (
+                  <option key={user.id} value={user.id}>
+                    {user.first_name || user.last_name
+                      ? `${user.first_name || ''} ${user.last_name || ''}`.trim()
+                      : user.username}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
-        );
-      })()}
+
+          {selectedGroupId && (() => {
+            const group = faceGroups.find(g => g.id === selectedGroupId);
+            return (
+              <div className="mb-4 flex items-center gap-2 flex-wrap">
+                <span className="text-sm text-gray-600">{t('Filtering by')}:</span>
+                <span className="inline-flex items-center gap-1 bg-pink-50 rounded-full px-2 py-1">
+                  <img
+                    src={group?.thumbnail_url || 'https://i.imgur.com/V4RclNb.png'}
+                    alt=""
+                    className="w-6 h-6 rounded-full object-cover border border-pink-200"
+                    onError={(e) => { e.target.src = 'https://i.imgur.com/V4RclNb.png'; }}
+                  />
+                  <button
+                    onClick={() => setSelectedGroupId(null)}
+                    className="text-pink-600 hover:text-pink-800 text-xs leading-none"
+                    title={t('Remove filter')}
+                  >
+                    ✕
+                  </button>
+                </span>
+                <button
+                  onClick={() => setSelectedGroupId(null)}
+                  className="text-xs text-pink-600 underline hover:text-pink-800 ml-2"
+                >
+                  {t('Clear filter')}
+                </button>
+              </div>
+            );
+          })()}
+        </>
+      )}
 
       {!loading && media.length === 0 ? (
         <div className="text-center py-20 wedding-card">
@@ -294,7 +345,7 @@ const Gallery = () => {
           <p className="mt-4 text-gray-600 text-lg">{t('no_photos_yet')}</p>
           <p className="text-gray-500 text-sm">{t('be_first_to_share')}</p>
         </div>
-      ) : (
+      ) : viewMode === 'gallery' ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {media.map((item) => {
             const isFailed = failedMediaIds.has(item.id);
@@ -375,6 +426,45 @@ const Gallery = () => {
                   </p>
                 </div>
               </div>
+            );
+          })}
+          {hasMore && (
+            <div ref={sentinelRef} className="col-span-full flex justify-center py-4">
+              {loadingMore ? (
+                <span className="text-gray-500">{t('loading_more')}</span>
+              ) : (
+                <span className="text-gray-400">&#8203;</span>
+              )}
+            </div>
+          )}
+        </div>
+      ) : (
+        /* Grid mode: 3-column square thumbnails, no captions */
+        <div className="grid grid-cols-3 gap-1">
+          {sortedMedia.map((item) => {
+            const isFailed = failedMediaIds.has(item.id);
+            return (
+              <Link
+                key={item.id}
+                to={`/media/${item.id}`}
+                state={{ media: item }}
+                className="block relative aspect-square bg-gray-100"
+              >
+                {isFailed ? (
+                  <div className="w-full h-full flex items-center justify-center text-gray-400">
+                    <span className="text-2xl">🖼️‍🗑️</span>
+                  </div>
+                ) : (
+                  <ThumbnailImage
+                    mediaId={item.id}
+                    apiUrl={API_URL}
+                    alt={item.caption || t('beautiful_moment')}
+                    className="w-full h-full object-cover"
+                    mediaType={item.media_type}
+                    onFinalError={(id) => setFailedMediaIds(prev => new Set(prev).add(id))}
+                  />
+                )}
+              </Link>
             );
           })}
           {hasMore && (
