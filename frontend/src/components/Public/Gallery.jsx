@@ -98,11 +98,25 @@ const Gallery = () => {
     // Videos first, then photos
     const combined = [...sortedVideos, ...sortedPhotos];
 
-    // Assign sizes: every 6th item gets 'large' (span 2 rows)
-    return combined.map((item, index) => ({
-      ...item,
-      gridSize: index % 6 === 0 ? 'large' : 'normal',
-    }));
+    // Assign sizes: Instagram-like pattern
+    return combined.map((item, index) => {
+      const mod = index % 10;
+      let gridColSpan = 1;
+      let gridRowSpan = 1;
+      if (mod === 0) {
+        gridColSpan = 2;
+        gridRowSpan = 2; // 2x2 large tile
+      } else if (mod === 3) {
+        gridColSpan = 2; // 2x1 wide tile
+      } else if (mod === 7) {
+        gridRowSpan = 2; // 1x2 tall tile
+      }
+      return {
+        ...item,
+        gridColSpan,
+        gridRowSpan,
+      };
+    });
   }, [media, viewMode]);
 
   // Restoration effect – only restore filters and scroll position, NOT media data
@@ -457,19 +471,19 @@ const Gallery = () => {
         </div>
       ) : (
         /* Grid mode: 3-column Instagram-style grid with varying sizes */
-        <div className="grid grid-cols-3 gap-1 auto-rows-[150px]">
+        <div className="grid grid-cols-3 gap-1 auto-rows-[150px] grid-flow-dense">
           {sortedMedia.map((item) => {
             const isFailed = failedMediaIds.has(item.id);
-            const isLarge = item.gridSize === 'large';
             return (
               <Link
                 key={item.id}
                 to={`/media/${item.id}`}
                 state={{ media: item }}
                 className={`block relative bg-gray-100 ${
-                  isLarge ? 'row-span-2' : ''
+                  item.gridColSpan === 2 ? 'col-span-2' : ''
+                } ${
+                  item.gridRowSpan === 2 ? 'row-span-2' : ''
                 }`}
-                style={isLarge ? { aspectRatio: 'auto' } : { aspectRatio: '1/1' }}
               >
                 {isFailed ? (
                   <div className="w-full h-full flex items-center justify-center text-gray-400">
