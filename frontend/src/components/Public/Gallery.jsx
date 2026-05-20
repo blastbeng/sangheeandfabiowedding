@@ -626,7 +626,8 @@ const Gallery = () => {
                     mediaId={item.id}
                     apiUrl={API_URL}
                     alt={item.caption || t('beautiful_moment')}
-                    className="absolute inset-0 w-full h-full object-cover"
+                    className="w-full h-full object-cover"
+                    rootClassName="h-full"
                     mediaType={item.media_type}
                     onFinalError={(id) => setFailedMediaIds(prev => new Set(prev).add(id))}
                   />

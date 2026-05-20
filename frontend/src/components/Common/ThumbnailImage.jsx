@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 const MAX_RETRIES = 10;
 const RETRY_DELAY = 2000; // 2 seconds
 
-const ThumbnailImage = ({ mediaId, apiUrl, alt, className, mediaType, onFinalError, src, fallbackSrc }) => {
+const ThumbnailImage = ({ mediaId, apiUrl, alt, className, mediaType, onFinalError, src, fallbackSrc, rootClassName }) => {
   const [status, setStatus] = useState('loading'); // 'loading' | 'loaded' | 'error'
   const [retryCount, setRetryCount] = useState(0);
   const [imgSrc, setImgSrc] = useState(null);
@@ -78,7 +78,7 @@ const ThumbnailImage = ({ mediaId, apiUrl, alt, className, mediaType, onFinalErr
   }
 
   return (
-    <div className="relative">
+    <div className={`relative ${rootClassName || ''}`}>
       <img src={imgSrc} alt={alt} className={className} />
       {mediaType === 'video' && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/20 hover:bg-black/40 transition-colors">
