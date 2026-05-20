@@ -115,6 +115,7 @@ services:
       - /dev/dri:/dev/dri
     volumes:
       - ./backend/media:/app/media
+      - models_data:/app/models
     environment:
       - PUID=1000
       - PGID=1000
@@ -161,6 +162,8 @@ services:
     build: ./backend
     container_name: wedding-celery-beat
     command: celery -A config beat --loglevel=info
+    volumes:
+      - models_data:/app/models
     environment:
       - PUID=1000
       - PGID=1000
@@ -249,3 +252,6 @@ services:
 networks:
   app-network:
     driver: bridge
+
+volumes:
+  models_data:

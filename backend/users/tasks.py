@@ -1153,87 +1153,147 @@ def cleanup_missing_cloud_files():
 @shared_task
 def compute_similarity_ordering():
     """
-    Compute a similarity-based ordering for all approved media.
-    Images sharing face groups are placed near each other via BFS clustering.
-    Videos are placed after all images, ordered by upload date.
+    Compute visual similarity ordering for all approved images and videos
+    using a MobileNetV2 feature extractor (TFLite).  Assigns a float position
+    to each media item so that visually similar items appear near each other.
+    Runs every 24 hours (or as scheduled).
     """
-    # Get all approved images with face tags
-    images = list(
-        Media.objects.filter(
-            status='approved',
-            media_type='image'
-        ).prefetch_related('face_tags').order_by('-uploaded_at')
+    import tflite_runtime.interpreter as tflite
+    from PIL import Image
+    from io import BytesIO
+    import numpy as np
+    import cv2
+    import tempfile
+    import os
+    import requests
+    from django.conf import settings as django_settings
+
+    MODEL_URL = (
+        "https://tfhub.dev/google/lite-model/imagenet/mobilenet_v2_100_224/"
+        "feature_vector/2/default/1?lite-format=tflite"
     )
+    MODELS_DIR = os.path.join(django_settings.BASE_DIR, 'models')
+    os.makedirs(MODELS_DIR, exist_ok=True)
+    MODEL_PATH = os.path.join(MODELS_DIR, 'similarity_model.tflite')
 
-    # Build face_group -> media and media -> face_group mappings
-    group_to_media = defaultdict(set)
-    media_to_groups = defaultdict(set)
+    # Download model if not present
+    if not os.path.exists(MODEL_PATH):
+        logger.info("[similarity] Downloading MobileNetV2 TFLite model...")
+        resp = requests.get(MODEL_URL, timeout=120)
+        resp.raise_for_status()
+        with open(MODEL_PATH, "wb") as f:
+            f.write(resp.content)
 
-    for media in images:
-        for tag in media.face_tags.all():
-            if tag.face_group_id:
-                group_to_media[tag.face_group_id].add(media.id)
-                media_to_groups[media.id].add(tag.face_group_id)
+    # Load TFLite model
+    interpreter = tflite.Interpreter(model_path=MODEL_PATH)
+    interpreter.allocate_tensors()
+    input_details = interpreter.get_input_details()
+    output_details = interpreter.get_output_details()
+    input_shape = input_details[0]['shape']  # [1, 224, 224, 3]
 
-    # BFS ordering: cluster media by shared face groups
-    visited = set()
-    image_order = []
+    # Fetch all approved media (images + videos)
+    from .models import Media
+    media_items = list(Media.objects.filter(status='approved'))
 
-    # Start with the most-connected media (most face groups)
-    sorted_images = sorted(
-        images,
-        key=lambda m: len(media_to_groups.get(m.id, set())),
-        reverse=True
-    )
+    if not media_items:
+        logger.info("[similarity] No approved media to order.")
+        return
 
-    for start_media in sorted_images:
-        if start_media.id in visited:
-            continue
-        queue = deque([start_media.id])
-        while queue:
-            mid = queue.popleft()
-            if mid in visited:
-                continue
-            visited.add(mid)
-            image_order.append(mid)
-            for gid in media_to_groups.get(mid, set()):
-                for connected_mid in group_to_media.get(gid, set()):
-                    if connected_mid not in visited:
-                        queue.append(connected_mid)
+    embeddings = []
+    valid_media = []
 
-    # Add images without face groups at the end (preserving upload order)
-    for media in images:
-        if media.id not in visited:
-            image_order.append(media.id)
-            visited.add(media.id)
+    for media in media_items:
+        try:
+            content, _ = get_file_from_cloud(media)
+            if content is None:
+                # fallback to local file
+                if media.file and media.file.storage.exists(media.file.name):
+                    with media.file.open('rb') as f:
+                        content = f.read()
+                else:
+                    continue
 
-    # Get all approved videos, ordered by upload date
-    videos = list(
-        Media.objects.filter(
-            status='approved',
-            media_type='video'
-        ).order_by('-uploaded_at')
-    )
+            if media.media_type == 'image':
+                # Process image
+                img = Image.open(BytesIO(content)).convert('RGB').resize((224, 224))
+                img_array = np.array(img, dtype=np.float32) / 127.5 - 1.0
+                img_array = np.expand_dims(img_array, axis=0)
+                interpreter.set_tensor(input_details[0]['index'], img_array)
+                interpreter.invoke()
+                embedding = interpreter.get_tensor(output_details[0]['index'])[0]
+                embeddings.append(embedding)
+                valid_media.append(media)
 
-    # Final order: images by similarity, then videos by upload date
-    final_order = image_order + [v.id for v in videos]
+            elif media.media_type == 'video':
+                # Extract one frame from the middle of the video
+                with tempfile.NamedTemporaryFile(suffix='.mp4', delete=False) as tmp:
+                    tmp.write(content)
+                    tmp_path = tmp.name
+                cap = cv2.VideoCapture(tmp_path)
+                total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+                if total_frames > 0:
+                    cap.set(cv2.CAP_PROP_POS_FRAMES, total_frames // 2)
+                    ret, frame = cap.read()
+                    if ret:
+                        # Convert BGR to RGB and resize
+                        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                        img = Image.fromarray(frame_rgb).resize((224, 224))
+                        img_array = np.array(img, dtype=np.float32) / 127.5 - 1.0
+                        img_array = np.expand_dims(img_array, axis=0)
+                        interpreter.set_tensor(input_details[0]['index'], img_array)
+                        interpreter.invoke()
+                        embedding = interpreter.get_tensor(output_details[0]['index'])[0]
+                        embeddings.append(embedding)
+                        valid_media.append(media)
+                cap.release()
+                os.unlink(tmp_path)
 
-    # Assign sequential similarity_position values
-    all_media = {m.id: m for m in images + videos}
-    updates = []
-    for pos, mid in enumerate(final_order):
-        media = all_media.get(mid)
-        if media and media.similarity_position != pos:
-            media.similarity_position = pos
-            updates.append(media)
+        except Exception as e:
+            logger.warning(f"[similarity] Failed to process media {media.id}: {e}")
 
-    # Reset similarity_position for non-approved media
-    Media.objects.filter(
-        status__in=['pending', 'rejected']
-    ).filter(similarity_position__isnull=False).update(similarity_position=None)
+    if len(valid_media) < 2:
+        # Not enough items to order
+        for idx, media in enumerate(valid_media):
+            media.similarity_position = float(idx)
+            media.save(update_fields=['similarity_position'])
+        # Clear positions for non-processed approved media
+        Media.objects.filter(status='approved').exclude(
+            id__in=[m.id for m in valid_media]
+        ).update(similarity_position=None)
+        return
 
-    if updates:
-        Media.objects.bulk_update(updates, ['similarity_position'])
+    # Compute cosine distance matrix
+    embeddings = np.array(embeddings)
+    norms = np.linalg.norm(embeddings, axis=1, keepdims=True)
+    norms[norms == 0] = 1e-10
+    normalized = embeddings / norms
+    similarity = np.dot(normalized, normalized.T)
+    distance = 1.0 - similarity
+    np.fill_diagonal(distance, np.inf)
 
-    logger.info(f"[compute_similarity_ordering] Updated positions for {len(updates)} media items")
-    return len(updates)
+    # Greedy nearest-neighbour ordering
+    n = len(valid_media)
+    start_idx = 0  # deterministic start
+    order = [start_idx]
+    visited = {start_idx}
+
+    for _ in range(n - 1):
+        last = order[-1]
+        dists = distance[last].copy()
+        for v in visited:
+            dists[v] = np.inf
+        next_idx = np.argmin(dists)
+        order.append(next_idx)
+        visited.add(next_idx)
+
+    # Assign positions
+    for pos, idx in enumerate(order):
+        valid_media[idx].similarity_position = float(pos)
+        valid_media[idx].save(update_fields=['similarity_position'])
+
+    # Clear positions for approved media not in this run
+    Media.objects.filter(status='approved').exclude(
+        id__in=[m.id for m in valid_media]
+    ).update(similarity_position=None)
+
+    logger.info(f"[similarity] Ordered {len(valid_media)} media items by visual similarity.")

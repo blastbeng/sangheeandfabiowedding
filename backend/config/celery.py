@@ -24,7 +24,7 @@ app.conf.beat_schedule = {
     },
     'compute-similarity-ordering-daily': {
         'task': 'users.tasks.compute_similarity_ordering',
-        'schedule': 86400.0,  # every 24 hours
+        'schedule': crontab(minute=0, hour='*/12'),  # every 12 hours
     },
     # 'cleanup-missing-cloud-files-every-hour': {
     #     'task': 'users.tasks.cleanup_missing_cloud_files',

@@ -34,3 +34,6 @@ mediapipe>=0.10.0,<0.11
 
 # NSFW detection
 nudenet>=1.0.4,<4.0
+
+# Visual similarity (MobileNetV2 TFLite)
+tflite-runtime>=2.14.0,<3
