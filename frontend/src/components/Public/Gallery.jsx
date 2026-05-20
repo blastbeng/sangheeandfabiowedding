@@ -381,8 +381,6 @@ const Gallery = () => {
         </div>
       </div>
 
-      {viewMode === 'gallery' && (
-        <>
           {/* Face group row */}
           {faceGroups.length > 0 && (
             <div className="mb-6">
@@ -507,9 +505,6 @@ const Gallery = () => {
               </div>
             );
           })()}
-        </>
-      )}
-
       {!loading && media.length === 0 ? (
         <div className="text-center py-20 wedding-card">
           <span className="text-6xl floating-heart inline-block">🌸</span>
