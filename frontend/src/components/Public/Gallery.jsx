@@ -463,19 +463,6 @@ const Gallery = () => {
                 ))}
               </select>
             </div>
-            {viewMode === 'gallery' && (
-              <div>
-                <label className="block text-sm text-gray-600 mb-1">{t('sort_by') || 'Sort by'}</label>
-                <select
-                  value={sortBy}
-                  onChange={e => setSortBy(e.target.value)}
-                  className="wedding-input"
-                >
-                  <option value="newest">{t('sort_newest') || 'Newest first'}</option>
-                  <option value="similarity">{t('sort_similarity') || 'By person'}</option>
-                </select>
-              </div>
-            )}
           </div>
 
           {selectedGroupId && (() => {
@@ -614,14 +601,14 @@ const Gallery = () => {
         </div>
       ) : (
         /* Grid mode: 3-column Instagram-style grid with varying sizes */
-        <div className="grid grid-cols-3 gap-0 auto-rows-[150px] grid-flow-dense">
+        <div className="grid grid-cols-3 gap-0 auto-rows-[150px] grid-flow-dense bg-gray-100">
           {sortedMedia.map((item) => {
             const isFailed = failedMediaIds.has(item.id);
             return (
               <div
                 key={item.id}
                 onClick={() => setSelectedMedia(item)}
-                className={`block relative bg-gray-100 cursor-pointer ${
+                className={`block relative cursor-pointer ${
                   item.gridColSpan === 2 ? 'col-span-2' : ''
                 } ${
                   item.gridRowSpan === 2 ? 'row-span-2' : ''
