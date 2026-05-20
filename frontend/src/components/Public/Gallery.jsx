@@ -655,8 +655,6 @@ const Gallery = () => {
             if (isSwiping.current) return;
             setSelectedMedia(null);
           }}
-          onTouchStart={handleTouchStart}
-          onTouchEnd={handleTouchEnd}
         >
           {/* Close button */}
           <button
