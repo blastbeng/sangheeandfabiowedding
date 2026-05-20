@@ -51,7 +51,9 @@ const Gallery = () => {
       params.append('face_group_id', selectedGroupId);
     }
     if (selectedMediaType !== 'all') params.append('media_type', selectedMediaType);
-    if (sortBy === 'similarity') params.append('ordering', 'similarity');
+    if (viewMode === 'grid' || sortBy === 'similarity') {
+      params.append('ordering', 'similarity');
+    }
     params.append('page', pageNum);
     params.append('page_size', PAGE_SIZE);
 
@@ -74,13 +76,13 @@ const Gallery = () => {
       setLoading(false);
       setLoadingMore(false);
     }
-  }, [selectedUserId, selectedGroupId, selectedMediaType, sortBy, API_URL]);
+  }, [selectedUserId, selectedGroupId, selectedMediaType, sortBy, viewMode, API_URL]);
 
   const sortedMedia = useMemo(() => {
     if (viewMode !== 'grid') return media;
 
     // When using similarity ordering, respect backend order and just assign grid sizes
-    if (sortBy === 'similarity') {
+    if (viewMode === 'grid' || sortBy === 'similarity') {
       return media.map((item, index) => {
         const mod = index % 10;
         let gridColSpan = 1;
