@@ -1788,6 +1788,18 @@ class RegenerateAllFacesView(APIView):
         )
 
 
+class RegenerateSimilarityOrderingView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def post(self, request):
+        from .tasks import compute_similarity_ordering
+        compute_similarity_ordering.delay()
+        return Response(
+            {'message': 'Similarity ordering regeneration started.'},
+            status=status.HTTP_200_OK
+        )
+
+
 # ==================== COOKIE CONSENT VIEWS ====================
 
 class CookieConsentView(APIView):
