@@ -582,11 +582,8 @@ const Gallery = () => {
           >
             {/* Media display */}
             {modalLoading ? (
-              <div className="w-full flex items-center justify-center bg-black" style={{ minHeight: '50vh' }}>
-                <div className="text-center">
-                  <span className="text-5xl heartDecoration inline-block">💝</span>
-                  <p className="mt-4 text-white text-lg">{t('loading_memories')}</p>
-                </div>
+              <div className="w-full flex items-center justify-center bg-gray-200" style={{ minHeight: '50vh' }}>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500"></div>
               </div>
             ) : (
               <div className="w-full flex items-center justify-center bg-black">
