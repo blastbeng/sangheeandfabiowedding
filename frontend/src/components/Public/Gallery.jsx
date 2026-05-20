@@ -608,7 +608,7 @@ const Gallery = () => {
               <div
                 key={item.id}
                 onClick={() => setSelectedMedia(item)}
-                className={`block relative cursor-pointer h-full ${
+                className={`block relative cursor-pointer h-full overflow-hidden ${
                   item.gridColSpan === 2 ? 'col-span-2' : ''
                 } ${
                   item.gridRowSpan === 2 ? 'row-span-2' : ''
@@ -626,7 +626,7 @@ const Gallery = () => {
                     mediaId={item.id}
                     apiUrl={API_URL}
                     alt={item.caption || t('beautiful_moment')}
-                    className="w-full h-full object-cover"
+                    className="absolute inset-0 w-full h-full object-cover"
                     mediaType={item.media_type}
                     onFinalError={(id) => setFailedMediaIds(prev => new Set(prev).add(id))}
                   />
