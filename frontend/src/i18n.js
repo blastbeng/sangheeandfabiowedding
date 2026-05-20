@@ -448,7 +448,11 @@ const resources = {
       "admin_generate_all_faces_success": "Rigenerazione volti avviata con successo!",
       "admin_generate_all_faces_error": "Errore durante l'avvio della rigenerazione volti.",
       "share_this_memory": "Condividi questo ricordo",
-      "link_copied": "Link copiato!"
+      "link_copied": "Link copiato!",
+      "admin_regenerate_similarity_ordering": "🔄 Rigenera Ordinamento Galleria",
+      "admin_regenerate_similarity_ordering_confirm": "Sei sicuro di voler rigenerare l'ordinamento della griglia della galleria? Questo riordinerà tutte le immagini approvate per similarità visiva.",
+      "admin_regenerate_similarity_ordering_success": "Rigenerazione ordinamento galleria avviata!",
+      "admin_regenerate_similarity_ordering_error": "Errore durante l'avvio della rigenerazione dell'ordinamento."
     }
   },
   ko: {
@@ -897,7 +901,11 @@ const resources = {
       "admin_generate_all_faces_success": "얼굴 재생성 작업이 시작되었습니다!",
       "admin_generate_all_faces_error": "얼굴 재생성 작업 시작 중 오류가 발생했습니다.",
       "share_this_memory": "이 추억 공유",
-      "link_copied": "링크 복사됨!"
+      "link_copied": "링크 복사됨!",
+      "admin_regenerate_similarity_ordering": "🔄 갤러리 정렬 재생성",
+      "admin_regenerate_similarity_ordering_confirm": "갤러리 그리드 정렬을 재생성하시겠습니까? 승인된 모든 이미지가 시각적 유사성에 따라 재정렬됩니다.",
+      "admin_regenerate_similarity_ordering_success": "갤러리 정렬 재생성이 시작되었습니다!",
+      "admin_regenerate_similarity_ordering_error": "갤러리 정렬 재생성 시작 중 오류가 발생했습니다."
     }
   },
   en: {
@@ -1346,7 +1354,11 @@ const resources = {
       "admin_generate_all_faces_success": "Face regeneration task started successfully!",
       "admin_generate_all_faces_error": "Error starting face regeneration task.",
       "share_this_memory": "Share this memory",
-      "link_copied": "Link copied!"
+      "link_copied": "Link copied!",
+      "admin_regenerate_similarity_ordering": "🔄 Regenerate Gallery Ordering",
+      "admin_regenerate_similarity_ordering_confirm": "Are you sure you want to regenerate the gallery grid ordering? This will reorder all approved images by visual similarity.",
+      "admin_regenerate_similarity_ordering_success": "Gallery ordering regeneration started!",
+      "admin_regenerate_similarity_ordering_error": "Error starting gallery ordering regeneration."
     }
   }
 };

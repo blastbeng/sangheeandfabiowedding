@@ -247,6 +247,25 @@ const AdminModeration = () => {
     }
   };
 
+  const handleRegenerateSimilarityOrdering = async () => {
+    if (!window.confirm(t('admin_regenerate_similarity_ordering_confirm'))) return;
+    try {
+      const res = await authFetch(`${API_URL}/api/auth/media/moderation/regenerate-similarity-ordering/`, {
+        method: 'POST'
+      });
+      if (res.ok) {
+        const data = await res.json();
+        alert(data.message || t('admin_regenerate_similarity_ordering_success'));
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        alert(errData.detail || t('admin_regenerate_similarity_ordering_error'));
+      }
+    } catch (err) {
+      logger.error('[Moderation] Regenerate similarity ordering failed:', err);
+      alert(t('admin_regenerate_similarity_ordering_error'));
+    }
+  };
+
   const fetchUsersList = async () => {
     try {
       const res = await authFetch(`${API_URL}/api/auth/admin/users/`);
@@ -412,6 +431,12 @@ const AdminModeration = () => {
             className="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-purple-700 flex-shrink-0"
           >
             {t('admin_generate_all_faces')}
+          </button>
+          <button
+            onClick={handleRegenerateSimilarityOrdering}
+            className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-indigo-700 flex-shrink-0"
+          >
+            {t('admin_regenerate_similarity_ordering')}
           </button>
         </div>
 
