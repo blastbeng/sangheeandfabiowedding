@@ -25,6 +25,7 @@ const Gallery = () => {
   const [viewMode, setViewMode] = useState('gallery'); // 'gallery' | 'grid'
   const [selectedMedia, setSelectedMedia] = useState(null);
   const [modalLoading, setModalLoading] = useState(false);
+  const [copyFeedback, setCopyFeedback] = useState(false);
   const API_URL = import.meta.env.VITE_API_URL;
 
   const sentinelRef = useRef(null);
@@ -286,6 +287,29 @@ const Gallery = () => {
       return () => clearTimeout(timer);
     }
   }, [selectedMedia, API_URL]);
+
+  const handleShare = async () => {
+    const url = `${API_URL}/api/auth/media/${selectedMedia.id}/file/`;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: selectedMedia.caption || t('beautiful_moment'),
+          url: url,
+        });
+      } catch (err) {
+        // user cancelled or error – no action needed
+      }
+    } else {
+      // Fallback: copy to clipboard
+      try {
+        await navigator.clipboard.writeText(url);
+        setCopyFeedback(true);
+        setTimeout(() => setCopyFeedback(false), 2000);
+      } catch (err) {
+        // clipboard failed – silently ignore
+      }
+    }
+  };
 
   if (loading) {
     return (
@@ -732,6 +756,19 @@ const Gallery = () => {
               <p className="text-gray-500 text-xs mt-2">
                 {t('uploaded_at')}: {new Date(selectedMedia.uploaded_at).toLocaleDateString(dateLocale, { day: '2-digit', month: '2-digit', year: 'numeric' })} {new Date(selectedMedia.uploaded_at).toLocaleTimeString(dateLocale, { hour: '2-digit', minute: '2-digit', hour12: false })}
               </p>
+
+              {/* Share button */}
+              <div className="mt-3 flex items-center gap-2">
+                <button
+                  onClick={handleShare}
+                  className="inline-flex items-center gap-1 px-3 py-1 text-sm bg-pink-500 text-white rounded-full hover:bg-pink-600 transition-colors"
+                >
+                  <span>📤</span> {t('share_this_memory')}
+                </button>
+                {copyFeedback && (
+                  <span className="text-xs text-green-600">{t('link_copied')}</span>
+                )}
+              </div>
             </div>
           </div>
         </div>

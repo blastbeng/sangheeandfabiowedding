@@ -446,7 +446,9 @@ const resources = {
       "admin_generate_all_faces": "🔄 Rigenera Tutti i Volti",
       "admin_generate_all_faces_confirm": "Sei sicuro di voler rigenerare tutti i volti, i gruppi e le miniature per tutte le immagini approvate? L'operazione potrebbe richiedere tempo.",
       "admin_generate_all_faces_success": "Rigenerazione volti avviata con successo!",
-      "admin_generate_all_faces_error": "Errore durante l'avvio della rigenerazione volti."
+      "admin_generate_all_faces_error": "Errore durante l'avvio della rigenerazione volti.",
+      "share_this_memory": "Condividi questo ricordo",
+      "link_copied": "Link copiato!"
     }
   },
   ko: {
@@ -893,7 +895,9 @@ const resources = {
       "admin_generate_all_faces": "🔄 모든 얼굴 재생성",
       "admin_generate_all_faces_confirm": "승인된 모든 이미지의 얼굴, 그룹 및 썸네일을 재생성하시겠습니까? 시간이 걸릴 수 있습니다.",
       "admin_generate_all_faces_success": "얼굴 재생성 작업이 시작되었습니다!",
-      "admin_generate_all_faces_error": "얼굴 재생성 작업 시작 중 오류가 발생했습니다."
+      "admin_generate_all_faces_error": "얼굴 재생성 작업 시작 중 오류가 발생했습니다.",
+      "share_this_memory": "이 추억 공유",
+      "link_copied": "링크 복사됨!"
     }
   },
   en: {
@@ -1340,7 +1344,9 @@ const resources = {
       "admin_generate_all_faces": "🔄 Generate All Faces",
       "admin_generate_all_faces_confirm": "Are you sure you want to regenerate all faces, face groups, and thumbnails for all approved images? This may take a while.",
       "admin_generate_all_faces_success": "Face regeneration task started successfully!",
-      "admin_generate_all_faces_error": "Error starting face regeneration task."
+      "admin_generate_all_faces_error": "Error starting face regeneration task.",
+      "share_this_memory": "Share this memory",
+      "link_copied": "Link copied!"
     }
   }
 };
