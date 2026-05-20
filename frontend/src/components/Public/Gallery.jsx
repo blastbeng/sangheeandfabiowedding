@@ -51,7 +51,7 @@ const Gallery = () => {
       params.append('face_group_id', selectedGroupId);
     }
     if (selectedMediaType !== 'all') params.append('media_type', selectedMediaType);
-    if (viewMode === 'grid' || sortBy === 'similarity') {
+    if (viewMode === 'grid') {
       params.append('ordering', 'similarity');
     }
     params.append('page', pageNum);
@@ -76,13 +76,13 @@ const Gallery = () => {
       setLoading(false);
       setLoadingMore(false);
     }
-  }, [selectedUserId, selectedGroupId, selectedMediaType, sortBy, viewMode, API_URL]);
+  }, [selectedUserId, selectedGroupId, selectedMediaType, viewMode, API_URL]);
 
   const sortedMedia = useMemo(() => {
     if (viewMode !== 'grid') return media;
 
     // When using similarity ordering, respect backend order and just assign grid sizes
-    if (viewMode === 'grid' || sortBy === 'similarity') {
+    if (viewMode === 'grid') {
       return media.map((item, index) => {
         const mod = index % 10;
         let gridColSpan = 1;
@@ -463,17 +463,19 @@ const Gallery = () => {
                 ))}
               </select>
             </div>
-            <div>
-              <label className="block text-sm text-gray-600 mb-1">{t('sort_by') || 'Sort by'}</label>
-              <select
-                value={sortBy}
-                onChange={e => setSortBy(e.target.value)}
-                className="wedding-input"
-              >
-                <option value="newest">{t('sort_newest') || 'Newest first'}</option>
-                <option value="similarity">{t('sort_similarity') || 'By person'}</option>
-              </select>
-            </div>
+            {viewMode === 'gallery' && (
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">{t('sort_by') || 'Sort by'}</label>
+                <select
+                  value={sortBy}
+                  onChange={e => setSortBy(e.target.value)}
+                  className="wedding-input"
+                >
+                  <option value="newest">{t('sort_newest') || 'Newest first'}</option>
+                  <option value="similarity">{t('sort_similarity') || 'By person'}</option>
+                </select>
+              </div>
+            )}
           </div>
 
           {selectedGroupId && (() => {
