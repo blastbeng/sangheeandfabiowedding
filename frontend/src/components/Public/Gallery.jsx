@@ -608,7 +608,7 @@ const Gallery = () => {
               <div
                 key={item.id}
                 onClick={() => setSelectedMedia(item)}
-                className={`block relative cursor-pointer ${
+                className={`block relative cursor-pointer h-full ${
                   item.gridColSpan === 2 ? 'col-span-2' : ''
                 } ${
                   item.gridRowSpan === 2 ? 'row-span-2' : ''
