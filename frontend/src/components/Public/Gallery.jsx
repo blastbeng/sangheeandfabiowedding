@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import logger from '../../utils/logger';
 import ThumbnailImage from '../Common/ThumbnailImage';
+import ProtectedMediaPreview from '../Common/ProtectedMediaPreview';
 
 const PAGE_SIZE = 20;
 const STORAGE_KEY = 'galleryScrollState';
@@ -22,6 +23,7 @@ const Gallery = () => {
   const [failedMediaIds, setFailedMediaIds] = useState(new Set());
   const [faceGroupsVersion, setFaceGroupsVersion] = useState(0);
   const [viewMode, setViewMode] = useState('gallery'); // 'gallery' | 'grid'
+  const [selectedMedia, setSelectedMedia] = useState(null);
   const API_URL = import.meta.env.VITE_API_URL;
 
   const sentinelRef = useRef(null);
@@ -206,6 +208,17 @@ const Gallery = () => {
     };
   }, [hasMore, loadingMore, page, fetchMedia]);
 
+  // Escape key listener to close modal
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') setSelectedMedia(null);
+    };
+    if (selectedMedia) {
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [selectedMedia]);
+
   // Map i18n language to locale string for date formatting
   const localeMap = { it: 'it-IT', ko: 'ko-KR', en: 'en-US' };
   const dateLocale = localeMap[i18n.language] || 'it-IT';
@@ -213,7 +226,7 @@ const Gallery = () => {
   if (loading) {
     return (
       <div className="text-center py-20">
-        <span className="text-5xl heart-decoration inline-block">💝</span>
+        <span className="text-5xl heartDecoration inline-block">💝</span>
         <p className="mt-4 text-gray-600 text-lg">{t('loading_memories')}</p>
       </div>
     );
@@ -392,7 +405,13 @@ const Gallery = () => {
                     </div>
                   </div>
                 ) : (
-                  <Link to={`/media/${item.id}`} state={{ media: item }} className="block relative">
+                  <div
+                    onClick={() => setSelectedMedia(item)}
+                    className="block relative cursor-pointer"
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => { if (e.key === 'Enter') setSelectedMedia(item); }}
+                  >
                     <ThumbnailImage
                       mediaId={item.id}
                       apiUrl={API_URL}
@@ -401,7 +420,7 @@ const Gallery = () => {
                       mediaType={item.media_type}
                       onFinalError={(id) => setFailedMediaIds(prev => new Set(prev).add(id))}
                     />
-                  </Link>
+                  </div>
                 )}
                 <div className="p-3">
                   {/* Uploader info */}
@@ -475,15 +494,17 @@ const Gallery = () => {
           {sortedMedia.map((item) => {
             const isFailed = failedMediaIds.has(item.id);
             return (
-              <Link
+              <div
                 key={item.id}
-                to={`/media/${item.id}`}
-                state={{ media: item }}
-                className={`block relative bg-gray-100 ${
+                onClick={() => setSelectedMedia(item)}
+                className={`block relative bg-gray-100 cursor-pointer ${
                   item.gridColSpan === 2 ? 'col-span-2' : ''
                 } ${
                   item.gridRowSpan === 2 ? 'row-span-2' : ''
                 }`}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === 'Enter') setSelectedMedia(item); }}
               >
                 {isFailed ? (
                   <div className="w-full h-full flex items-center justify-center text-gray-400">
@@ -499,7 +520,7 @@ const Gallery = () => {
                     onFinalError={(id) => setFailedMediaIds(prev => new Set(prev).add(id))}
                   />
                 )}
-              </Link>
+              </div>
             );
           })}
           {hasMore && (
@@ -511,6 +532,103 @@ const Gallery = () => {
               )}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Fullscreen modal */}
+      {selectedMedia && (
+        <div
+          className="fixed inset-0 z-50 bg-black bg-opacity-90 flex items-center justify-center p-4"
+          onClick={() => setSelectedMedia(null)}
+        >
+          {/* Close button */}
+          <button
+            onClick={() => setSelectedMedia(null)}
+            className="absolute top-4 right-4 text-white text-3xl hover:text-gray-300 z-10"
+            aria-label="Close"
+          >
+            &times;
+          </button>
+
+          {/* Content container – stop click propagation */}
+          <div
+            className="relative max-w-4xl w-full max-h-full overflow-auto bg-white rounded-lg shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Media display */}
+            <div className="w-full flex items-center justify-center bg-black">
+              <ProtectedMediaPreview
+                fileUrl={`${API_URL}/api/auth/media/${selectedMedia.id}/file/`}
+                mediaType={selectedMedia.media_type}
+                className="max-w-full max-h-[70vh] object-contain"
+                alt={selectedMedia.caption || t('beautiful_moment')}
+              />
+            </div>
+
+            {/* Details section */}
+            <div className="p-4">
+              {/* Uploader info */}
+              {selectedMedia.uploader_username && (
+                <div className="mb-2 flex items-center gap-1">
+                  <span className="text-xs text-gray-500">{t('uploaded_by')}:</span>
+                  <Link
+                    to={`/user/${selectedMedia.user_id}`}
+                    className="inline-flex items-center gap-1 hover:opacity-80"
+                  >
+                    <img
+                      src={selectedMedia.uploader_profile_picture || 'https://i.imgur.com/V4RclNb.png'}
+                      alt={selectedMedia.uploader_username}
+                      className="w-6 h-6 rounded-full object-cover border border-pink-200"
+                      onError={(e) => { e.target.src = 'https://i.imgur.com/V4RclNb.png'; }}
+                    />
+                    <span className="text-sm text-gray-600 font-medium">
+                      {selectedMedia.uploader_first_name || selectedMedia.uploader_last_name
+                        ? `${selectedMedia.uploader_first_name || ''} ${selectedMedia.uploader_last_name || ''}`.trim()
+                        : selectedMedia.uploader_username}
+                    </span>
+                  </Link>
+                </div>
+              )}
+
+              {/* Caption */}
+              <p className="text-gray-700 text-sm mb-2">
+                {selectedMedia.caption || t('beautiful_moment')}
+              </p>
+
+              {/* Face tags */}
+              {selectedMedia.media_type === 'image' && selectedMedia.face_tags?.length > 0 && (
+                <div className="mt-2 flex items-center gap-1">
+                  <span className="text-xs text-gray-500">{t('in_this_photo')}:</span>
+                  <div className="inline-flex gap-1">
+                    {selectedMedia.face_tags.map(tag => (
+                      <button
+                        key={tag.face_group_id}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedGroupId(prev => prev === tag.face_group_id ? null : tag.face_group_id);
+                        }}
+                        className={`flex-shrink-0 w-6 h-6 rounded-full overflow-hidden border-2 transition-colors ${
+                          selectedGroupId === tag.face_group_id ? 'border-pink-500' : 'border-white'
+                        }`}
+                      >
+                        <img
+                          src={tag.thumbnail_url || 'https://i.imgur.com/V4RclNb.png'}
+                          alt=""
+                          className="w-full h-full object-cover"
+                          onError={(e) => { e.target.src = 'https://i.imgur.com/V4RclNb.png'; }}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Date */}
+              <p className="text-gray-500 text-xs mt-2">
+                {t('uploaded_at')}: {new Date(selectedMedia.uploaded_at).toLocaleDateString(dateLocale, { day: '2-digit', month: '2-digit', year: 'numeric' })} {new Date(selectedMedia.uploaded_at).toLocaleTimeString(dateLocale, { hour: '2-digit', minute: '2-digit', hour12: false })}
+              </p>
+            </div>
+          </div>
         </div>
       )}
     </div>
