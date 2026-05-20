@@ -24,6 +24,7 @@ const Gallery = () => {
   const [faceGroupsVersion, setFaceGroupsVersion] = useState(0);
   const [viewMode, setViewMode] = useState('gallery'); // 'gallery' | 'grid'
   const [selectedMedia, setSelectedMedia] = useState(null);
+  const [modalLoading, setModalLoading] = useState(false);
   const API_URL = import.meta.env.VITE_API_URL;
 
   const sentinelRef = useRef(null);
@@ -218,6 +219,30 @@ const Gallery = () => {
       return () => window.removeEventListener('keydown', handleKeyDown);
     }
   }, [selectedMedia]);
+
+  // Preload modal media and manage loading state
+  useEffect(() => {
+    if (!selectedMedia) {
+      setModalLoading(false);
+      return;
+    }
+    setModalLoading(true);
+    const url = `${API_URL}/api/auth/media/${selectedMedia.id}/file/`;
+    if (selectedMedia.media_type === 'image') {
+      const img = new Image();
+      img.onload = () => setModalLoading(false);
+      img.onerror = () => setModalLoading(false);
+      img.src = url;
+      return () => {
+        img.onload = null;
+        img.onerror = null;
+      };
+    } else {
+      // For video, show loading for a short time then reveal the player
+      const timer = setTimeout(() => setModalLoading(false), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [selectedMedia, API_URL]);
 
   // Map i18n language to locale string for date formatting
   const localeMap = { it: 'it-IT', ko: 'ko-KR', en: 'en-US' };
@@ -556,14 +581,23 @@ const Gallery = () => {
             onClick={(e) => e.stopPropagation()}
           >
             {/* Media display */}
-            <div className="w-full flex items-center justify-center bg-black">
-              <ProtectedMediaPreview
-                fileUrl={`${API_URL}/api/auth/media/${selectedMedia.id}/file/`}
-                mediaType={selectedMedia.media_type}
-                className="max-w-full max-h-[70vh] object-contain"
-                alt={selectedMedia.caption || t('beautiful_moment')}
-              />
-            </div>
+            {modalLoading ? (
+              <div className="w-full flex items-center justify-center bg-black" style={{ minHeight: '50vh' }}>
+                <div className="text-center">
+                  <span className="text-5xl heartDecoration inline-block">💝</span>
+                  <p className="mt-4 text-white text-lg">{t('loading_memories')}</p>
+                </div>
+              </div>
+            ) : (
+              <div className="w-full flex items-center justify-center bg-black">
+                <ProtectedMediaPreview
+                  fileUrl={`${API_URL}/api/auth/media/${selectedMedia.id}/file/`}
+                  mediaType={selectedMedia.media_type}
+                  className="max-w-full max-h-[70vh] object-contain"
+                  alt={selectedMedia.caption || t('beautiful_moment')}
+                />
+              </div>
+            )}
 
             {/* Details section */}
             <div className="p-4">
