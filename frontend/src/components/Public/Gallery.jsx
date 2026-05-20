@@ -30,6 +30,8 @@ const Gallery = () => {
   const sentinelRef = useRef(null);
   const hasRestoredScroll = useRef(false);
   const faceRowRef = useRef(null);
+  const touchStartX = useRef(0);
+  const isSwiping = useRef(false);
 
   const scrollFaceRow = (direction) => {
     if (faceRowRef.current) {
@@ -209,16 +211,57 @@ const Gallery = () => {
     };
   }, [hasMore, loadingMore, page, fetchMedia]);
 
-  // Escape key listener to close modal
+  // Map i18n language to locale string for date formatting
+  const localeMap = { it: 'it-IT', ko: 'ko-KR', en: 'en-US' };
+  const dateLocale = localeMap[i18n.language] || 'it-IT';
+
+  const navigableMedia = viewMode === 'grid' ? sortedMedia : media;
+  const currentIndex = selectedMedia
+    ? navigableMedia.findIndex(item => item.id === selectedMedia.id)
+    : -1;
+
+  const goToPrev = () => {
+    if (currentIndex > 0) setSelectedMedia(navigableMedia[currentIndex - 1]);
+  };
+  const goToNext = () => {
+    if (currentIndex < navigableMedia.length - 1) setSelectedMedia(navigableMedia[currentIndex + 1]);
+  };
+
+  const handleTouchStart = (e) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+  const handleTouchEnd = (e) => {
+    const deltaX = e.changedTouches[0].clientX - touchStartX.current;
+    if (Math.abs(deltaX) > 50) {
+      isSwiping.current = true;
+      setTimeout(() => { isSwiping.current = false; }, 100);
+      if (deltaX > 0 && currentIndex > 0) {
+        goToPrev();
+      } else if (deltaX < 0 && currentIndex < navigableMedia.length - 1) {
+        goToNext();
+      }
+    } else {
+      // Tap (no significant swipe) → close modal
+      setSelectedMedia(null);
+    }
+  };
+
+  // Escape and arrow key listener to close/navigate modal
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape') setSelectedMedia(null);
+      if (e.key === 'Escape') {
+        setSelectedMedia(null);
+      } else if (e.key === 'ArrowLeft' && currentIndex > 0) {
+        goToPrev();
+      } else if (e.key === 'ArrowRight' && currentIndex < navigableMedia.length - 1) {
+        goToNext();
+      }
     };
     if (selectedMedia) {
       window.addEventListener('keydown', handleKeyDown);
       return () => window.removeEventListener('keydown', handleKeyDown);
     }
-  }, [selectedMedia]);
+  }, [selectedMedia, currentIndex, navigableMedia.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Preload modal media and manage loading state
   useEffect(() => {
@@ -243,10 +286,6 @@ const Gallery = () => {
       return () => clearTimeout(timer);
     }
   }, [selectedMedia, API_URL]);
-
-  // Map i18n language to locale string for date formatting
-  const localeMap = { it: 'it-IT', ko: 'ko-KR', en: 'en-US' };
-  const dateLocale = localeMap[i18n.language] || 'it-IT';
 
   if (loading) {
     return (
@@ -564,7 +603,12 @@ const Gallery = () => {
       {selectedMedia && (
         <div
           className="fixed inset-0 z-50 bg-black bg-opacity-90 flex items-center justify-center p-4"
-          onClick={() => setSelectedMedia(null)}
+          onClick={() => {
+            if (isSwiping.current) return;
+            setSelectedMedia(null);
+          }}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
         >
           {/* Close button */}
           <button
@@ -574,6 +618,28 @@ const Gallery = () => {
           >
             &times;
           </button>
+
+          {/* Left arrow */}
+          {currentIndex > 0 && (
+            <button
+              onClick={(e) => { e.stopPropagation(); goToPrev(); }}
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-white text-4xl hover:text-gray-300 z-10 bg-black bg-opacity-50 rounded-full w-12 h-12 flex items-center justify-center"
+              aria-label="Previous"
+            >
+              ‹
+            </button>
+          )}
+
+          {/* Right arrow */}
+          {currentIndex < navigableMedia.length - 1 && (
+            <button
+              onClick={(e) => { e.stopPropagation(); goToNext(); }}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-white text-4xl hover:text-gray-300 z-10 bg-black bg-opacity-50 rounded-full w-12 h-12 flex items-center justify-center"
+              aria-label="Next"
+            >
+              ›
+            </button>
+          )}
 
           {/* Content container – stop click propagation */}
           <div
