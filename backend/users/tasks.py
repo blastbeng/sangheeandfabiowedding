@@ -124,6 +124,112 @@ def _align_face(image_array, top, right, bottom, left, target_size=256, landmark
         return None
 
 
+def _detect_faces_robust(img_array):
+    """
+    Detect faces using MediaPipe first, then HOG fallback,
+    then rotation fallback. Returns list of (top, right, bottom, left)
+    in dlib order.
+    """
+    h, w = img_array.shape[:2]
+    face_locations = []
+
+    # --- Stage 1: MediaPipe with low confidence ---
+    try:
+        with mp.solutions.face_detection.FaceDetection(
+            model_selection=1, min_detection_confidence=0.2
+        ) as face_detection:
+            results = face_detection.process(img_array)
+        if results.detections:
+            for detection in results.detections:
+                bbox = detection.location_data.relative_bounding_box
+                xmin = int(bbox.xmin * w)
+                ymin = int(bbox.ymin * h)
+                width = int(bbox.width * w)
+                height = int(bbox.height * h)
+                # Expand box by 10%
+                expand_w = int(width * 0.1)
+                expand_h = int(height * 0.1)
+                xmin = max(0, xmin - expand_w)
+                ymin = max(0, ymin - expand_h)
+                xmax = min(w, xmin + width + 2 * expand_w)
+                ymax = min(h, ymin + height + 2 * expand_h)
+                if (xmax - xmin) >= 20 and (ymax - ymin) >= 20:
+                    face_locations.append((ymin, xmax, ymax, xmin))
+    except Exception as e:
+        logger.warning(f"[detect_faces] MediaPipe failed: {e}")
+
+    # --- Stage 2: HOG fallback if MediaPipe found nothing ---
+    if not face_locations:
+        try:
+            hog_locations = face_recognition.face_locations(
+                img_array, number_of_times_to_upsample=1, model="hog"
+            )
+            # Filter tiny faces
+            face_locations = [
+                loc for loc in hog_locations
+                if (loc[2] - loc[0]) >= 20 and (loc[1] - loc[3]) >= 20
+            ]
+        except Exception as e:
+            logger.warning(f"[detect_faces] HOG fallback failed: {e}")
+
+    # --- Stage 3: Rotation fallback (90°, 180°, 270°) ---
+    if not face_locations:
+        for angle in [90, 180, 270]:
+            if angle == 90:
+                rotated = cv2.rotate(img_array, cv2.ROTATE_90_CLOCKWISE)
+            elif angle == 180:
+                rotated = cv2.rotate(img_array, cv2.ROTATE_180)
+            else:
+                rotated = cv2.rotate(img_array, cv2.ROTATE_90_COUNTERCLOCKWISE)
+            try:
+                with mp.solutions.face_detection.FaceDetection(
+                    model_selection=1, min_detection_confidence=0.2
+                ) as face_detection:
+                    results = face_detection.process(rotated)
+                if results.detections:
+                    rh, rw = rotated.shape[:2]
+                    for detection in results.detections:
+                        bbox = detection.location_data.relative_bounding_box
+                        xmin = int(bbox.xmin * rw)
+                        ymin = int(bbox.ymin * rh)
+                        width = int(bbox.width * rw)
+                        height = int(bbox.height * rh)
+                        # Map back to original coordinates
+                        if angle == 90:
+                            orig_xmin = ymin
+                            orig_ymin = h - 1 - (xmin + width)
+                            orig_xmax = ymin + height
+                            orig_ymax = h - 1 - xmin
+                        elif angle == 180:
+                            orig_xmin = w - 1 - (xmin + width)
+                            orig_ymin = h - 1 - (ymin + height)
+                            orig_xmax = w - 1 - xmin
+                            orig_ymax = h - 1 - ymin
+                        else:  # 270
+                            orig_xmin = w - 1 - (ymin + height)
+                            orig_ymin = xmin
+                            orig_xmax = w - 1 - ymin
+                            orig_ymax = xmin + width
+                        # Expand and clamp
+                        expand_w = int((orig_xmax - orig_xmin) * 0.1)
+                        expand_h = int((orig_ymax - orig_ymin) * 0.1)
+                        orig_xmin = max(0, orig_xmin - expand_w)
+                        orig_ymin = max(0, orig_ymin - expand_h)
+                        orig_xmax = min(w, orig_xmax + expand_w)
+                        orig_ymax = min(h, orig_ymax + expand_h)
+                        if (orig_xmax - orig_xmin) >= 20 and (orig_ymax - orig_ymin) >= 20:
+                            face_locations.append((orig_ymin, orig_xmax, orig_ymax, orig_xmin))
+                    break  # stop after first successful rotation
+            except Exception as e:
+                logger.warning(f"[detect_faces] Rotation {angle}° failed: {e}")
+
+    # Deduplicate overlapping boxes (simple NMS)
+    if len(face_locations) > 1:
+        face_locations = _nms(face_locations, threshold=0.3)
+
+    return face_locations
+
+
 @shared_task(bind=True, max_retries=3)
 def upload_media_task(self, user_id, file_paths):
     """
@@ -324,66 +430,16 @@ def detect_faces_task(self, media_id, force=False):
         logger.error(f"[detect_faces] Cannot load image for media {media_id}: {e}")
         return
 
-    # Use MediaPipe for fast face detection
-    try:
-        with mp.solutions.face_detection.FaceDetection(
-            model_selection=1, min_detection_confidence=0.3
-        ) as face_detection:
-            results = face_detection.process(img_array)
-    except Exception as e:
-        logger.error(f"[detect_faces] MediaPipe face detection failed for media {media_id}: {e}")
-        return
-
-    if not results.detections:
-        # No faces found – mark as attempted and exit
-        logger.info(f"[detect_faces] No faces detected in media {media_id} by MediaPipe")
-        media.face_detection_attempted = True
-        media.save(update_fields=['face_detection_attempted'])
-        return
-
-    logger.info(f"[detect_faces] MediaPipe found {len(results.detections)} face(s) in media {media_id}")
-
-    # Extract face locations in dlib format (top, right, bottom, left)
-    # Expand boxes by 10% and filter out tiny faces
-    face_locations = []
-    h, w, _ = img_array.shape
-    for detection in results.detections:
-        bbox = detection.location_data.relative_bounding_box
-        xmin = int(bbox.xmin * w)
-        ymin = int(bbox.ymin * h)
-        width = int(bbox.width * w)
-        height = int(bbox.height * h)
-
-        # Expand box by 10% to include a little more context
-        expand_w = int(width * 0.1)
-        expand_h = int(height * 0.1)
-        xmin = max(0, xmin - expand_w)
-        ymin = max(0, ymin - expand_h)
-        xmax = min(w, xmin + width + 2 * expand_w)
-        ymax = min(h, ymin + height + 2 * expand_h)
-
-        # Skip faces that are too small
-        if (xmax - xmin) < 20 or (ymax - ymin) < 20:
-            continue
-
-        face_locations.append((ymin, xmax, ymax, xmin))  # dlib order: top, right, bottom, left
+    # Use robust multi-stage face detection (MediaPipe → HOG → rotation fallback)
+    face_locations = _detect_faces_robust(img_array)
 
     if not face_locations:
-        logger.info(f"[detect_faces] No usable faces after filtering in media {media_id}")
+        logger.info(f"[detect_faces] No faces detected in media {media_id}")
         media.face_detection_attempted = True
         media.save(update_fields=['face_detection_attempted'])
         return
 
-    # MediaPipe already performs NMS internally – no additional suppression needed
-    # face_locations = _nms(face_locations, threshold=0.3)
-
-    logger.info(f"[detect_faces] After NMS: {len(face_locations)} face(s) kept for media {media_id}")
-
-    if not face_locations:
-        logger.info(f"[detect_faces] No faces remaining after NMS in media {media_id}")
-        media.face_detection_attempted = True
-        media.save(update_fields=['face_detection_attempted'])
-        return
+    logger.info(f"[detect_faces] Found {len(face_locations)} face(s) in media {media_id}")
 
     # Load existing groups and their centroids
     existing_groups = FaceGroup.objects.prefetch_related('face_tags').all()
@@ -419,15 +475,11 @@ def detect_faces_task(self, media_id, force=False):
         use_aligned = False
         if aligned_face is not None:
             aligned_face_uint8 = (aligned_face * 255).astype(np.uint8) if aligned_face.dtype == np.float64 else aligned_face
-            # Check if aligned face is too dark (can happen near image borders)
-            if np.mean(aligned_face_uint8) < 10:
-                logger.debug(f"[detect_faces] Aligned face is too dark for media {media_id}, skipping alignment")
+            encoding_result = face_recognition.face_encodings(aligned_face_uint8, model="large")
+            if encoding_result:
+                use_aligned = True
             else:
-                encoding_result = face_recognition.face_encodings(aligned_face_uint8, model="large")
-                if encoding_result:
-                    use_aligned = True
-                else:
-                    logger.debug(f"[detect_faces] Aligned face encoding failed for media {media_id}, falling back to original crop")
+                logger.debug(f"[detect_faces] Aligned face encoding failed for media {media_id}, falling back to original crop")
 
         if use_aligned:
             face_for_quality = aligned_face_uint8
@@ -456,7 +508,7 @@ def detect_faces_task(self, media_id, force=False):
             pil_thumb = Image.fromarray(thumb_face)
 
         # Blur check – skip low-quality faces that produce unreliable encodings
-        if _is_blurry(face_for_quality, threshold=30.0):
+        if _is_blurry(face_for_quality, threshold=20.0):
             logger.info(f"[detect_faces] Skipping blurry face in media {media_id}")
             continue
 
@@ -745,14 +797,11 @@ def detect_faces_profile_picture(self, user_id):
     use_aligned = False
     if aligned_face is not None:
         aligned_face_uint8 = (aligned_face * 255).astype(np.uint8) if aligned_face.dtype == np.float64 else aligned_face
-        if np.mean(aligned_face_uint8) < 10:
-            logger.debug(f"[detect_faces_profile] Aligned face is too dark for user {user_id}, skipping alignment")
+        face_encodings_result = face_recognition.face_encodings(aligned_face_uint8, model="large")
+        if face_encodings_result:
+            use_aligned = True
         else:
-            face_encodings_result = face_recognition.face_encodings(aligned_face_uint8, model="large")
-            if face_encodings_result:
-                use_aligned = True
-            else:
-                logger.debug(f"[detect_faces_profile] Aligned face encoding failed for user {user_id}, falling back to original crop")
+            logger.debug(f"[detect_faces_profile] Aligned face encoding failed for user {user_id}, falling back to original crop")
 
     if use_aligned:
         face_for_quality = aligned_face_uint8
@@ -781,7 +830,7 @@ def detect_faces_profile_picture(self, user_id):
         pil_thumb = Image.fromarray(thumb_face)
 
     # Blur check – skip low-quality faces that produce unreliable encodings
-    if _is_blurry(face_for_quality, threshold=30.0):
+    if _is_blurry(face_for_quality, threshold=20.0):
         logger.info(f"[detect_faces_profile] Skipping blurry face for user {user_id}")
         return
 
