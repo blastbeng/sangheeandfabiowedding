@@ -23,7 +23,7 @@ const Gallery = () => {
   const [sortBy, setSortBy] = useState('newest');
   const [failedMediaIds, setFailedMediaIds] = useState(new Set());
   const [faceGroupsVersion, setFaceGroupsVersion] = useState(0);
-  const [viewMode, setViewMode] = useState('gallery'); // 'gallery' | 'grid'
+  const [viewMode, setViewMode] = useState('grid'); // 'gallery' | 'grid'
   const [selectedMedia, setSelectedMedia] = useState(null);
   const [modalLoading, setModalLoading] = useState(false);
   const [copyFeedback, setCopyFeedback] = useState(false);
@@ -359,24 +359,24 @@ const Gallery = () => {
       <div className="flex justify-center mb-4">
         <div className="inline-flex rounded-lg border border-gray-200 bg-white shadow-sm">
           <button
-            onClick={() => setViewMode('gallery')}
-            className={`px-4 py-2 text-sm font-medium rounded-l-lg transition-colors ${
-              viewMode === 'gallery'
-                ? 'bg-pink-500 text-white'
-                : 'text-gray-600 hover:bg-gray-50'
-            }`}
-          >
-            {t('gallery_mode') || 'Gallery'}
-          </button>
-          <button
             onClick={() => setViewMode('grid')}
-            className={`px-4 py-2 text-sm font-medium rounded-r-lg transition-colors ${
+            className={`px-4 py-2 text-sm font-medium rounded-l-lg transition-colors ${
               viewMode === 'grid'
                 ? 'bg-pink-500 text-white'
                 : 'text-gray-600 hover:bg-gray-50'
             }`}
           >
             {t('grid_mode') || 'Grid'}
+          </button>
+          <button
+            onClick={() => setViewMode('gallery')}
+            className={`px-4 py-2 text-sm font-medium rounded-r-lg transition-colors ${
+              viewMode === 'gallery'
+                ? 'bg-pink-500 text-white'
+                : 'text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            {t('gallery_mode') || 'Gallery'}
           </button>
         </div>
       </div>
