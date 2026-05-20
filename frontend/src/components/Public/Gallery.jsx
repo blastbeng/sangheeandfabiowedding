@@ -782,7 +782,9 @@ const Gallery = () => {
               {/* Share button */}
               <div className="mt-3 flex items-center gap-2">
                 <button
-                  onClick={handleShare}
+                  onClick={(e) => { e.stopPropagation(); handleShare(); }}
+                  onTouchStart={(e) => e.stopPropagation()}
+                  onTouchEnd={(e) => e.stopPropagation()}
                   className="inline-flex items-center gap-1 px-3 py-1 text-sm bg-pink-500 text-white rounded-full hover:bg-pink-600 transition-colors"
                 >
                   <span>📤</span> {t('share_this_memory')}
