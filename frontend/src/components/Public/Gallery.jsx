@@ -20,6 +20,7 @@ const Gallery = () => {
   const [faceGroups, setFaceGroups] = useState([]);
   const [selectedGroupId, setSelectedGroupId] = useState(null);
   const [selectedMediaType, setSelectedMediaType] = useState('all');
+  const [sortBy, setSortBy] = useState('newest');
   const [failedMediaIds, setFailedMediaIds] = useState(new Set());
   const [faceGroupsVersion, setFaceGroupsVersion] = useState(0);
   const [viewMode, setViewMode] = useState('gallery'); // 'gallery' | 'grid'
@@ -50,6 +51,7 @@ const Gallery = () => {
       params.append('face_group_id', selectedGroupId);
     }
     if (selectedMediaType !== 'all') params.append('media_type', selectedMediaType);
+    if (sortBy === 'similarity') params.append('ordering', 'similarity');
     params.append('page', pageNum);
     params.append('page_size', PAGE_SIZE);
 
@@ -72,10 +74,32 @@ const Gallery = () => {
       setLoading(false);
       setLoadingMore(false);
     }
-  }, [selectedUserId, selectedGroupId, selectedMediaType, API_URL]);
+  }, [selectedUserId, selectedGroupId, selectedMediaType, sortBy, API_URL]);
 
   const sortedMedia = useMemo(() => {
     if (viewMode !== 'grid') return media;
+
+    // When using similarity ordering, respect backend order and just assign grid sizes
+    if (sortBy === 'similarity') {
+      return media.map((item, index) => {
+        const mod = index % 10;
+        let gridColSpan = 1;
+        let gridRowSpan = 1;
+        if (mod === 0) {
+          gridColSpan = 2;
+          gridRowSpan = 2;
+        } else if (mod === 3) {
+          gridColSpan = 2;
+        } else if (mod === 7) {
+          gridRowSpan = 2;
+        }
+        return {
+          ...item,
+          gridColSpan,
+          gridRowSpan,
+        };
+      });
+    }
 
     // Separate videos and photos
     const videos = media.filter(item => item.media_type === 'video');
@@ -123,7 +147,7 @@ const Gallery = () => {
         gridRowSpan,
       };
     });
-  }, [media, viewMode]);
+  }, [media, viewMode, sortBy]);
 
   // Restoration effect – only restore filters and scroll position, NOT media data
   useEffect(() => {
@@ -134,6 +158,7 @@ const Gallery = () => {
         if (state.selectedUserId) setSelectedUserId(state.selectedUserId);
         if (state.selectedGroupId) setSelectedGroupId(state.selectedGroupId);
         if (state.selectedMediaType) setSelectedMediaType(state.selectedMediaType);
+        if (state.sortBy) setSortBy(state.sortBy);
         if (state.scrollY !== undefined) {
           hasRestoredScroll.current = true;
           // Store scrollY in a ref so we can use it after media loads
@@ -172,11 +197,12 @@ const Gallery = () => {
         selectedUserId,
         selectedGroupId,
         selectedMediaType,
+        sortBy,
         scrollY: window.scrollY,
       };
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     };
-  }, [selectedUserId, selectedGroupId, selectedMediaType]);
+  }, [selectedUserId, selectedGroupId, selectedMediaType, sortBy]);
 
   useEffect(() => {
     fetch(`${API_URL}/api/auth/face-groups/`)
@@ -435,6 +461,17 @@ const Gallery = () => {
                       : user.username}
                   </option>
                 ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm text-gray-600 mb-1">{t('sort_by') || 'Sort by'}</label>
+              <select
+                value={sortBy}
+                onChange={e => setSortBy(e.target.value)}
+                className="wedding-input"
+              >
+                <option value="newest">{t('sort_newest') || 'Newest first'}</option>
+                <option value="similarity">{t('sort_similarity') || 'By person'}</option>
               </select>
             </div>
           </div>

@@ -18,7 +18,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.contrib.staticfiles.storage import staticfiles_storage
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
-from django.db.models import Q, Count
+from django.db.models import F, Q, Count
 from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
 from django.utils.decorators import method_decorator
@@ -1389,7 +1389,12 @@ class PublicMediaListView(APIView):
         media_type = request.query_params.get('media_type')
         if media_type and media_type != 'all':
             queryset = queryset.filter(media_type=media_type)
-        serializer = PublicMediaSerializer(queryset.order_by('-uploaded_at'), many=True, context={'request': request})
+        ordering = request.query_params.get('ordering', 'newest')
+        if ordering == 'similarity':
+            queryset = queryset.order_by(F('similarity_position').asc(nulls_last=True), '-uploaded_at')
+        else:
+            queryset = queryset.order_by('-uploaded_at')
+        serializer = PublicMediaSerializer(queryset, many=True, context={'request': request})
         return Response(serializer.data)
 
 

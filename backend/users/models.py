@@ -109,6 +109,7 @@ class Media(models.Model):
     view_count = models.IntegerField(default=0)
     face_detection_attempted = models.BooleanField(default=False)
     content_hash = models.CharField(max_length=64, null=True, blank=True, db_index=True)
+    similarity_position = models.IntegerField(null=True, blank=True, db_index=True)
 
     class Meta:
         db_table = 'users_media'

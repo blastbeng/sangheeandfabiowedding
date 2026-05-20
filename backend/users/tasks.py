@@ -2,6 +2,7 @@ import logging
 import redis
 
 from celery import shared_task
+from collections import defaultdict, deque
 from django.core.files.base import ContentFile
 from django.db.models import Count, Q
 import hashlib
@@ -1147,3 +1148,92 @@ def cleanup_missing_cloud_files():
             deleted_count += 1
 
     logger.info(f"cleanup_missing_cloud_files: deleted {deleted_count} Media records")
+
+
+@shared_task
+def compute_similarity_ordering():
+    """
+    Compute a similarity-based ordering for all approved media.
+    Images sharing face groups are placed near each other via BFS clustering.
+    Videos are placed after all images, ordered by upload date.
+    """
+    # Get all approved images with face tags
+    images = list(
+        Media.objects.filter(
+            status='approved',
+            media_type='image'
+        ).prefetch_related('face_tags').order_by('-uploaded_at')
+    )
+
+    # Build face_group -> media and media -> face_group mappings
+    group_to_media = defaultdict(set)
+    media_to_groups = defaultdict(set)
+
+    for media in images:
+        for tag in media.face_tags.all():
+            if tag.face_group_id:
+                group_to_media[tag.face_group_id].add(media.id)
+                media_to_groups[media.id].add(tag.face_group_id)
+
+    # BFS ordering: cluster media by shared face groups
+    visited = set()
+    image_order = []
+
+    # Start with the most-connected media (most face groups)
+    sorted_images = sorted(
+        images,
+        key=lambda m: len(media_to_groups.get(m.id, set())),
+        reverse=True
+    )
+
+    for start_media in sorted_images:
+        if start_media.id in visited:
+            continue
+        queue = deque([start_media.id])
+        while queue:
+            mid = queue.popleft()
+            if mid in visited:
+                continue
+            visited.add(mid)
+            image_order.append(mid)
+            for gid in media_to_groups.get(mid, set()):
+                for connected_mid in group_to_media.get(gid, set()):
+                    if connected_mid not in visited:
+                        queue.append(connected_mid)
+
+    # Add images without face groups at the end (preserving upload order)
+    for media in images:
+        if media.id not in visited:
+            image_order.append(media.id)
+            visited.add(media.id)
+
+    # Get all approved videos, ordered by upload date
+    videos = list(
+        Media.objects.filter(
+            status='approved',
+            media_type='video'
+        ).order_by('-uploaded_at')
+    )
+
+    # Final order: images by similarity, then videos by upload date
+    final_order = image_order + [v.id for v in videos]
+
+    # Assign sequential similarity_position values
+    all_media = {m.id: m for m in images + videos}
+    updates = []
+    for pos, mid in enumerate(final_order):
+        media = all_media.get(mid)
+        if media and media.similarity_position != pos:
+            media.similarity_position = pos
+            updates.append(media)
+
+    # Reset similarity_position for non-approved media
+    Media.objects.filter(
+        status__in=['pending', 'rejected']
+    ).filter(similarity_position__isnull=False).update(similarity_position=None)
+
+    if updates:
+        Media.objects.bulk_update(updates, ['similarity_position'])
+
+    logger.info(f"[compute_similarity_ordering] Updated positions for {len(updates)} media items")
+    return len(updates)
