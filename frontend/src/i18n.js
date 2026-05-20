@@ -452,7 +452,14 @@ const resources = {
       "admin_regenerate_similarity_ordering": "🔄 Rigenera Ordinamento Galleria",
       "admin_regenerate_similarity_ordering_confirm": "Sei sicuro di voler rigenerare l'ordinamento della griglia della galleria? Questo riordinerà tutte le immagini approvate per similarità visiva.",
       "admin_regenerate_similarity_ordering_success": "Rigenerazione ordinamento galleria avviata!",
-      "admin_regenerate_similarity_ordering_error": "Errore durante l'avvio della rigenerazione dell'ordinamento."
+      "admin_regenerate_similarity_ordering_error": "Errore durante l'avvio della rigenerazione dell'ordinamento.",
+      "admin_change_uploader": "Cambia Autore",
+      "admin_change_uploader_single": "Cambia Autore del Media",
+      "admin_change_uploader_bulk": "Cambia Autore per i Media Selezionati",
+      "admin_select_user": "Seleziona un utente...",
+      "cancel": "Annulla",
+      "confirm": "Conferma",
+      "file_unavailable": "File non disponibile"
     }
   },
   ko: {
@@ -905,7 +912,14 @@ const resources = {
       "admin_regenerate_similarity_ordering": "🔄 갤러리 정렬 재생성",
       "admin_regenerate_similarity_ordering_confirm": "갤러리 그리드 정렬을 재생성하시겠습니까? 승인된 모든 이미지가 시각적 유사성에 따라 재정렬됩니다.",
       "admin_regenerate_similarity_ordering_success": "갤러리 정렬 재생성이 시작되었습니다!",
-      "admin_regenerate_similarity_ordering_error": "갤러리 정렬 재생성 시작 중 오류가 발생했습니다."
+      "admin_regenerate_similarity_ordering_error": "갤러리 정렬 재생성 시작 중 오류가 발생했습니다.",
+      "admin_change_uploader": "업로더 변경",
+      "admin_change_uploader_single": "미디어 업로더 변경",
+      "admin_change_uploader_bulk": "선택한 미디어 업로더 변경",
+      "admin_select_user": "사용자 선택...",
+      "cancel": "취소",
+      "confirm": "확인",
+      "file_unavailable": "파일을 사용할 수 없음"
     }
   },
   en: {
@@ -1358,7 +1372,14 @@ const resources = {
       "admin_regenerate_similarity_ordering": "🔄 Regenerate Gallery Ordering",
       "admin_regenerate_similarity_ordering_confirm": "Are you sure you want to regenerate the gallery grid ordering? This will reorder all approved images by visual similarity.",
       "admin_regenerate_similarity_ordering_success": "Gallery ordering regeneration started!",
-      "admin_regenerate_similarity_ordering_error": "Error starting gallery ordering regeneration."
+      "admin_regenerate_similarity_ordering_error": "Error starting gallery ordering regeneration.",
+      "admin_change_uploader": "Change Uploader",
+      "admin_change_uploader_single": "Change Media Uploader",
+      "admin_change_uploader_bulk": "Change Uploader for Selected Media",
+      "admin_select_user": "Select a user...",
+      "cancel": "Cancel",
+      "confirm": "Confirm",
+      "file_unavailable": "File unavailable"
     }
   }
 };
