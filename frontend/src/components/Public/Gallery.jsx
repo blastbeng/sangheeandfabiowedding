@@ -699,8 +699,8 @@ const Gallery = () => {
           <div
             className="relative max-w-4xl w-full max-h-full overflow-auto bg-white rounded-lg shadow-2xl"
             onClick={(e) => e.stopPropagation()}
-            onTouchStart={(e) => e.stopPropagation()}
-            onTouchEnd={(e) => e.stopPropagation()}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
           >
             {/* Media display */}
             {modalLoading ? (
