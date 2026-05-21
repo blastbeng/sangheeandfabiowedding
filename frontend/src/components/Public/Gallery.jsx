@@ -749,7 +749,6 @@ const Gallery = () => {
       {/* Fullscreen modal */}
       {selectedMedia && (
         <div
-          key={selectedMedia.id}
           className="fixed inset-0 z-50 bg-black bg-opacity-90 flex items-center justify-center p-4"
           onClick={() => {
             if (isSwiping.current) return;
