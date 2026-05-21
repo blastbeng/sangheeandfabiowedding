@@ -10,6 +10,7 @@ import shutil
 from io import BytesIO
 from datetime import timedelta
 from urllib.parse import quote
+from django.core.cache import cache
 from django.core.files.base import ContentFile
 from django.core.mail import send_mail
 from django.core.signing import TimestampSigner, BadSignature, SignatureExpired
@@ -47,6 +48,7 @@ from .serializers import (
 from .cloud_clients import get_file_from_cloud, NextcloudClient
 from .tasks import upload_media_task, delete_media_task, detect_faces_task, backfill_faces_periodic
 from .utils import process_profile_picture
+from .thumbnails import PROFILE_CACHE_KEY_PREFIX
 from .rate_limit import check_rate_limit, record_failed_attempt
 
 logger = logging.getLogger(__name__)
@@ -284,6 +286,8 @@ def update_user_from_social(user, provider, extra_data):
 
     if updated:
         user.save()
+        # Invalidate profile thumbnail cache
+        cache.delete(f"{PROFILE_CACHE_KEY_PREFIX}:{user.id}")
 
 
 # ==================== AUTH VIEWS ====================
@@ -740,6 +744,8 @@ class ProfileView(APIView):
         serializer = CustomUserSerializer(request.user, data=data, partial=True, context={'request': request})
         if serializer.is_valid():
             serializer.save()
+            # Invalidate profile thumbnail cache
+            cache.delete(f"{PROFILE_CACHE_KEY_PREFIX}:{request.user.id}")
             # Trigger face detection if a new profile picture was provided
             if 'profile_picture' in request.FILES:
                 from .tasks import detect_faces_profile_picture
@@ -1006,6 +1012,8 @@ class SocialLoginCallbackView(APIView):
                             try:
                                 processed = process_profile_picture(ContentFile(resp.content, name='social.jpg'))
                                 user.profile_picture.save(f"{user.username}_social.jpg", processed, save=False)
+                                # Invalidate profile thumbnail cache
+                                cache.delete(f"{PROFILE_CACHE_KEY_PREFIX}:{user.id}")
                                 # Trigger face detection on the new social profile picture
                                 from .tasks import detect_faces_profile_picture
                                 detect_faces_profile_picture.delay(user.id)
@@ -1019,6 +1027,8 @@ class SocialLoginCallbackView(APIView):
                 try:
                     with staticfiles_storage.open('images/default_profile_pic.png', 'rb') as f:
                         user.profile_picture.save('default.png', ContentFile(f.read()), save=False)
+                        # Invalidate profile thumbnail cache
+                        cache.delete(f"{PROFILE_CACHE_KEY_PREFIX}:{user.id}")
                 except Exception as e:
                     logger.error(f"Failed to set default profile picture for {user.email}: {e}")
 
@@ -1103,6 +1113,22 @@ class UserProfilePictureView(APIView):
             return HttpResponse(content, content_type='image/png')
         except Exception:
             raise Http404("Profile picture not found")
+
+
+class UserProfileThumbnailView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, user_id):
+        from .thumbnails import get_profile_thumbnail
+        data = get_profile_thumbnail(user_id)
+        if data is None:
+            # Fallback to default profile picture from static files
+            try:
+                with staticfiles_storage.open('images/default_profile_pic.png', 'rb') as f:
+                    data = f.read()
+            except Exception:
+                raise Http404("Profile picture not found")
+        return HttpResponse(data, content_type='image/jpeg')
 
 
 # ==================== MEDIA VIEWS ====================
@@ -1534,6 +1560,8 @@ class AdminUserDetailView(APIView):
         serializer = AdminUserSerializer(user, data=data, partial=True, context={'request': request})
         if serializer.is_valid():
             user = serializer.save()
+            # Invalidate profile thumbnail cache
+            cache.delete(f"{PROFILE_CACHE_KEY_PREFIX}:{user.id}")
             # Invalidate the cached profile picture so the new one is served immediately
             redis_client = redis.Redis(
                 host=django_settings.REDIS_HOST,

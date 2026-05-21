@@ -35,11 +35,12 @@ class CustomUserSerializer(serializers.ModelSerializer):
         }
 
     def get_profile_picture_url(self, obj):
-        request = self.context.get('request')
-        url = f'/api/auth/users/{obj.id}/profile-picture/'
-        if request:
-            return request.build_absolute_uri(url)
-        return url
+        if obj.profile_picture and obj.profile_picture.name != 'profile_pics/default.png':
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(f'/api/auth/users/{obj.id}/profile-thumbnail/')
+            return f'/api/auth/users/{obj.id}/profile-thumbnail/'
+        return None
 
     def get_has_password(self, obj):
         return obj.has_usable_password()
@@ -153,11 +154,12 @@ class PublicUserSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
     def get_profile_picture_url(self, obj):
-        request = self.context.get('request')
-        url = f'/api/auth/users/{obj.id}/profile-picture/'
-        if request:
-            return request.build_absolute_uri(url)
-        return url
+        if obj.profile_picture and obj.profile_picture.name != 'profile_pics/default.png':
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(f'/api/auth/users/{obj.id}/profile-thumbnail/')
+            return f'/api/auth/users/{obj.id}/profile-thumbnail/'
+        return None
 
 
 class MediaSerializer(serializers.ModelSerializer):
@@ -213,12 +215,11 @@ class PublicMediaSerializer(serializers.ModelSerializer):
         return f"/api/auth/media/{obj.id}/file/"
 
     def get_uploader_profile_picture(self, obj):
-        if obj.user:
+        if obj.user and obj.user.profile_picture and obj.user.profile_picture.name != 'profile_pics/default.png':
             request = self.context.get('request')
-            url = f'/api/auth/users/{obj.user.id}/profile-picture/'
             if request:
-                return request.build_absolute_uri(url)
-            return url
+                return request.build_absolute_uri(f'/api/auth/users/{obj.user.id}/profile-thumbnail/')
+            return f'/api/auth/users/{obj.user.id}/profile-thumbnail/'
         return None
 
     def get_face_tags(self, obj):
@@ -285,11 +286,12 @@ class AdminUserSerializer(serializers.ModelSerializer):
         read_only_fields = ('created_at', 'updated_at')
 
     def get_profile_picture_url(self, obj):
-        request = self.context.get('request')
-        url = f'/api/auth/users/{obj.id}/profile-picture/'
-        if request:
-            return request.build_absolute_uri(url)
-        return url
+        if obj.profile_picture and obj.profile_picture.name != 'profile_pics/default.png':
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(f'/api/auth/users/{obj.id}/profile-thumbnail/')
+            return f'/api/auth/users/{obj.id}/profile-thumbnail/'
+        return None
 
     def get_is_default_admin(self, obj):
         return obj.username == os.getenv('ADMIN_USERNAME') and obj.is_superuser

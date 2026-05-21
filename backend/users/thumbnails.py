@@ -7,7 +7,7 @@ from django.core.cache import cache
 from PIL import Image, ImageOps
 import cv2
 
-from .models import Media
+from .models import Media, CustomUser
 from .cloud_clients import get_file_from_cloud
 
 logger = logging.getLogger(__name__)
@@ -88,4 +88,57 @@ def get_thumbnail(media_id: int) -> bytes | None:
     data = generate_thumbnail(media)
     if data is not None:
         cache.set(cache_key, data, timeout=CACHE_TIMEOUT)
+    return data
+
+
+PROFILE_THUMBNAIL_SIZE = (128, 128)
+PROFILE_CACHE_KEY_PREFIX = "user_profile_thumbnail:v1"
+PROFILE_CACHE_TIMEOUT = 60 * 60 * 24 * 7  # 7 days
+
+
+def generate_profile_thumbnail(user) -> bytes | None:
+    """
+    Generate a small JPEG thumbnail for a user's profile picture.
+    Returns JPEG bytes, or None on failure.
+    """
+    if not user.profile_picture or user.profile_picture.name == 'profile_pics/default.png':
+        return None
+
+    try:
+        with user.profile_picture.open('rb') as f:
+            content = f.read()
+    except Exception:
+        return None
+
+    try:
+        img = Image.open(BytesIO(content))
+        img = ImageOps.exif_transpose(img)
+        img = img.convert('RGB')
+        img.thumbnail(PROFILE_THUMBNAIL_SIZE, Image.LANCZOS)
+        buf = BytesIO()
+        img.save(buf, format='JPEG', quality=85)
+        return buf.getvalue()
+    except Exception as e:
+        logger.exception("Profile thumbnail generation failed for user %s: %s", user.id, e)
+        return None
+
+
+def get_profile_thumbnail(user_id: int) -> bytes | None:
+    """
+    Return cached profile thumbnail bytes for the given user ID.
+    Generates and caches if not present.
+    """
+    cache_key = f"{PROFILE_CACHE_KEY_PREFIX}:{user_id}"
+    data = cache.get(cache_key)
+    if data is not None:
+        return data
+
+    try:
+        user = CustomUser.objects.get(id=user_id)
+    except CustomUser.DoesNotExist:
+        return None
+
+    data = generate_profile_thumbnail(user)
+    if data is not None:
+        cache.set(cache_key, data, timeout=PROFILE_CACHE_TIMEOUT)
     return data
