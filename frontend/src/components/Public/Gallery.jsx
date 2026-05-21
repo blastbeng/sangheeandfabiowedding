@@ -780,6 +780,7 @@ const Gallery = () => {
                     onTouchEnd={handleTouchEnd}
                   >
                     <ProtectedMediaPreview
+                      key={selectedMedia.id}
                       fileUrl={`${API_URL}/api/auth/media/${selectedMedia.id}/file/`}
                       mediaType={selectedMedia.media_type}
                       className="max-w-full max-h-[70vh] object-contain"
