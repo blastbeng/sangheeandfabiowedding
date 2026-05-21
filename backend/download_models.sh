@@ -19,7 +19,7 @@ else
     # Remove any existing invalid file
     rm -f "$SIM_MODEL"
     echo "Downloading similarity model..."
-    curl -fSL --retry 5 --retry-delay 5 --connect-timeout 30 --max-time 120 \
+    curl -fSL --compressed --retry 5 --retry-delay 5 --connect-timeout 30 --max-time 120 \
          -o "$SIM_MODEL" "$SIM_URL"
     if [ ! -s "$SIM_MODEL" ]; then
         echo "ERROR: similarity_model.tflite is empty – download failed."
@@ -43,7 +43,7 @@ if [ -f "$CAP_MODEL" ] && [ -s "$CAP_MODEL" ] && [ "$(head -c 4 "$CAP_MODEL")" =
 else
     rm -f "$CAP_MODEL"
     echo "Downloading caption classifier model..."
-    curl -fSL --retry 5 --retry-delay 5 --connect-timeout 30 --max-time 120 \
+    curl -fSL --compressed --retry 5 --retry-delay 5 --connect-timeout 30 --max-time 120 \
          -o "$CAP_MODEL" "$CAP_URL"
     if [ ! -s "$CAP_MODEL" ]; then
         echo "ERROR: caption_classifier.tflite is empty – download failed."
