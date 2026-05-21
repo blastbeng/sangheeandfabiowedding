@@ -769,16 +769,23 @@ const Gallery = () => {
                     playsInline
                     className="max-w-full max-h-[70vh]"
                     onError={() => setModalImageState('loading')}
+                    onTouchStart={handleTouchStart}
+                    onTouchEnd={handleTouchEnd}
                   >
                     Your browser does not support the video tag.
                   </video>
                 ) : (
-                  <ProtectedMediaPreview
-                    fileUrl={`${API_URL}/api/auth/media/${selectedMedia.id}/file/`}
-                    mediaType={selectedMedia.media_type}
-                    className="max-w-full max-h-[70vh] object-contain"
-                    alt={selectedMedia.caption || t('beautiful_moment')}
-                  />
+                  <div
+                    onTouchStart={handleTouchStart}
+                    onTouchEnd={handleTouchEnd}
+                  >
+                    <ProtectedMediaPreview
+                      fileUrl={`${API_URL}/api/auth/media/${selectedMedia.id}/file/`}
+                      mediaType={selectedMedia.media_type}
+                      className="max-w-full max-h-[70vh] object-contain"
+                      alt={selectedMedia.caption || t('beautiful_moment')}
+                    />
+                  </div>
                 )}
               </div>
             )}
