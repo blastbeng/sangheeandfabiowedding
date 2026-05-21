@@ -3,6 +3,10 @@ import logging
 from PIL import Image
 from transformers import VisionEncoderDecoderModel, ViTFeatureExtractor, AutoTokenizer, MarianMTModel, MarianTokenizer
 import torch
+import cv2
+import numpy as np
+from .cloud_clients import get_file_from_cloud
+from .models import Media
 
 logger = logging.getLogger(__name__)
 
@@ -105,3 +109,67 @@ def unload_models():
     _tokenizer_ko = None
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
+
+
+def _compute_image_score(media_obj):
+    """
+    Compute a simple quality score for a media item.
+    Higher is better. Uses:
+      - face bonus (1 if face tags exist)
+      - sharpness (Laplacian variance, normalized)
+      - resolution (normalized by 12 MP)
+    All processing is done on a downscaled image to stay fast on RPi5.
+    """
+    score = 0.0
+    # Face bonus
+    if media_obj.face_tags.exists():
+        score += 1.0
+
+    # Image sharpness and resolution
+    try:
+        content, _ = get_file_from_cloud(media_obj)
+        if content is None:
+            # fallback to local file
+            if media_obj.file and media_obj.file.storage.exists(media_obj.file.name):
+                with media_obj.file.open('rb') as f:
+                    content = f.read()
+        if content:
+            pil_img = Image.open(io.BytesIO(content)).convert('RGB')
+            w, h = pil_img.size
+            # Resolution score (cap at 12 MP)
+            mp = (w * h) / 1_000_000
+            resolution_score = min(mp / 12.0, 1.0)
+            score += resolution_score
+
+            # Sharpness: resize to max 300px, convert to grayscale, compute Laplacian variance
+            pil_img.thumbnail((300, 300), Image.LANCZOS)
+            gray = np.array(pil_img.convert('L'))
+            laplacian_var = cv2.Laplacian(gray, cv2.CV_64F).var()
+            # Normalize: typical values range 0-500, cap at 500
+            sharpness_score = min(laplacian_var / 500.0, 1.0)
+            score += sharpness_score
+    except Exception as e:
+        logger.warning(f"Could not compute score for media {media_obj.id}: {e}")
+
+    return score
+
+
+def auto_select_media(already_selected_ids, target=20):
+    """
+    Given a list of already selected media IDs, return a list of exactly `target`
+    media IDs by adding the best remaining approved media (based on quality score).
+    """
+    already_set = set(already_selected_ids)
+    # Fetch all approved media not already selected
+    candidates = Media.objects.filter(status='approved').exclude(id__in=already_set)
+    # Compute scores
+    scored = []
+    for media in candidates:
+        s = _compute_image_score(media)
+        scored.append((media.id, s))
+    # Sort descending by score
+    scored.sort(key=lambda x: x[1], reverse=True)
+    # Take as many as needed to reach target
+    needed = target - len(already_selected_ids)
+    additional_ids = [mid for mid, _ in scored[:needed]]
+    return list(already_selected_ids) + additional_ids

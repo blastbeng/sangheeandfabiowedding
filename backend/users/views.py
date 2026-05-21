@@ -48,6 +48,7 @@ from .serializers import (
 )
 from .cloud_clients import get_file_from_cloud, NextcloudClient
 from .tasks import upload_media_task, delete_media_task, detect_faces_task, backfill_faces_periodic, generate_wedding_book_task
+from .wedding_book_utils import auto_select_media
 from .utils import process_profile_picture
 from .thumbnails import PROFILE_CACHE_KEY_PREFIX
 from .rate_limit import check_rate_limit, record_failed_attempt
@@ -1948,6 +1949,18 @@ class WeddingBookGenerateView(APIView):
         serializer.is_valid(raise_exception=True)
         media_ids = serializer.validated_data['media_ids']
 
+        # Ensure at least 20 approved media exist in total
+        total_approved = Media.objects.filter(status='approved').count()
+        if total_approved < 20:
+            return Response(
+                {'error': 'At least 20 approved media are required to generate a wedding book.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Auto-select additional media if fewer than 20 were chosen
+        if len(media_ids) < 20:
+            media_ids = auto_select_media(media_ids, target=20)
+
         valid_ids = Media.objects.filter(
             id__in=media_ids, status='approved'
         ).values_list('id', flat=True)
@@ -2002,6 +2015,16 @@ class WeddingBookRegenerateView(APIView):
         # Accept new media_ids if provided
         media_ids = request.data.get('media_ids')
         if media_ids:
+            # Enforce minimum total approved
+            total_approved = Media.objects.filter(status='approved').count()
+            if total_approved < 20:
+                return Response(
+                    {'error': 'At least 20 approved media are required to generate a wedding book.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            # Auto-select if needed
+            if len(media_ids) < 20:
+                media_ids = auto_select_media(media_ids, target=20)
             # Validate that at least some are approved
             valid_ids = Media.objects.filter(
                 id__in=media_ids, status='approved'

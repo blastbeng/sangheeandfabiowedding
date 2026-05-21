@@ -18,6 +18,8 @@ const WeddingBook = () => {
   const [error, setError] = useState('');
   const pollingRef = useRef(null);
 
+  const MIN_MEDIA = 20;
+
   // Fetch approved media for selection
   useEffect(() => {
     authFetch(`${API_URL}/api/auth/media/public/?status=approved&page_size=1000`)
@@ -152,20 +154,25 @@ const WeddingBook = () => {
     setSelectedIds([]);
   };
 
-  return (
-    <div className="p-4">
-      <h2 className="text-2xl font-bold mb-4">{t('Wedding Book')}</h2>
-      {/* Media selection grid */}
-      <div className="grid grid-cols-4 gap-2 mb-4">
-        {media.map(item => (
-          <div key={item.id} className={`cursor-pointer border-2 ${selectedIds.includes(item.id) ? 'border-wedding-azure' : 'border-transparent'}`} onClick={() => toggleSelect(item.id)}>
-            <img src={`${API_URL}/api/auth/media/${item.id}/thumbnail/`} alt="" className="w-full h-32 object-cover" />
-          </div>
-        ))}
-      </div>
+  const totalApproved = media.length;
+  const canGenerate = totalApproved >= MIN_MEDIA;
 
+  return (
+    <div className="wedding-card p-6">
+      <h2 className="text-2xl wedding-title mb-4">{t('Wedding Book')}</h2>
+
+      {/* Info message */}
+      <p className="text-sm text-gray-600 mb-4">
+        {t('Select at least {min} images. If you select fewer, AI will automatically choose the best ones to reach {min}.', { min: MIN_MEDIA })}
+      </p>
+
+      {/* Buttons and progress bar – moved to top */}
       <div className="flex items-center gap-2 mb-4">
-        <button onClick={startGeneration} disabled={status === 'generating' || selectedIds.length === 0} className="px-4 py-2 bg-wedding-navy text-white rounded">
+        <button
+          onClick={startGeneration}
+          disabled={status === 'generating' || !canGenerate}
+          className="px-4 py-2 bg-wedding-navy text-white rounded disabled:opacity-50"
+        >
           {t('Generate Wedding Book')}
         </button>
         {bookId && (
@@ -173,6 +180,9 @@ const WeddingBook = () => {
             {t('New Book')}
           </button>
         )}
+        <span className="text-sm text-gray-500 ml-2">
+          {selectedIds.length} / {MIN_MEDIA} {t('selected')}
+        </span>
       </div>
 
       {status === 'generating' && (
@@ -201,6 +211,19 @@ const WeddingBook = () => {
           </button>
         </div>
       )}
+
+      {/* Media selection grid – remains below */}
+      <div className="grid grid-cols-4 gap-2 mb-4">
+        {media.map(item => (
+          <div
+            key={item.id}
+            className={`cursor-pointer border-2 ${selectedIds.includes(item.id) ? 'border-wedding-azure' : 'border-transparent'}`}
+            onClick={() => toggleSelect(item.id)}
+          >
+            <img src={`${API_URL}/api/auth/media/${item.id}/thumbnail/`} alt="" className="w-full h-32 object-cover" />
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
