@@ -11,7 +11,7 @@ mkdir -p "$MODELS_DIR"
 
 # --- similarity_model.tflite (feature vector) ---
 SIM_MODEL="$MODELS_DIR/similarity_model.tflite"
-SIM_URL="https://storage.googleapis.com/tfhub-lite-models/google/lite-model/mobilenet_v2/1.0_224/feature-vector/1.tflite"
+SIM_URL="https://tfhub.dev/google/lite-model/mobilenet_v2/1.0_224/feature-vector/1?lite-format=tflite"
 
 if [ -f "$SIM_MODEL" ] && [ -s "$SIM_MODEL" ] && [ "$(head -c 4 "$SIM_MODEL")" = "TFL3" ]; then
     echo "Similarity model already exists and is valid, skipping download."
@@ -36,7 +36,7 @@ fi
 
 # --- caption_classifier.tflite (classification) ---
 CAP_MODEL="$MODELS_DIR/caption_classifier.tflite"
-CAP_URL="https://storage.googleapis.com/tfhub-lite-models/google/lite-model/mobilenet_v2/1.0_224/1.tflite"
+CAP_URL="https://tfhub.dev/google/lite-model/mobilenet_v2/1.0_224/1?lite-format=tflite"
 
 if [ -f "$CAP_MODEL" ] && [ -s "$CAP_MODEL" ] && [ "$(head -c 4 "$CAP_MODEL")" = "TFL3" ]; then
     echo "Caption classifier model already exists and is valid, skipping download."
