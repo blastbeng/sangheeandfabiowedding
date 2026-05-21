@@ -25,7 +25,7 @@ from reportlab.lib.colors import HexColor
 
 from .models import Media, CustomUser, FaceTag, FaceGroup, WeddingBook
 from .cloud_clients import NextcloudClient, get_file_from_cloud
-from .wedding_book_utils import generate_english_caption, translate_text, unload_models
+from .wedding_book_utils import generate_english_caption, translate_text, unload_models, auto_select_media
 from django.conf import settings as django_settings
 from config.settings import (
     NEXTCLOUD_URL, NEXTCLOUD_USERNAME, NEXTCLOUD_PASSWORD, NEXTCLOUD_FOLDER
@@ -1370,12 +1370,15 @@ def generate_wedding_book_task(self, book_id):
         book.error_message = ''
         book.save()
 
-        media_ids = book.selected_media_ids
-        if not media_ids:
-            book.status = WeddingBook.Status.FAILED
-            book.error_message = 'No media selected.'
-            book.save()
-            return
+        media_ids = book.selected_media_ids or []
+
+        # Auto-select media if fewer than 20 IDs were provided
+        if len(media_ids) < 20:
+            media_ids = auto_select_media(media_ids, target=20)
+
+        # Persist the final list back to the book
+        book.selected_media_ids = media_ids
+        book.save(update_fields=['selected_media_ids'])
 
         media_list = list(Media.objects.filter(id__in=media_ids, status='approved').order_by('id'))
         if not media_list:

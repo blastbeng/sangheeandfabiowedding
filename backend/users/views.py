@@ -48,7 +48,6 @@ from .serializers import (
 )
 from .cloud_clients import get_file_from_cloud, NextcloudClient
 from .tasks import upload_media_task, delete_media_task, detect_faces_task, backfill_faces_periodic, generate_wedding_book_task
-from .wedding_book_utils import auto_select_media
 from .utils import process_profile_picture
 from .thumbnails import PROFILE_CACHE_KEY_PREFIX
 from .rate_limit import check_rate_limit, record_failed_attempt
@@ -1982,20 +1981,9 @@ class WeddingBookGenerateView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # If no media selected, auto-select the 20 best
-        if not media_ids:
-            media_ids = auto_select_media([], target=20)
-        elif len(media_ids) < 20:
-            media_ids = auto_select_media(media_ids, target=20)
-
-        valid_ids = Media.objects.filter(
-            id__in=media_ids, status='approved'
-        ).values_list('id', flat=True)
-        if not valid_ids:
-            return Response({'error': 'No valid approved media found.'}, status=status.HTTP_400_BAD_REQUEST)
-
+        # Pass the provided IDs (or empty list) to the task; it will auto-select if needed.
         book = WeddingBook.objects.create(
-            selected_media_ids=list(valid_ids),
+            selected_media_ids=list(media_ids),
             status=WeddingBook.Status.PENDING,
         )
         generate_wedding_book_task.delay(book.id)
@@ -2047,18 +2035,7 @@ class WeddingBookRegenerateView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        if not media_ids:
-            media_ids = auto_select_media([], target=20)
-        elif len(media_ids) < 20:
-            media_ids = auto_select_media(media_ids, target=20)
-
-        valid_ids = Media.objects.filter(
-            id__in=media_ids, status='approved'
-        ).values_list('id', flat=True)
-        if not valid_ids:
-            return Response({'error': 'No valid approved media found.'}, status=status.HTTP_400_BAD_REQUEST)
-
-        book.selected_media_ids = list(valid_ids)
+        book.selected_media_ids = list(media_ids)
         book.status = WeddingBook.Status.PENDING
         book.progress = 0
         book.error_message = ''
