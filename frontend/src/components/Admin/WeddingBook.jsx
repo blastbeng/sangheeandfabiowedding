@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import authFetch from '../../utils/authFetch';
 import logger from '../../utils/logger';
+import ThumbnailImage from '../Common/ThumbnailImage';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -20,15 +21,31 @@ const WeddingBook = () => {
   const [pastBooks, setPastBooks] = useState([]);
   const pollingRef = useRef(null);
 
+  // Loading/error states for media
+  const [mediaLoading, setMediaLoading] = useState(true);
+  const [mediaError, setMediaError] = useState('');
+
   const MIN_MEDIA = 20;
 
   // Fetch approved media
   useEffect(() => {
+    setMediaLoading(true);
+    setMediaError('');
     authFetch(`${API_URL}/api/auth/media/public/?status=approved&page_size=1000`)
-      .then(res => res.json())
-      .then(data => setMedia(data))
-      .catch(err => logger.error('[WeddingBook] Failed to fetch media:', err));
-  }, []);
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then(data => {
+        setMedia(Array.isArray(data) ? data : []);
+        setMediaLoading(false);
+      })
+      .catch(err => {
+        logger.error('[WeddingBook] Failed to fetch media:', err);
+        setMediaError(t('Failed to load media. Please try again.'));
+        setMediaLoading(false);
+      });
+  }, [API_URL, t]);
 
   // Fetch users with approved media for filter
   useEffect(() => {
@@ -210,7 +227,7 @@ const WeddingBook = () => {
   };
 
   const totalApproved = media.length;
-  const canGenerate = totalApproved >= MIN_MEDIA;
+  const canGenerate = !mediaLoading && totalApproved >= MIN_MEDIA;
 
   return (
     <div className="wedding-card p-6">
@@ -291,17 +308,42 @@ const WeddingBook = () => {
       )}
 
       {/* Media selection grid */}
-      <div className="grid grid-cols-4 gap-2 mb-4">
-        {filteredMedia.map(item => (
-          <div
-            key={item.id}
-            className={`cursor-pointer border-2 ${selectedIds.includes(item.id) ? 'border-wedding-azure' : 'border-transparent'}`}
-            onClick={() => toggleSelect(item.id)}
+      {mediaLoading ? (
+        <div className="text-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500 mx-auto"></div>
+          <p className="text-gray-500 mt-2">{t('Loading media...')}</p>
+        </div>
+      ) : mediaError ? (
+        <div className="text-center py-8">
+          <p className="text-red-500 mb-2">{mediaError}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-gray-200 rounded"
           >
-            <img src={`${API_URL}/api/auth/media/${item.id}/thumbnail/`} alt="" className="w-full h-32 object-cover" />
-          </div>
-        ))}
-      </div>
+            {t('Retry')}
+          </button>
+        </div>
+      ) : filteredMedia.length === 0 ? (
+        <div className="text-center py-8 text-gray-500">{t('No approved media found.')}</div>
+      ) : (
+        <div className="grid grid-cols-4 gap-2 mb-4">
+          {filteredMedia.map(item => (
+            <div
+              key={item.id}
+              className={`cursor-pointer border-2 ${selectedIds.includes(item.id) ? 'border-wedding-azure' : 'border-transparent'}`}
+              onClick={() => toggleSelect(item.id)}
+            >
+              <ThumbnailImage
+                mediaId={item.id}
+                apiUrl={API_URL}
+                alt={item.caption || t('beautiful_moment')}
+                className="w-full h-32 object-cover"
+                mediaType={item.media_type}
+              />
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Past Wedding Books */}
       <div className="mt-8">
