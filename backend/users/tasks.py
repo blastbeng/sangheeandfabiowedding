@@ -31,6 +31,9 @@ from config.settings import (
     NEXTCLOUD_URL, NEXTCLOUD_USERNAME, NEXTCLOUD_PASSWORD, NEXTCLOUD_FOLDER
 )
 
+# Path to the MobileNetV2 feature vector model (used by similarity ordering and wedding book clustering)
+SIMILARITY_MODEL_PATH = os.path.join(django_settings.BASE_DIR, 'models', 'similarity_model.tflite')
+
 logger = logging.getLogger(__name__)
 
 
@@ -1244,43 +1247,22 @@ def compute_similarity_ordering():
     import cv2
     import tempfile
     import os
-    import requests
     from django.conf import settings as django_settings
 
-    MODEL_URL = (
-        "https://storage.googleapis.com/download.tensorflow.org/"
-        "models/tflite/model_zoo/vision_models/"
-        "mobilenet_v2_1.0_224_quantized_1_feature_vector_1_default_1.tflite"
-    )
-    MODELS_DIR = os.path.join(django_settings.BASE_DIR, 'models')
-    os.makedirs(MODELS_DIR, exist_ok=True)
-    MODEL_PATH = os.path.join(MODELS_DIR, 'similarity_model.tflite')
-
-    # Download model if not present
-    if not os.path.exists(MODEL_PATH):
-        logger.info("[similarity] Downloading MobileNetV2 TFLite model...")
-        resp = requests.get(MODEL_URL, timeout=120)
-        resp.raise_for_status()
-        content = resp.content
-        if not content.startswith(b'TFL3'):
-            raise ValueError(
-                f"Downloaded similarity model is not a valid TFLite file "
-                f"(starts with {content[:4]!r}). URL may be invalid or returned an error page."
-            )
-        with open(MODEL_PATH, "wb") as f:
-            f.write(content)
-
-    # Validate existing file before loading
-    with open(MODEL_PATH, "rb") as f:
+    # Load the model from the local file (must be placed there manually)
+    if not os.path.exists(SIMILARITY_MODEL_PATH):
+        raise FileNotFoundError(
+            f"Similarity model not found at {SIMILARITY_MODEL_PATH}. "
+            "Please download the MobileNetV2 feature vector TFLite model and save it as 'similarity_model.tflite' "
+            "in the 'models/' directory."
+        )
+    with open(SIMILARITY_MODEL_PATH, "rb") as f:
         header = f.read(4)
     if header != b'TFL3':
-        os.remove(MODEL_PATH)
         raise ValueError(
-            f"Cached similarity model is corrupt (header {header!r}). "
-            f"Deleted {MODEL_PATH}. Please retry."
+            f"Similarity model at {SIMILARITY_MODEL_PATH} is not a valid TFLite file (header {header!r})."
         )
-    # Load TFLite model
-    interpreter = tflite.Interpreter(model_path=MODEL_PATH)
+    interpreter = tflite.Interpreter(model_path=SIMILARITY_MODEL_PATH)
     interpreter.allocate_tensors()
     input_details = interpreter.get_input_details()
     output_details = interpreter.get_output_details()
@@ -1403,41 +1385,23 @@ def _cluster_images_for_pages(media_list):
     import numpy as np
     from PIL import Image
     from io import BytesIO
-    import os, requests
+    import os
     from django.conf import settings as django_settings
 
-    MODEL_URL = (
-        "https://storage.googleapis.com/download.tensorflow.org/"
-        "models/tflite/model_zoo/vision_models/"
-        "mobilenet_v2_1.0_224_quantized_1_feature_vector_1_default_1.tflite"
-    )
-    MODELS_DIR = os.path.join(django_settings.BASE_DIR, 'models')
-    os.makedirs(MODELS_DIR, exist_ok=True)
-    MODEL_PATH = os.path.join(MODELS_DIR, 'similarity_model.tflite')
-
-    if not os.path.exists(MODEL_PATH):
-        logger.info("[wedding_book] Downloading MobileNetV2 TFLite model...")
-        resp = requests.get(MODEL_URL, timeout=120)
-        resp.raise_for_status()
-        content = resp.content
-        if not content.startswith(b'TFL3'):
-            raise ValueError(
-                f"Downloaded similarity model is not a valid TFLite file "
-                f"(starts with {content[:4]!r}). URL may be invalid or returned an error page."
-            )
-        with open(MODEL_PATH, "wb") as f:
-            f.write(content)
-
-    # Validate existing file before loading
-    with open(MODEL_PATH, "rb") as f:
+    # Load the model from the local file (must be placed there manually)
+    if not os.path.exists(SIMILARITY_MODEL_PATH):
+        raise FileNotFoundError(
+            f"Similarity model not found at {SIMILARITY_MODEL_PATH}. "
+            "Please download the MobileNetV2 feature vector TFLite model and save it as 'similarity_model.tflite' "
+            "in the 'models/' directory."
+        )
+    with open(SIMILARITY_MODEL_PATH, "rb") as f:
         header = f.read(4)
     if header != b'TFL3':
-        os.remove(MODEL_PATH)
         raise ValueError(
-            f"Cached similarity model is corrupt (header {header!r}). "
-            f"Deleted {MODEL_PATH}. Please retry."
+            f"Similarity model at {SIMILARITY_MODEL_PATH} is not a valid TFLite file (header {header!r})."
         )
-    interpreter = tflite.Interpreter(model_path=MODEL_PATH)
+    interpreter = tflite.Interpreter(model_path=SIMILARITY_MODEL_PATH)
     interpreter.allocate_tensors()
     input_details = interpreter.get_input_details()
     output_details = interpreter.get_output_details()

@@ -110,60 +110,43 @@ _caption_classifier_interpreter = None
 _caption_classifier_labels = None
 
 def _load_caption_classifier():
-    """Load the MobileNetV2 classification TFLite model and ImageNet labels."""
+    """Load the MobileNetV2 classification TFLite model and ImageNet labels from local files."""
     global _caption_classifier_interpreter, _caption_classifier_labels
     if _caption_classifier_interpreter is not None:
         return _caption_classifier_interpreter, _caption_classifier_labels
 
     import tflite_runtime.interpreter as tflite
-    import os, requests, json
+    import os, json
     from django.conf import settings as django_settings
 
-    MODEL_URL = (
-        "https://storage.googleapis.com/download.tensorflow.org/"
-        "models/tflite/model_zoo/vision_models/"
-        "mobilenet_v2_1.0_224_quantized_1_default_1.tflite"
-    )
     MODELS_DIR = os.path.join(django_settings.BASE_DIR, 'models')
-    os.makedirs(MODELS_DIR, exist_ok=True)
     MODEL_PATH = os.path.join(MODELS_DIR, 'caption_classifier.tflite')
     LABELS_PATH = os.path.join(MODELS_DIR, 'imagenet_labels.json')
 
     if not os.path.exists(MODEL_PATH):
-        logger.info("[caption] Downloading MobileNetV2 classification TFLite model...")
-        resp = requests.get(MODEL_URL, timeout=120)
-        resp.raise_for_status()
-        content = resp.content
-        # Validate TFLite magic bytes
-        if not content.startswith(b'TFL3'):
-            raise ValueError(
-                f"Downloaded caption classifier model is not a valid TFLite file "
-                f"(starts with {content[:4]!r}). URL may be invalid or returned an error page."
-            )
-        with open(MODEL_PATH, "wb") as f:
-            f.write(content)
-
+        raise FileNotFoundError(
+            f"Caption classifier model not found at {MODEL_PATH}. "
+            "Please download the MobileNetV2 classification TFLite model and save it as 'caption_classifier.tflite' "
+            "in the 'models/' directory."
+        )
     if not os.path.exists(LABELS_PATH):
-        # Download ImageNet class labels (simple list)
-        LABELS_URL = "https://storage.googleapis.com/download.tensorflow.org/data/ImageNetLabels.txt"
-        resp = requests.get(LABELS_URL, timeout=30)
-        resp.raise_for_status()
-        labels = [line.strip() for line in resp.text.splitlines()]
-        with open(LABELS_PATH, "w") as f:
-            json.dump(labels, f)
+        raise FileNotFoundError(
+            f"ImageNet labels file not found at {LABELS_PATH}. "
+            "Please download the ImageNet labels (JSON list) and save it as 'imagenet_labels.json' "
+            "in the 'models/' directory."
+        )
+
+    # Validate the model file
+    with open(MODEL_PATH, "rb") as f:
+        header = f.read(4)
+    if header != b'TFL3':
+        raise ValueError(
+            f"Caption classifier model at {MODEL_PATH} is not a valid TFLite file (header {header!r})."
+        )
 
     with open(LABELS_PATH, "r") as f:
         _caption_classifier_labels = json.load(f)
 
-    # Validate existing file before loading
-    with open(MODEL_PATH, "rb") as f:
-        header = f.read(4)
-    if header != b'TFL3':
-        os.remove(MODEL_PATH)
-        raise ValueError(
-            f"Cached caption classifier model is corrupt (header {header!r}). "
-            f"Deleted {MODEL_PATH}. Please retry."
-        )
     _caption_classifier_interpreter = tflite.Interpreter(model_path=MODEL_PATH)
     _caption_classifier_interpreter.allocate_tensors()
     return _caption_classifier_interpreter, _caption_classifier_labels
