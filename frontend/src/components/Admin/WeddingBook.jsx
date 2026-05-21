@@ -258,11 +258,11 @@ const WeddingBook = () => {
       </div>
 
       {/* Buttons and progress bar */}
-      <div className="flex items-center gap-2 mb-4">
+      <div className="flex items-center gap-2 mb-4 overflow-x-auto whitespace-nowrap pb-2">
         <button
           onClick={startGeneration}
           disabled={status === 'generating' || !canGenerate}
-          className="px-4 py-2 bg-wedding-navy text-white rounded disabled:opacity-50 flex items-center gap-2"
+          className="px-4 py-2 bg-pink-500 text-white rounded disabled:opacity-50 flex items-center gap-2 flex-shrink-0"
         >
           {status === 'generating' ? (
             <>
@@ -274,17 +274,17 @@ const WeddingBook = () => {
           )}
         </button>
         {bookId && (
-          <button onClick={handleNewBook} className="px-4 py-2 bg-gray-500 text-white rounded">
+          <button onClick={handleNewBook} className="px-4 py-2 bg-gray-200 text-gray-700 rounded flex-shrink-0">
             {t('New Book')}
           </button>
         )}
         <button
           onClick={handleSelectAll}
-          className="px-4 py-2 bg-gray-200 text-gray-700 rounded"
+          className="px-4 py-2 bg-gray-200 text-gray-700 rounded flex-shrink-0"
         >
           {selectAll ? t('Deselect All') : t('Select All')}
         </button>
-        <span className="text-sm text-gray-500 ml-2">
+        <span className="text-sm text-gray-500 ml-2 flex-shrink-0">
           {selectedIds.length} / {MIN_MEDIA} {t('selected')}
         </span>
       </div>
@@ -303,10 +303,10 @@ const WeddingBook = () => {
 
       {status === 'completed' && (
         <div className="mt-4">
-          <a href={downloadUrl} target="_blank" rel="noopener noreferrer" className="px-4 py-2 bg-green-600 text-white rounded mr-2">
+          <a href={downloadUrl} target="_blank" rel="noopener noreferrer" className="px-4 py-2 bg-pink-500 text-white rounded mr-2">
             {t('Download PDF')}
           </a>
-          <button onClick={handleRegenerate} className="px-4 py-2 bg-yellow-500 text-white rounded">
+          <button onClick={handleRegenerate} className="px-4 py-2 bg-pink-500 text-white rounded">
             {t('Regenerate')}
           </button>
         </div>
@@ -315,7 +315,7 @@ const WeddingBook = () => {
       {status === 'failed' && (
         <div className="mt-4 text-red-600">
           <p>{error}</p>
-          <button onClick={handleRegenerate} className="px-4 py-2 bg-yellow-500 text-white rounded mt-2">
+          <button onClick={handleRegenerate} className="px-4 py-2 bg-pink-500 text-white rounded mt-2">
             {t('Retry')}
           </button>
         </div>
