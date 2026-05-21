@@ -47,6 +47,11 @@ services:
       - sh
       - -c
       - |
+        echo "Waiting for similarity model to be downloaded..."
+        while [ ! -s /app/models/similarity_model.tflite ]; do
+          sleep 2
+        done
+        echo "Model ready."
         python manage.py migrate &&
         python manage.py create_default_admin &&
         python manage.py create_social_apps &&
@@ -55,6 +60,7 @@ services:
       - /dev/dri:/dev/dri
     volumes:
       - ./backend/media:/app/media
+      - models_data:/app/models
     environment:
       - PUID=1000
       - PGID=1000
