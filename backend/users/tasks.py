@@ -34,6 +34,25 @@ from config.settings import (
 logger = logging.getLogger(__name__)
 
 
+def compress_image_for_pdf(image_bytes, max_dim=1500, quality=85):
+    """Resize and compress an image for PDF embedding to reduce file size."""
+    img = Image.open(BytesIO(image_bytes))
+    # Convert to RGB if necessary (e.g., PNG with transparency)
+    if img.mode in ('RGBA', 'P'):
+        img = img.convert('RGB')
+    # Resize if larger than max_dim
+    w, h = img.size
+    if max(w, h) > max_dim:
+        ratio = max_dim / max(w, h)
+        new_size = (int(w * ratio), int(h * ratio))
+        img = img.resize(new_size, Image.LANCZOS)
+    # Save as JPEG with compression
+    out = BytesIO()
+    img.save(out, format='JPEG', quality=quality)
+    out.seek(0)
+    return out.read()
+
+
 def _iou(boxA, boxB):
     """Intersection over Union for two boxes in (top, right, bottom, left) format."""
     # Determine intersection rectangle
@@ -1550,7 +1569,8 @@ def generate_wedding_book_task(self, book_id):
                 x, y, w, h, rotation = chosen_layout[slot_idx]
                 try:
                     file_content, _ = get_file_from_cloud(media_obj)
-                    img = ImageReader(BytesIO(file_content))
+                    compressed_content = compress_image_for_pdf(file_content)
+                    img = ImageReader(BytesIO(compressed_content))
                     pdf_canvas.saveState()
                     # Translate to center of image, rotate, then draw
                     cx = x + w / 2
