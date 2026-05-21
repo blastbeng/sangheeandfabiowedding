@@ -202,7 +202,7 @@ def auto_select_media(already_selected_ids, target=20):
     """
     already_set = set(already_selected_ids)
     # Fetch all approved media not already selected
-    candidates = Media.objects.filter(status='approved').exclude(id__in=already_set)
+    candidates = Media.objects.filter(status='approved', media_type='image').exclude(id__in=already_set)
     # Compute scores
     scored = []
     for media in candidates:

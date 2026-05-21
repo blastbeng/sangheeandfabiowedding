@@ -1380,12 +1380,18 @@ def generate_wedding_book_task(self, book_id):
         book.selected_media_ids = media_ids
         book.save(update_fields=['selected_media_ids'])
 
-        media_list = list(Media.objects.filter(id__in=media_ids, status='approved').order_by('id'))
+        media_list = list(Media.objects.filter(
+            id__in=media_ids, status='approved', media_type='image'
+        ).order_by('id'))
         if not media_list:
             book.status = WeddingBook.Status.FAILED
-            book.error_message = 'No approved media found for the selected IDs.'
+            book.error_message = 'No approved images found for the selected IDs.'
             book.save()
             return
+
+        # Update selected_media_ids to only the valid image IDs
+        book.selected_media_ids = [m.id for m in media_list]
+        book.save(update_fields=['selected_media_ids'])
 
         total = len(media_list)
         captions = {}
