@@ -299,19 +299,62 @@ const Gallery = () => {
       return;
     }
     setModalImageState('loading');
-    const url = `${API_URL}/api/auth/media/${selectedMedia.id}/file/`;
+    const fullUrl = `${API_URL}/api/auth/media/${selectedMedia.id}/file/`;
     if (selectedMedia.media_type === 'image') {
-      const img = new Image();
-      img.onload = () => {
-        setModalImageState('full');
+      const thumbUrl = `${API_URL}/api/auth/media/${selectedMedia.id}/thumbnail/`;
+      let thumbLoaded = false;
+      let fullLoaded = false;
+      let cancelled = false;
+
+      const transition = () => {
+        if (cancelled) return;
+        if (fullLoaded) {
+          setModalImageState('full');
+        } else if (thumbLoaded) {
+          setModalImageState('thumbnail');
+        }
       };
-      img.onerror = () => {
-        setModalImageState('full'); // fallback – will show ProtectedMediaPreview which handles errors
+
+      // Preload thumbnail
+      const thumbImg = new Image();
+      thumbImg.onload = () => {
+        thumbLoaded = true;
+        transition();
       };
-      img.src = url;
+      thumbImg.onerror = () => {
+        // Thumbnail failed – go straight to full (will show full image loading)
+        fullLoaded = true;
+        transition();
+      };
+      thumbImg.src = thumbUrl;
+      if (thumbImg.complete) {
+        // Already cached – fire immediately
+        thumbLoaded = true;
+        transition();
+      }
+
+      // Preload full image
+      const fullImg = new Image();
+      fullImg.onload = () => {
+        fullLoaded = true;
+        transition();
+      };
+      fullImg.onerror = () => {
+        fullLoaded = true; // ProtectedMediaPreview handles errors
+        transition();
+      };
+      fullImg.src = fullUrl;
+      if (fullImg.complete) {
+        fullLoaded = true;
+        transition();
+      }
+
       return () => {
-        img.onload = null;
-        img.onerror = null;
+        cancelled = true;
+        thumbImg.onload = null;
+        thumbImg.onerror = null;
+        fullImg.onload = null;
+        fullImg.onerror = null;
       };
     } else {
       // For video, show loading briefly then reveal the player
@@ -708,20 +751,9 @@ const Gallery = () => {
           >
             {/* Media display */}
             {modalImageState === 'loading' ? (
-              <>
-                <div className="w-full flex items-center justify-center bg-gray-200" style={{ minHeight: '50vh' }}>
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500"></div>
-                </div>
-                {selectedMedia.media_type === 'image' && (
-                  <img
-                    src={`${API_URL}/api/auth/media/${selectedMedia.id}/thumbnail/`}
-                    alt=""
-                    className="hidden"
-                    onLoad={() => setModalImageState('thumbnail')}
-                    onError={() => setModalImageState('full')}
-                  />
-                )}
-              </>
+              <div className="w-full flex items-center justify-center bg-gray-200" style={{ minHeight: '50vh' }}>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500"></div>
+              </div>
             ) : modalImageState === 'thumbnail' ? (
               <div className="w-full flex items-center justify-center bg-black" style={{ minHeight: '50vh' }}>
                 <img
