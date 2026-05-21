@@ -37,6 +37,8 @@ logger = logging.getLogger(__name__)
 def compress_image_for_pdf(image_bytes, max_dim=1500, quality=85):
     """Resize and compress an image for PDF embedding to reduce file size."""
     img = Image.open(BytesIO(image_bytes))
+    # Apply EXIF orientation to correct rotation
+    img = ImageOps.exif_transpose(img)
     # Convert to RGB if necessary (e.g., PNG with transparency)
     if img.mode in ('RGBA', 'P'):
         img = img.convert('RGB')
