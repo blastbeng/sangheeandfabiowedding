@@ -289,7 +289,7 @@ const WeddingBook = () => {
 
       {status === 'completed' && (
         <div className="mt-4">
-          <a href={downloadUrl} download className="px-4 py-2 bg-green-600 text-white rounded mr-2">
+          <a href={downloadUrl} target="_blank" rel="noopener noreferrer" className="px-4 py-2 bg-green-600 text-white rounded mr-2">
             {t('Download PDF')}
           </a>
           <button onClick={handleRegenerate} className="px-4 py-2 bg-yellow-500 text-white rounded">
@@ -373,7 +373,7 @@ const WeddingBook = () => {
                     <td className="px-2 py-1">{new Date(book.created_at).toLocaleDateString()}</td>
                     <td className="px-2 py-1">
                       {book.status === 'completed' && book.download_url && (
-                        <a href={book.download_url} download className="text-blue-600 hover:underline mr-2">
+                        <a href={book.download_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline mr-2">
                           {t('Download')}
                         </a>
                       )}
