@@ -132,8 +132,15 @@ def _load_caption_classifier():
         logger.info("[caption] Downloading MobileNetV2 classification TFLite model...")
         resp = requests.get(MODEL_URL, timeout=120)
         resp.raise_for_status()
+        content = resp.content
+        # Validate TFLite magic bytes
+        if not content.startswith(b'TFL3'):
+            raise ValueError(
+                f"Downloaded caption classifier model is not a valid TFLite file "
+                f"(starts with {content[:4]!r}). URL may be invalid or returned an error page."
+            )
         with open(MODEL_PATH, "wb") as f:
-            f.write(resp.content)
+            f.write(content)
 
     if not os.path.exists(LABELS_PATH):
         # Download ImageNet class labels (simple list)
@@ -147,6 +154,15 @@ def _load_caption_classifier():
     with open(LABELS_PATH, "r") as f:
         _caption_classifier_labels = json.load(f)
 
+    # Validate existing file before loading
+    with open(MODEL_PATH, "rb") as f:
+        header = f.read(4)
+    if header != b'TFL3':
+        os.remove(MODEL_PATH)
+        raise ValueError(
+            f"Cached caption classifier model is corrupt (header {header!r}). "
+            f"Deleted {MODEL_PATH}. Please retry."
+        )
     _caption_classifier_interpreter = tflite.Interpreter(model_path=MODEL_PATH)
     _caption_classifier_interpreter.allocate_tensors()
     return _caption_classifier_interpreter, _caption_classifier_labels

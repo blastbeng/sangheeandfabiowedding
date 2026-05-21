@@ -1260,9 +1260,24 @@ def compute_similarity_ordering():
         logger.info("[similarity] Downloading MobileNetV2 TFLite model...")
         resp = requests.get(MODEL_URL, timeout=120)
         resp.raise_for_status()
+        content = resp.content
+        if not content.startswith(b'TFL3'):
+            raise ValueError(
+                f"Downloaded similarity model is not a valid TFLite file "
+                f"(starts with {content[:4]!r}). URL may be invalid or returned an error page."
+            )
         with open(MODEL_PATH, "wb") as f:
-            f.write(resp.content)
+            f.write(content)
 
+    # Validate existing file before loading
+    with open(MODEL_PATH, "rb") as f:
+        header = f.read(4)
+    if header != b'TFL3':
+        os.remove(MODEL_PATH)
+        raise ValueError(
+            f"Cached similarity model is corrupt (header {header!r}). "
+            f"Deleted {MODEL_PATH}. Please retry."
+        )
     # Load TFLite model
     interpreter = tflite.Interpreter(model_path=MODEL_PATH)
     interpreter.allocate_tensors()
@@ -1402,9 +1417,24 @@ def _cluster_images_for_pages(media_list):
         logger.info("[wedding_book] Downloading MobileNetV2 TFLite model...")
         resp = requests.get(MODEL_URL, timeout=120)
         resp.raise_for_status()
+        content = resp.content
+        if not content.startswith(b'TFL3'):
+            raise ValueError(
+                f"Downloaded similarity model is not a valid TFLite file "
+                f"(starts with {content[:4]!r}). URL may be invalid or returned an error page."
+            )
         with open(MODEL_PATH, "wb") as f:
-            f.write(resp.content)
+            f.write(content)
 
+    # Validate existing file before loading
+    with open(MODEL_PATH, "rb") as f:
+        header = f.read(4)
+    if header != b'TFL3':
+        os.remove(MODEL_PATH)
+        raise ValueError(
+            f"Cached similarity model is corrupt (header {header!r}). "
+            f"Deleted {MODEL_PATH}. Please retry."
+        )
     interpreter = tflite.Interpreter(model_path=MODEL_PATH)
     interpreter.allocate_tensors()
     input_details = interpreter.get_input_details()
