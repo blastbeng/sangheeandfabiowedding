@@ -1248,8 +1248,9 @@ def compute_similarity_ordering():
     from django.conf import settings as django_settings
 
     MODEL_URL = (
-        "https://tfhub.dev/google/lite-model/imagenet/mobilenet_v2_100_224/"
-        "feature_vector/2/default/1?lite-format=tflite"
+        "https://storage.googleapis.com/download.tensorflow.org/"
+        "models/tflite/model_zoo/vision_models/"
+        "mobilenet_v2_1.0_224_quantized_1_feature_vector_1_default_1.tflite"
     )
     MODELS_DIR = os.path.join(django_settings.BASE_DIR, 'models')
     os.makedirs(MODELS_DIR, exist_ok=True)
@@ -1406,8 +1407,9 @@ def _cluster_images_for_pages(media_list):
     from django.conf import settings as django_settings
 
     MODEL_URL = (
-        "https://tfhub.dev/google/lite-model/imagenet/mobilenet_v2_100_224/"
-        "feature_vector/2/default/1?lite-format=tflite"
+        "https://storage.googleapis.com/download.tensorflow.org/"
+        "models/tflite/model_zoo/vision_models/"
+        "mobilenet_v2_1.0_224_quantized_1_feature_vector_1_default_1.tflite"
     )
     MODELS_DIR = os.path.join(django_settings.BASE_DIR, 'models')
     os.makedirs(MODELS_DIR, exist_ok=True)
