@@ -1050,6 +1050,8 @@ class PublicUserListView(APIView):
         search = request.query_params.get('search')
         if search:
             queryset = queryset.filter(username__icontains=search)
+        if request.query_params.get('has_approved_media') == 'true':
+            queryset = queryset.filter(uploaded_media__status='approved').distinct()
         serializer = PublicUserSerializer(queryset.order_by('username'), many=True, context={'request': request})
         return Response(serializer.data)
 

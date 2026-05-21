@@ -216,7 +216,7 @@ const Gallery = () => {
   }, [faceGroupsVersion]);
 
   useEffect(() => {
-    fetch(`${API_URL}/api/auth/users/public/`)
+    fetch(`${API_URL}/api/auth/users/public/?has_approved_media=true`)
       .then(res => res.json())
       .then(data => setUsers(Array.isArray(data) ? data : []))
       .catch(err => logger.error('[Gallery] Failed to fetch users:', err));
