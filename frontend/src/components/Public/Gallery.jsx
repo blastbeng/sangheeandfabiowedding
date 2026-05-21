@@ -27,6 +27,7 @@ const Gallery = () => {
   const [viewMode, setViewMode] = useState('grid'); // 'gallery' | 'grid'
   const [selectedMedia, setSelectedMedia] = useState(null);
   const [modalImageState, setModalImageState] = useState('loading'); // 'loading' | 'thumbnail' | 'full'
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [copyFeedback, setCopyFeedback] = useState(false);
   const API_URL = import.meta.env.VITE_API_URL;
 
@@ -294,6 +295,15 @@ const Gallery = () => {
     }
   }, [selectedMedia, currentIndex, navigableMedia.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Listen for fullscreen changes
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
   // Preload modal media and manage loading state
   useEffect(() => {
     if (!selectedMedia) {
@@ -390,12 +400,18 @@ const Gallery = () => {
   const handleFullscreen = () => {
     const el = mediaRef.current;
     if (!el) return;
-    if (el.requestFullscreen) {
-      el.requestFullscreen();
-    } else if (el.webkitRequestFullscreen) {
-      el.webkitRequestFullscreen();
-    } else if (el.msRequestFullscreen) {
-      el.msRequestFullscreen();
+    try {
+      if (el.requestFullscreen) {
+        el.requestFullscreen().catch(err => {
+          logger.error('[Gallery] Fullscreen request failed:', err);
+        });
+      } else if (el.webkitRequestFullscreen) {
+        el.webkitRequestFullscreen();
+      } else if (el.msRequestFullscreen) {
+        el.msRequestFullscreen();
+      }
+    } catch (err) {
+      logger.error('[Gallery] Fullscreen error:', err);
     }
   };
 
@@ -781,7 +797,27 @@ const Gallery = () => {
             onClick={(e) => e.stopPropagation()}
           >
             {/* Media area – fixed height, no scroll */}
-            <div className="flex-1 min-h-0 relative bg-black" ref={mediaRef}>
+            <div
+              className="flex-1 min-h-0 relative bg-black"
+              ref={mediaRef}
+              {...(isFullscreen ? { onTouchStart: handleTouchStart, onTouchEnd: handleTouchEnd } : {})}
+            >
+              {isFullscreen && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (document.exitFullscreen) {
+                      document.exitFullscreen();
+                    }
+                  }}
+                  onTouchStart={(e) => e.stopPropagation()}
+                  onTouchEnd={(e) => e.stopPropagation()}
+                  className="absolute top-2 right-2 z-20 bg-black bg-opacity-50 text-white rounded-full p-2 hover:bg-opacity-75"
+                  aria-label="Exit fullscreen"
+                >
+                  ✕
+                </button>
+              )}
               {modalImageState === 'loading' ? (
                 <div className="absolute inset-0 flex items-center justify-center bg-gray-200">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500"></div>
@@ -817,6 +853,8 @@ const Gallery = () => {
                   {/* Fullscreen button */}
                   <button
                     onClick={(e) => { e.stopPropagation(); handleFullscreen(); }}
+                    onTouchStart={(e) => e.stopPropagation()}
+                    onTouchEnd={(e) => e.stopPropagation()}
                     className="absolute bottom-2 right-2 z-10 bg-black bg-opacity-50 text-white rounded-full p-2 hover:bg-opacity-75 transition-opacity"
                     title="Fullscreen"
                   >
