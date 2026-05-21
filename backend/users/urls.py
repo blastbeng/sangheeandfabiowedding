@@ -20,6 +20,7 @@ from .views import (
     DeleteAllFacesView,
     RegenerateAllFacesView,
     RegenerateSimilarityOrderingView,
+    MediaShareView,
     MediaThumbnailView,
 )
 
@@ -52,6 +53,7 @@ urlpatterns = [
     path('media/moderation/delete-all-faces/', DeleteAllFacesView.as_view(), name='delete-all-faces'),
     path('media/moderation/generate-all-faces/', RegenerateAllFacesView.as_view(), name='media-generate-all-faces'),
     path('media/moderation/regenerate-similarity-ordering/', RegenerateSimilarityOrderingView.as_view(), name='regenerate-similarity-ordering'),
+    path('media/<int:media_id>/share/', MediaShareView.as_view(), name='media-share'),
     path('media/<int:media_id>/file/', MediaFileView.as_view(), name='media-file'),
     path('media/public/', PublicMediaListView.as_view(), name='media-public'),
     path('users/public/', PublicUserListView.as_view(), name='public-user-list'),

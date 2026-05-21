@@ -1826,6 +1826,40 @@ class RegenerateSimilarityOrderingView(APIView):
         )
 
 
+class MediaShareView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, media_id):
+        try:
+            media = Media.objects.get(id=media_id, status='approved')
+        except Media.DoesNotExist:
+            raise Http404("Media not found")
+
+        title = media.caption or "A beautiful memory"
+        description = f"Shared by {media.user.get_full_name() or media.user.username}"
+        image_url = request.build_absolute_uri(f'/api/auth/media/{media.id}/thumbnail/')
+        page_url = request.build_absolute_uri(f'/media/{media.id}/')
+
+        html = f"""<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta property="og:title" content="{title}" />
+    <meta property="og:description" content="{description}" />
+    <meta property="og:image" content="{image_url}" />
+    <meta property="og:url" content="{page_url}" />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <title>{title}</title>
+</head>
+<body>
+    <p>{title}</p>
+    <img src="{image_url}" alt="{title}" style="max-width:100%;" />
+</body>
+</html>"""
+        return HttpResponse(html, content_type='text/html')
+
+
 # ==================== COOKIE CONSENT VIEWS ====================
 
 class CookieConsentView(APIView):

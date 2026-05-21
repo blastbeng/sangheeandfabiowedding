@@ -2,6 +2,7 @@ import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import logger from '../../utils/logger';
+import authFetch from '../../utils/authFetch';
 import ThumbnailImage from '../Common/ThumbnailImage';
 import ProtectedMediaPreview from '../Common/ProtectedMediaPreview';
 
@@ -364,12 +365,12 @@ const Gallery = () => {
   }, [selectedMedia, API_URL]);
 
   const handleShare = async () => {
-    const url = `${API_URL}/api/auth/media/${selectedMedia.id}/file/`;
+    const shareUrl = `${window.location.origin}/api/auth/media/${selectedMedia.id}/share/`;
     if (navigator.share) {
       try {
         await navigator.share({
           title: selectedMedia.caption || t('beautiful_moment'),
-          url: url,
+          url: shareUrl,
         });
       } catch (err) {
         // user cancelled or error – no action needed
@@ -377,7 +378,7 @@ const Gallery = () => {
     } else {
       // Fallback: copy to clipboard
       try {
-        await navigator.clipboard.writeText(url);
+        await navigator.clipboard.writeText(shareUrl);
         setCopyFeedback(true);
         setTimeout(() => setCopyFeedback(false), 2000);
       } catch (err) {
@@ -395,6 +396,25 @@ const Gallery = () => {
       el.webkitRequestFullscreen();
     } else if (el.msRequestFullscreen) {
       el.msRequestFullscreen();
+    }
+  };
+
+  const handleDownload = async () => {
+    const url = `${API_URL}/api/auth/media/${selectedMedia.id}/file/`;
+    try {
+      const res = await authFetch(url);
+      if (!res.ok) throw new Error('Download failed');
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = selectedMedia.original_filename || `media_${selectedMedia.id}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      logger.error('[Gallery] Download failed:', err);
     }
   };
 
@@ -761,7 +781,7 @@ const Gallery = () => {
             onClick={(e) => e.stopPropagation()}
           >
             {/* Media area – fixed height, no scroll */}
-            <div className="flex-1 min-h-0 relative bg-black">
+            <div className="flex-1 min-h-0 relative bg-black" ref={mediaRef}>
               {modalImageState === 'loading' ? (
                 <div className="absolute inset-0 flex items-center justify-center bg-gray-200">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500"></div>
@@ -776,7 +796,6 @@ const Gallery = () => {
                 <>
                   {selectedMedia.media_type === 'video' ? (
                     <video
-                      ref={mediaRef}
                       key={selectedMedia.id}
                       src={`${API_URL}/api/auth/media/${selectedMedia.id}/file/`}
                       controls
@@ -789,7 +808,6 @@ const Gallery = () => {
                     </video>
                   ) : (
                     <img
-                      ref={mediaRef}
                       key={selectedMedia.id}
                       src={`${API_URL}/api/auth/media/${selectedMedia.id}/file/`}
                       alt={selectedMedia.caption || t('beautiful_moment')}
@@ -880,6 +898,14 @@ const Gallery = () => {
                   className="inline-flex items-center gap-1 px-3 py-1 text-sm bg-pink-500 text-white rounded-full hover:bg-pink-600 transition-colors"
                 >
                   <span>📤</span> {t('share_this_memory')}
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleDownload(); }}
+                  onTouchStart={(e) => e.stopPropagation()}
+                  onTouchEnd={(e) => e.stopPropagation()}
+                  className="inline-flex items-center gap-1 px-3 py-1 text-sm bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors"
+                >
+                  <span>⬇️</span> {t('download') || 'Download'}
                 </button>
                 {copyFeedback && (
                   <span className="text-xs text-green-600">{t('link_copied')}</span>
