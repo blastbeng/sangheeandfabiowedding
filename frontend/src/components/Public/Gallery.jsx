@@ -27,6 +27,8 @@ const Gallery = () => {
   const [selectedMedia, setSelectedMedia] = useState(null);
   const [modalLoading, setModalLoading] = useState(false);
   const [copyFeedback, setCopyFeedback] = useState(false);
+  const [fullImageLoaded, setFullImageLoaded] = useState(false);
+  const [thumbnailFailed, setThumbnailFailed] = useState(false);
   const API_URL = import.meta.env.VITE_API_URL;
 
   const sentinelRef = useRef(null);
@@ -296,14 +298,24 @@ const Gallery = () => {
   useEffect(() => {
     if (!selectedMedia) {
       setModalLoading(false);
+      setFullImageLoaded(false);
+      setThumbnailFailed(false);
       return;
     }
     setModalLoading(true);
+    setFullImageLoaded(false);
+    setThumbnailFailed(false);
     const url = `${API_URL}/api/auth/media/${selectedMedia.id}/file/`;
     if (selectedMedia.media_type === 'image') {
       const img = new Image();
-      img.onload = () => setModalLoading(false);
-      img.onerror = () => setModalLoading(false);
+      img.onload = () => {
+        setModalLoading(false);
+        setFullImageLoaded(true);
+      };
+      img.onerror = () => {
+        setModalLoading(false);
+        setFullImageLoaded(false);
+      };
       img.src = url;
       return () => {
         img.onload = null;
@@ -311,7 +323,10 @@ const Gallery = () => {
       };
     } else {
       // For video, show loading for a short time then reveal the player
-      const timer = setTimeout(() => setModalLoading(false), 1000);
+      const timer = setTimeout(() => {
+        setModalLoading(false);
+        setFullImageLoaded(true);
+      }, 1000);
       return () => clearTimeout(timer);
     }
   }, [selectedMedia, API_URL]);
@@ -701,7 +716,16 @@ const Gallery = () => {
             onTouchEnd={handleTouchEnd}
           >
             {/* Media display */}
-            {modalLoading ? (
+            {selectedMedia.media_type === 'image' && !fullImageLoaded && !thumbnailFailed ? (
+              <div className="w-full flex items-center justify-center bg-black" style={{ minHeight: '50vh' }}>
+                <img
+                  src={`${API_URL}/api/auth/media/${selectedMedia.id}/thumbnail/`}
+                  alt=""
+                  className="max-w-full max-h-[70vh] object-contain"
+                  onError={() => setThumbnailFailed(true)}
+                />
+              </div>
+            ) : modalLoading ? (
               <div className="w-full flex items-center justify-center bg-gray-200" style={{ minHeight: '50vh' }}>
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500"></div>
               </div>
