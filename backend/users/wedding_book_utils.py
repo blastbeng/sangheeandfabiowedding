@@ -120,8 +120,9 @@ def _load_caption_classifier():
     from django.conf import settings as django_settings
 
     MODEL_URL = (
-        "https://tfhub.dev/google/lite-model/imagenet/mobilenet_v2_100_224/"
-        "classification/5/default/1?lite-format=tflite"
+        "https://storage.googleapis.com/tfhub-modules/google/"
+        "lite-model/imagenet/mobilenet_v2_100_224/classification/5/"
+        "default/1/lite-model.tflite"
     )
     MODELS_DIR = os.path.join(django_settings.BASE_DIR, 'models')
     os.makedirs(MODELS_DIR, exist_ok=True)
