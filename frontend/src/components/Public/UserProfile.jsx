@@ -158,7 +158,7 @@ const UserProfile = () => {
     <div className="max-w-4xl mx-auto p-4">
       <div className="wedding-card p-8 text-center mb-8">
         <img
-          src={user.profile_picture_url || `${API_URL}/media/profile_pics/default.png`}
+          src={user.profile_picture_url || 'https://i.imgur.com/V4RclNb.png'}
           alt={displayName}
           className="w-28 h-28 rounded-full object-cover border-4 border-pink-200 mx-auto mb-4"
           onError={(e) => { e.target.src = 'https://i.imgur.com/V4RclNb.png'; }}
