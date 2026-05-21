@@ -44,7 +44,7 @@ from .serializers import (
     PublicMediaSerializer, PublicUserSerializer, FaceGroupSerializer,
     FaceTagSerializer,
     CookieConsentSerializer,
-    WeddingBookSerializer, GenerateWeddingBookSerializer,
+    WeddingBookSerializer, WeddingBookListSerializer, GenerateWeddingBookSerializer,
 )
 from .cloud_clients import get_file_from_cloud, NextcloudClient
 from .tasks import upload_media_task, delete_media_task, detect_faces_task, backfill_faces_periodic, generate_wedding_book_task
@@ -1930,6 +1930,32 @@ class CookieConsentView(APIView):
 
 # ==================== WEDDING BOOK VIEWS ====================
 
+class WeddingBookListView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def get(self, request):
+        books = WeddingBook.objects.all().order_by('-created_at')
+        serializer = WeddingBookListSerializer(books, many=True, context={'request': request})
+        return Response(serializer.data)
+
+
+class WeddingBookDeleteView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def delete(self, request, book_id):
+        try:
+            book = WeddingBook.objects.get(id=book_id)
+        except WeddingBook.DoesNotExist:
+            return Response({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Delete the PDF file from storage
+        if book.pdf_file:
+            book.pdf_file.delete(save=False)
+
+        book.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
 class WeddingBookLatestView(APIView):
     permission_classes = [IsAdminUser]
 
@@ -1947,9 +1973,8 @@ class WeddingBookGenerateView(APIView):
     def post(self, request):
         serializer = GenerateWeddingBookSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        media_ids = serializer.validated_data['media_ids']
+        media_ids = serializer.validated_data.get('media_ids', [])
 
-        # Ensure at least 20 approved media exist in total
         total_approved = Media.objects.filter(status='approved').count()
         if total_approved < 20:
             return Response(
@@ -1957,8 +1982,10 @@ class WeddingBookGenerateView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Auto-select additional media if fewer than 20 were chosen
-        if len(media_ids) < 20:
+        # If no media selected, auto-select the 20 best
+        if not media_ids:
+            media_ids = auto_select_media([], target=20)
+        elif len(media_ids) < 20:
             media_ids = auto_select_media(media_ids, target=20)
 
         valid_ids = Media.objects.filter(
@@ -2012,27 +2039,26 @@ class WeddingBookRegenerateView(APIView):
         except WeddingBook.DoesNotExist:
             return Response({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        # Accept new media_ids if provided
-        media_ids = request.data.get('media_ids')
-        if media_ids:
-            # Enforce minimum total approved
-            total_approved = Media.objects.filter(status='approved').count()
-            if total_approved < 20:
-                return Response(
-                    {'error': 'At least 20 approved media are required to generate a wedding book.'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            # Auto-select if needed
-            if len(media_ids) < 20:
-                media_ids = auto_select_media(media_ids, target=20)
-            # Validate that at least some are approved
-            valid_ids = Media.objects.filter(
-                id__in=media_ids, status='approved'
-            ).values_list('id', flat=True)
-            if not valid_ids:
-                return Response({'error': 'No valid approved media found.'}, status=status.HTTP_400_BAD_REQUEST)
-            book.selected_media_ids = list(valid_ids)
+        media_ids = request.data.get('media_ids', [])
+        total_approved = Media.objects.filter(status='approved').count()
+        if total_approved < 20:
+            return Response(
+                {'error': 'At least 20 approved media are required to generate a wedding book.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
+        if not media_ids:
+            media_ids = auto_select_media([], target=20)
+        elif len(media_ids) < 20:
+            media_ids = auto_select_media(media_ids, target=20)
+
+        valid_ids = Media.objects.filter(
+            id__in=media_ids, status='approved'
+        ).values_list('id', flat=True)
+        if not valid_ids:
+            return Response({'error': 'No valid approved media found.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        book.selected_media_ids = list(valid_ids)
         book.status = WeddingBook.Status.PENDING
         book.progress = 0
         book.error_message = ''

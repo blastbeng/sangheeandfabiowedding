@@ -492,7 +492,30 @@ class WeddingBookSerializer(serializers.ModelSerializer):
         return None
 
 
+class WeddingBookListSerializer(serializers.ModelSerializer):
+    download_url = serializers.SerializerMethodField()
+    media_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = WeddingBook
+        fields = [
+            'id', 'status', 'progress', 'media_count',
+            'error_message', 'created_at', 'updated_at', 'download_url',
+        ]
+
+    def get_download_url(self, obj):
+        if obj.status == WeddingBook.Status.COMPLETED and obj.pdf_file:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.pdf_file.url)
+            return obj.pdf_file.url
+        return None
+
+    def get_media_count(self, obj):
+        return len(obj.selected_media_ids) if obj.selected_media_ids else 0
+
+
 class GenerateWeddingBookSerializer(serializers.Serializer):
     media_ids = serializers.ListField(
-        child=serializers.IntegerField(), allow_empty=False
+        child=serializers.IntegerField(), allow_empty=True, required=False, default=[]
     )

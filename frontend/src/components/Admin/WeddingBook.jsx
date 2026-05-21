@@ -8,19 +8,21 @@ const API_URL = import.meta.env.VITE_API_URL;
 const WeddingBook = () => {
   const { t } = useTranslation();
   const [media, setMedia] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [selectedUserId, setSelectedUserId] = useState('');
   const [selectedIds, setSelectedIds] = useState([]);
-  const [bookId, setBookId] = useState(() => {
-    return localStorage.getItem('weddingBookId') || null;
-  });
+  const [selectAll, setSelectAll] = useState(false);
+  const [bookId, setBookId] = useState(() => localStorage.getItem('weddingBookId') || null);
   const [status, setStatus] = useState('idle');
   const [progress, setProgress] = useState(0);
   const [downloadUrl, setDownloadUrl] = useState(null);
   const [error, setError] = useState('');
+  const [pastBooks, setPastBooks] = useState([]);
   const pollingRef = useRef(null);
 
   const MIN_MEDIA = 20;
 
-  // Fetch approved media for selection
+  // Fetch approved media
   useEffect(() => {
     authFetch(`${API_URL}/api/auth/media/public/?status=approved&page_size=1000`)
       .then(res => res.json())
@@ -28,6 +30,27 @@ const WeddingBook = () => {
       .catch(err => logger.error('[WeddingBook] Failed to fetch media:', err));
   }, []);
 
+  // Fetch users with approved media for filter
+  useEffect(() => {
+    authFetch(`${API_URL}/api/auth/users/public/?has_approved_media=true`)
+      .then(res => res.json())
+      .then(data => setUsers(data))
+      .catch(err => logger.error('[WeddingBook] Failed to fetch users:', err));
+  }, []);
+
+  // Fetch past books
+  const fetchPastBooks = useCallback(() => {
+    authFetch(`${API_URL}/api/auth/admin/wedding-book/`)
+      .then(res => res.json())
+      .then(data => setPastBooks(data))
+      .catch(err => logger.error('[WeddingBook] Failed to fetch past books:', err));
+  }, []);
+
+  useEffect(() => {
+    fetchPastBooks();
+  }, [fetchPastBooks]);
+
+  // Polling logic
   const startPolling = (id) => {
     if (pollingRef.current) clearInterval(pollingRef.current);
     pollingRef.current = setInterval(async () => {
@@ -39,6 +62,7 @@ const WeddingBook = () => {
           clearInterval(pollingRef.current);
           setStatus('completed');
           setDownloadUrl(data.download_url);
+          fetchPastBooks(); // refresh list
         } else if (data.status === 'failed') {
           clearInterval(pollingRef.current);
           setStatus('failed');
@@ -75,7 +99,6 @@ const WeddingBook = () => {
     }
   }, []);
 
-  // On mount, if a bookId exists, fetch its status and resume polling
   useEffect(() => {
     if (bookId) {
       fetchBookStatus(bookId);
@@ -85,12 +108,30 @@ const WeddingBook = () => {
     };
   }, [bookId, fetchBookStatus]);
 
+  // Filter media by selected user
+  const filteredMedia = selectedUserId
+    ? media.filter(item => item.user_id === parseInt(selectedUserId))
+    : media;
+
+  // Toggle individual selection
   const toggleSelect = (id) => {
     setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
   };
 
+  // Select All / Deselect All
+  const handleSelectAll = () => {
+    if (selectAll) {
+      setSelectedIds([]);
+      setSelectAll(false);
+    } else {
+      const allIds = filteredMedia.map(item => item.id);
+      setSelectedIds(allIds);
+      setSelectAll(true);
+    }
+  };
+
+  // Start generation (now always allowed if total approved >= 20)
   const startGeneration = async () => {
-    if (selectedIds.length === 0) return;
     setStatus('generating');
     setProgress(0);
     setError('');
@@ -98,7 +139,7 @@ const WeddingBook = () => {
       const res = await authFetch(`${API_URL}/api/auth/admin/wedding-book/generate/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ media_ids: selectedIds }),
+        body: JSON.stringify({ media_ids: selectedIds }), // can be empty
       });
       const data = await res.json();
       if (res.ok) {
@@ -117,10 +158,6 @@ const WeddingBook = () => {
 
   const handleRegenerate = async () => {
     if (!bookId) return;
-    if (selectedIds.length === 0) {
-      setError('Please select at least one media item.');
-      return;
-    }
     setStatus('generating');
     setProgress(0);
     setError('');
@@ -154,6 +191,24 @@ const WeddingBook = () => {
     setSelectedIds([]);
   };
 
+  const handleDeleteBook = async (id) => {
+    if (!confirm(t('Delete this wedding book?'))) return;
+    try {
+      const res = await authFetch(`${API_URL}/api/auth/admin/wedding-book/${id}/delete/`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        fetchPastBooks();
+        // If the deleted book was the active one, clear it
+        if (bookId === id) {
+          handleNewBook();
+        }
+      }
+    } catch (err) {
+      logger.error('[WeddingBook] Delete book error:', err);
+    }
+  };
+
   const totalApproved = media.length;
   const canGenerate = totalApproved >= MIN_MEDIA;
 
@@ -166,7 +221,24 @@ const WeddingBook = () => {
         {t('Select at least {min} images. If you select fewer, AI will automatically choose the best ones to reach {min}.', { min: MIN_MEDIA })}
       </p>
 
-      {/* Buttons and progress bar – moved to top */}
+      {/* User filter */}
+      <div className="mb-4">
+        <label className="mr-2 text-sm">{t('Filter by user')}:</label>
+        <select
+          value={selectedUserId}
+          onChange={(e) => setSelectedUserId(e.target.value)}
+          className="border rounded px-2 py-1"
+        >
+          <option value="">{t('All users')}</option>
+          {users.map(u => (
+            <option key={u.id} value={u.id}>
+              {u.first_name} {u.last_name} ({u.username})
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Buttons and progress bar */}
       <div className="flex items-center gap-2 mb-4">
         <button
           onClick={startGeneration}
@@ -180,6 +252,12 @@ const WeddingBook = () => {
             {t('New Book')}
           </button>
         )}
+        <button
+          onClick={handleSelectAll}
+          className="px-4 py-2 bg-gray-200 text-gray-700 rounded"
+        >
+          {selectAll ? t('Deselect All') : t('Select All')}
+        </button>
         <span className="text-sm text-gray-500 ml-2">
           {selectedIds.length} / {MIN_MEDIA} {t('selected')}
         </span>
@@ -212,9 +290,9 @@ const WeddingBook = () => {
         </div>
       )}
 
-      {/* Media selection grid – remains below */}
+      {/* Media selection grid */}
       <div className="grid grid-cols-4 gap-2 mb-4">
-        {media.map(item => (
+        {filteredMedia.map(item => (
           <div
             key={item.id}
             className={`cursor-pointer border-2 ${selectedIds.includes(item.id) ? 'border-wedding-azure' : 'border-transparent'}`}
@@ -223,6 +301,53 @@ const WeddingBook = () => {
             <img src={`${API_URL}/api/auth/media/${item.id}/thumbnail/`} alt="" className="w-full h-32 object-cover" />
           </div>
         ))}
+      </div>
+
+      {/* Past Wedding Books */}
+      <div className="mt-8">
+        <h3 className="text-xl wedding-title mb-2">{t('Previously Generated Books')}</h3>
+        {pastBooks.length === 0 ? (
+          <p className="text-gray-500">{t('No books generated yet.')}</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="px-2 py-1 text-left">{t('ID')}</th>
+                  <th className="px-2 py-1 text-left">{t('Status')}</th>
+                  <th className="px-2 py-1 text-left">{t('Progress')}</th>
+                  <th className="px-2 py-1 text-left">{t('Media Count')}</th>
+                  <th className="px-2 py-1 text-left">{t('Created')}</th>
+                  <th className="px-2 py-1 text-left">{t('Actions')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pastBooks.map(book => (
+                  <tr key={book.id} className="border-t">
+                    <td className="px-2 py-1">{book.id}</td>
+                    <td className="px-2 py-1">{book.status}</td>
+                    <td className="px-2 py-1">{book.progress}%</td>
+                    <td className="px-2 py-1">{book.media_count}</td>
+                    <td className="px-2 py-1">{new Date(book.created_at).toLocaleDateString()}</td>
+                    <td className="px-2 py-1">
+                      {book.status === 'completed' && book.download_url && (
+                        <a href={book.download_url} download className="text-blue-600 hover:underline mr-2">
+                          {t('Download')}
+                        </a>
+                      )}
+                      <button
+                        onClick={() => handleDeleteBook(book.id)}
+                        className="text-red-600 hover:underline"
+                      >
+                        {t('Delete')}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
