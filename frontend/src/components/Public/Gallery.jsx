@@ -34,6 +34,7 @@ const Gallery = () => {
   const faceRowRef = useRef(null);
   const touchStartX = useRef(0);
   const isSwiping = useRef(false);
+  const mediaRef = useRef(null);
 
   const scrollFaceRow = (direction) => {
     if (faceRowRef.current) {
@@ -382,6 +383,18 @@ const Gallery = () => {
       } catch (err) {
         // clipboard failed – silently ignore
       }
+    }
+  };
+
+  const handleFullscreen = () => {
+    const el = mediaRef.current;
+    if (!el) return;
+    if (el.requestFullscreen) {
+      el.requestFullscreen();
+    } else if (el.webkitRequestFullscreen) {
+      el.webkitRequestFullscreen();
+    } else if (el.msRequestFullscreen) {
+      el.msRequestFullscreen();
     }
   };
 
@@ -744,53 +757,56 @@ const Gallery = () => {
 
           {/* Content container – stop click and touch propagation */}
           <div
-            className="relative max-w-4xl w-full max-h-full overflow-auto bg-white rounded-lg shadow-2xl"
+            className="relative max-w-4xl w-full h-full max-h-full overflow-hidden bg-white rounded-lg shadow-2xl flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Media display */}
-            {modalImageState === 'loading' ? (
-              <div className="w-full flex items-center justify-center bg-gray-200" style={{ minHeight: '50vh' }}>
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500"></div>
-              </div>
-            ) : modalImageState === 'thumbnail' ? (
-              <div className="w-full flex items-center justify-center bg-black" style={{ minHeight: '50vh' }}>
+            {/* Media area – fixed height, no scroll */}
+            <div className="flex-1 min-h-0 relative bg-black">
+              {modalImageState === 'loading' ? (
+                <div className="absolute inset-0 flex items-center justify-center bg-gray-200">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500"></div>
+                </div>
+              ) : modalImageState === 'thumbnail' ? (
                 <img
                   src={`${API_URL}/api/auth/media/${selectedMedia.id}/thumbnail/`}
                   alt=""
-                  className="max-w-full max-h-[70vh] object-contain"
+                  className="absolute inset-0 w-full h-full object-contain"
                 />
-              </div>
-            ) : (
-              <div className="w-full flex items-center justify-center bg-black">
-                {selectedMedia.media_type === 'video' ? (
-                  <video
-                    key={selectedMedia.id}
-                    src={`${API_URL}/api/auth/media/${selectedMedia.id}/file/`}
-                    controls
-                    autoPlay
-                    playsInline
-                    className="max-w-full max-h-[70vh]"
-                    onError={() => setModalImageState('loading')}
-                  >
-                    Your browser does not support the video tag.
-                  </video>
-                ) : (
-                  <div
-                    key={selectedMedia.id}
-                    onTouchStart={handleTouchStart}
-                    onTouchEnd={handleTouchEnd}
-                  >
-                    <ProtectedMediaPreview
+              ) : (
+                <>
+                  {selectedMedia.media_type === 'video' ? (
+                    <video
+                      ref={mediaRef}
                       key={selectedMedia.id}
-                      fileUrl={`${API_URL}/api/auth/media/${selectedMedia.id}/file/`}
-                      mediaType={selectedMedia.media_type}
-                      className="max-w-full max-h-[70vh] object-contain"
+                      src={`${API_URL}/api/auth/media/${selectedMedia.id}/file/`}
+                      controls
+                      autoPlay
+                      playsInline
+                      className="absolute inset-0 w-full h-full object-contain"
+                      onError={() => setModalImageState('loading')}
+                    >
+                      Your browser does not support the video tag.
+                    </video>
+                  ) : (
+                    <img
+                      ref={mediaRef}
+                      key={selectedMedia.id}
+                      src={`${API_URL}/api/auth/media/${selectedMedia.id}/file/`}
                       alt={selectedMedia.caption || t('beautiful_moment')}
+                      className="absolute inset-0 w-full h-full object-contain"
                     />
-                  </div>
-                )}
-              </div>
-            )}
+                  )}
+                  {/* Fullscreen button */}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleFullscreen(); }}
+                    className="absolute bottom-2 right-2 z-10 bg-black bg-opacity-50 text-white rounded-full p-2 hover:bg-opacity-75 transition-opacity"
+                    title="Fullscreen"
+                  >
+                    ⛶
+                  </button>
+                </>
+              )}
+            </div>
 
             {/* Details section */}
             <div className="p-4">
