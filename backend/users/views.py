@@ -1826,6 +1826,17 @@ class RegenerateSimilarityOrderingView(APIView):
         )
 
 
+class PublicMediaThumbnailView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, media_id):
+        from .thumbnails import get_thumbnail
+        data = get_thumbnail(media_id)
+        if data is None:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        return HttpResponse(data, content_type='image/jpeg')
+
+
 class MediaShareView(APIView):
     permission_classes = [AllowAny]
 
@@ -1837,7 +1848,7 @@ class MediaShareView(APIView):
 
         title = media.caption or "A beautiful memory"
         description = f"Shared by {media.user.get_full_name() or media.user.username}"
-        image_url = request.build_absolute_uri(f'/api/auth/media/{media.id}/thumbnail/')
+        image_url = request.build_absolute_uri(f'/api/auth/media/{media.id}/public-thumbnail/')
         page_url = request.build_absolute_uri(f'/media/{media.id}/')
 
         html = f"""<!DOCTYPE html>
