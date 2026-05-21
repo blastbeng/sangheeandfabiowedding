@@ -53,6 +53,9 @@ const WeddingBook = () => {
       const res = await authFetch(`${API_URL}/api/auth/admin/wedding-book/status/${id}/`);
       const data = await res.json();
       setProgress(data.progress);
+      if (data.selected_media_ids) {
+        setSelectedIds(data.selected_media_ids);
+      }
       if (data.status === 'completed') {
         setStatus('completed');
         setDownloadUrl(data.download_url);
