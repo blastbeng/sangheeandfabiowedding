@@ -763,6 +763,7 @@ const Gallery = () => {
               <div className="w-full flex items-center justify-center bg-black">
                 {selectedMedia.media_type === 'video' ? (
                   <video
+                    key={selectedMedia.id}
                     src={`${API_URL}/api/auth/media/${selectedMedia.id}/file/`}
                     controls
                     autoPlay
@@ -774,6 +775,7 @@ const Gallery = () => {
                   </video>
                 ) : (
                   <div
+                    key={selectedMedia.id}
                     onTouchStart={handleTouchStart}
                     onTouchEnd={handleTouchEnd}
                   >
