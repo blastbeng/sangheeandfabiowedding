@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import authFetch from '../../utils/authFetch';
 import logger from '../../utils/logger';
@@ -9,8 +9,10 @@ const WeddingBook = () => {
   const { t } = useTranslation();
   const [media, setMedia] = useState([]);
   const [selectedIds, setSelectedIds] = useState([]);
-  const [bookId, setBookId] = useState(null);
-  const [status, setStatus] = useState('idle'); // idle, generating, completed, failed
+  const [bookId, setBookId] = useState(() => {
+    return localStorage.getItem('weddingBookId') || null;
+  });
+  const [status, setStatus] = useState('idle');
   const [progress, setProgress] = useState(0);
   const [downloadUrl, setDownloadUrl] = useState(null);
   const [error, setError] = useState('');
@@ -23,35 +25,6 @@ const WeddingBook = () => {
       .then(data => setMedia(data))
       .catch(err => logger.error('[WeddingBook] Failed to fetch media:', err));
   }, []);
-
-  const toggleSelect = (id) => {
-    setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
-  };
-
-  const startGeneration = async () => {
-    if (selectedIds.length === 0) return;
-    setStatus('generating');
-    setProgress(0);
-    setError('');
-    try {
-      const res = await authFetch(`${API_URL}/api/auth/admin/wedding-book/generate/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ media_ids: selectedIds }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setBookId(data.id);
-        startPolling(data.id);
-      } else {
-        setError(data.error || 'Failed to start generation');
-        setStatus('failed');
-      }
-    } catch (err) {
-      setError('Network error');
-      setStatus('failed');
-    }
-  };
 
   const startPolling = (id) => {
     if (pollingRef.current) clearInterval(pollingRef.current);
@@ -75,14 +48,82 @@ const WeddingBook = () => {
     }, 2000);
   };
 
+  const fetchBookStatus = useCallback(async (id) => {
+    try {
+      const res = await authFetch(`${API_URL}/api/auth/admin/wedding-book/status/${id}/`);
+      const data = await res.json();
+      setProgress(data.progress);
+      if (data.status === 'completed') {
+        setStatus('completed');
+        setDownloadUrl(data.download_url);
+      } else if (data.status === 'failed') {
+        setStatus('failed');
+        setError(data.error_message || 'Generation failed');
+      } else {
+        setStatus('generating');
+        startPolling(id);
+      }
+    } catch (err) {
+      logger.error('[WeddingBook] Fetch status error:', err);
+      localStorage.removeItem('weddingBookId');
+      setBookId(null);
+    }
+  }, []);
+
+  // On mount, if a bookId exists, fetch its status and resume polling
+  useEffect(() => {
+    if (bookId) {
+      fetchBookStatus(bookId);
+    }
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+    };
+  }, [bookId, fetchBookStatus]);
+
+  const toggleSelect = (id) => {
+    setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  };
+
+  const startGeneration = async () => {
+    if (selectedIds.length === 0) return;
+    setStatus('generating');
+    setProgress(0);
+    setError('');
+    try {
+      const res = await authFetch(`${API_URL}/api/auth/admin/wedding-book/generate/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ media_ids: selectedIds }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setBookId(data.id);
+        localStorage.setItem('weddingBookId', data.id);
+        startPolling(data.id);
+      } else {
+        setError(data.error || 'Failed to start generation');
+        setStatus('failed');
+      }
+    } catch (err) {
+      setError('Network error');
+      setStatus('failed');
+    }
+  };
+
   const handleRegenerate = async () => {
     if (!bookId) return;
+    if (selectedIds.length === 0) {
+      setError('Please select at least one media item.');
+      return;
+    }
     setStatus('generating');
     setProgress(0);
     setError('');
     try {
       const res = await authFetch(`${API_URL}/api/auth/admin/wedding-book/regenerate/${bookId}/`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ media_ids: selectedIds }),
       });
       if (res.ok) {
         startPolling(bookId);
@@ -97,9 +138,16 @@ const WeddingBook = () => {
     }
   };
 
-  useEffect(() => {
-    return () => { if (pollingRef.current) clearInterval(pollingRef.current); };
-  }, []);
+  const handleNewBook = () => {
+    if (pollingRef.current) clearInterval(pollingRef.current);
+    localStorage.removeItem('weddingBookId');
+    setBookId(null);
+    setStatus('idle');
+    setProgress(0);
+    setDownloadUrl(null);
+    setError('');
+    setSelectedIds([]);
+  };
 
   return (
     <div className="p-4">
@@ -113,9 +161,16 @@ const WeddingBook = () => {
         ))}
       </div>
 
-      <button onClick={startGeneration} disabled={status === 'generating' || selectedIds.length === 0} className="px-4 py-2 bg-wedding-navy text-white rounded">
-        {t('Generate Wedding Book')}
-      </button>
+      <div className="flex items-center gap-2 mb-4">
+        <button onClick={startGeneration} disabled={status === 'generating' || selectedIds.length === 0} className="px-4 py-2 bg-wedding-navy text-white rounded">
+          {t('Generate Wedding Book')}
+        </button>
+        {bookId && (
+          <button onClick={handleNewBook} className="px-4 py-2 bg-gray-500 text-white rounded">
+            {t('New Book')}
+          </button>
+        )}
+      </div>
 
       {status === 'generating' && (
         <div className="mt-4">

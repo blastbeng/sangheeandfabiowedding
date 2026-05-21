@@ -18,11 +18,18 @@ _tokenizer_ko = None
 def _load_caption_model():
     global _caption_processor, _caption_model
     if _caption_model is None:
-        logger.info("Loading BLIP image captioning model...")
+        logger.info("Loading BLIP image captioning model (optimized for CPU)...")
         _caption_processor = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-base")
-        _caption_model = BlipForConditionalGeneration.from_pretrained("Salesforce/blip-image-captioning-base")
+        _caption_model = BlipForConditionalGeneration.from_pretrained(
+            "Salesforce/blip-image-captioning-base",
+            torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32
+        )
+        # Limit CPU threads to avoid overloading the Raspberry Pi
+        torch.set_num_threads(4)
         if torch.cuda.is_available():
             _caption_model = _caption_model.to("cuda")
+        else:
+            _caption_model = _caption_model.to('cpu')
         _caption_model.eval()
     return _caption_processor, _caption_model
 
@@ -31,20 +38,32 @@ def _load_translator(lang):
     global _translator_it, _translator_ko, _tokenizer_it, _tokenizer_ko
     if lang == 'it':
         if _translator_it is None:
-            logger.info("Loading English→Italian translation model...")
+            logger.info("Loading English→Italian translation model (optimized)...")
             _tokenizer_it = MarianTokenizer.from_pretrained("Helsinki-NLP/opus-mt-en-it")
-            _translator_it = MarianMTModel.from_pretrained("Helsinki-NLP/opus-mt-en-it")
+            _translator_it = MarianMTModel.from_pretrained(
+                "Helsinki-NLP/opus-mt-en-it",
+                torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32
+            )
+            torch.set_num_threads(4)
             if torch.cuda.is_available():
                 _translator_it = _translator_it.to("cuda")
+            else:
+                _translator_it = _translator_it.to('cpu')
             _translator_it.eval()
         return _tokenizer_it, _translator_it
     else:  # ko
         if _translator_ko is None:
-            logger.info("Loading English→Korean translation model...")
+            logger.info("Loading English→Korean translation model (optimized)...")
             _tokenizer_ko = MarianTokenizer.from_pretrained("Helsinki-NLP/opus-mt-en-ko")
-            _translator_ko = MarianMTModel.from_pretrained("Helsinki-NLP/opus-mt-en-ko")
+            _translator_ko = MarianMTModel.from_pretrained(
+                "Helsinki-NLP/opus-mt-en-ko",
+                torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32
+            )
+            torch.set_num_threads(4)
             if torch.cuda.is_available():
                 _translator_ko = _translator_ko.to("cuda")
+            else:
+                _translator_ko = _translator_ko.to('cpu')
             _translator_ko.eval()
         return _tokenizer_ko, _translator_ko
 

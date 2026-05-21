@@ -1410,38 +1410,84 @@ def generate_wedding_book_task(self, book_id):
         pdf_canvas = canvas.Canvas(buffer, pagesize=A4)
         width, height = A4
 
+        # Color palette
         GOLD = HexColor('#D4AF37')
         SOFT_PINK = HexColor('#F8E8E8')
         WHITE = HexColor('#FFFFFF')
         DARK = HexColor('#333333')
+        NAVY = HexColor('#1B2A4A')
+        BLUSH = HexColor('#F9E4E4')
         FONT_NAME = 'Helvetica'
         FONT_BOLD = 'Helvetica-Bold'
+        FONT_ITALIC = 'Helvetica-Oblique'
+        # Register a cursive font if available (optional, fallback to Helvetica)
+        CURSIVE = FONT_ITALIC
+        try:
+            from reportlab.pdfbase import pdfmetrics
+            from reportlab.pdfbase.ttfonts import TTFont
+            # Uncomment and adjust path to register a custom cursive font:
+            # pdfmetrics.registerFont(TTFont('Cursive', os.path.join(django_settings.BASE_DIR, 'static', 'fonts', 'GreatVibes-Regular.ttf')))
+            # CURSIVE = 'Cursive'
+        except Exception:
+            pass
 
+        # Predefined creative layouts (x, y, width, height) for 1-4 images
         layouts = [
+            # 1 image: centered large
             [(70, 200, 455, 400)],
+            # 2 images: side by side
             [(40, 250, 250, 300), (305, 250, 250, 300)],
+            # 2 images: stacked
             [(70, 450, 455, 250), (70, 100, 455, 250)],
+            # 3 images: one large left, two small right stacked
             [(40, 200, 280, 400), (340, 400, 220, 200), (340, 150, 220, 200)],
-            [(40, 450, 250, 250), (305, 450, 250, 250), (170, 100, 250, 250)],
+            # 3 images: three across
+            [(40, 500, 250, 200), (305, 500, 250, 200), (170, 150, 250, 200)],
+            # 4 images: grid
             [(40, 450, 250, 250), (305, 450, 250, 250), (40, 150, 250, 250), (305, 150, 250, 250)],
+            # 4 images: diamond-ish
+            [(170, 500, 250, 200), (40, 250, 200, 200), (350, 250, 200, 200), (170, 50, 250, 200)],
         ]
 
-        def draw_floral_border(pdf_canvas, width, height):
-            pdf_canvas.setStrokeColor(GOLD)
+        def draw_floral_border(pdf_canvas, width, height, color=GOLD):
+            pdf_canvas.setStrokeColor(color)
             pdf_canvas.setLineWidth(1.5)
             pdf_canvas.rect(15, 15, width - 30, height - 30)
             pdf_canvas.rect(18, 18, width - 36, height - 36)
+            # Simple corner flourishes
             pdf_canvas.setLineWidth(1)
             for x, y in [(20, 20), (width - 20, 20), (20, height - 20), (width - 20, height - 20)]:
                 pdf_canvas.arc(x - 10, y - 10, x + 10, y + 10, 0, 360)
 
+        def draw_page_number(pdf_canvas, page_num, total_pages):
+            pdf_canvas.setFont(FONT_NAME, 8)
+            pdf_canvas.setFillColor(GOLD)
+            pdf_canvas.drawRightString(width - 40, 20, f"{page_num} / {total_pages}")
+
+        # ---- Cover Page ----
+        pdf_canvas.setFillColor(NAVY)
+        pdf_canvas.rect(0, 0, width, height, fill=1)
+        draw_floral_border(pdf_canvas, width, height, GOLD)
+        pdf_canvas.setFont(CURSIVE, 36)
+        pdf_canvas.setFillColor(GOLD)
+        pdf_canvas.drawCentredString(width / 2, height / 2 + 40, "Our Wedding Book")
+        pdf_canvas.setFont(FONT_ITALIC, 14)
+        pdf_canvas.drawCentredString(width / 2, height / 2 - 20, "Sang Hee & Fabio")
+        pdf_canvas.showPage()
+
         page_images = []
         i = 0
+        # Shuffle layouts to ensure variety, but avoid repeating the same layout consecutively
+        random.shuffle(layouts)
+        layout_index = 0
+
         while i < total:
             remaining = total - i
             max_on_page = min(4, remaining)
+            # Pick a layout that fits the number of images, cycling through shuffled list
             possible = [lay for lay in layouts if len(lay) == max_on_page]
             if not possible:
+                # Fallback: create a simple grid
                 cols = min(2, max_on_page)
                 rows = math.ceil(max_on_page / cols)
                 cell_w = (width - 80) / cols
@@ -1454,17 +1500,24 @@ def generate_wedding_book_task(self, book_id):
                             y = height - 150 - (r + 1) * cell_h
                             lay.append((x, y, cell_w - 10, cell_h - 10))
                 possible = [lay]
-            chosen_layout = random.choice(possible)
+            chosen_layout = possible[layout_index % len(possible)]
+            layout_index += 1
             page_images.append((media_list[i:i + max_on_page], chosen_layout))
             i += max_on_page
 
-        total_pages = len(page_images)
+        total_pages = len(page_images) + 1  # +1 for cover
 
         for page_idx, (media_group, layout) in enumerate(page_images):
-            pdf_canvas.setFillColor(SOFT_PINK if page_idx % 2 == 0 else WHITE)
+            # Alternate background colors
+            if page_idx % 2 == 0:
+                bg_color = SOFT_PINK
+            else:
+                bg_color = BLUSH
+            pdf_canvas.setFillColor(bg_color)
             pdf_canvas.rect(0, 0, width, height, fill=1)
             draw_floral_border(pdf_canvas, width, height)
 
+            # Draw images
             for slot_idx, media_obj in enumerate(media_group):
                 if slot_idx >= len(layout):
                     break
@@ -1480,6 +1533,7 @@ def generate_wedding_book_task(self, book_id):
                     pdf_canvas.setFillColor(DARK)
                     pdf_canvas.drawString(x + 10, y + h / 2, "Image missing")
 
+            # Captions area
             caption_y = 120
             pdf_canvas.setFont(FONT_BOLD, 10)
             pdf_canvas.setFillColor(GOLD)
@@ -1503,12 +1557,11 @@ def generate_wedding_book_task(self, book_id):
                 if y_offset < 40:
                     break
 
-            pdf_canvas.setFont(FONT_NAME, 8)
-            pdf_canvas.setFillColor(GOLD)
-            pdf_canvas.drawRightString(width - 40, 20, f"{page_idx + 1} / {total_pages}")
+            draw_page_number(pdf_canvas, page_idx + 2, total_pages)  # +2 because cover is page 1
             pdf_canvas.showPage()
 
-            progress = 50 + int((page_idx + 1) / total_pages * 50)
+            # Update progress (50% -> 100%)
+            progress = 50 + int((page_idx + 1) / len(page_images) * 50)
             book.progress = progress
             book.save()
 

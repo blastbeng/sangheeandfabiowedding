@@ -1929,6 +1929,17 @@ class CookieConsentView(APIView):
 
 # ==================== WEDDING BOOK VIEWS ====================
 
+class WeddingBookLatestView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def get(self, request):
+        book = WeddingBook.objects.order_by('-created_at').first()
+        if not book:
+            return Response({'detail': 'No wedding book found.'}, status=status.HTTP_404_NOT_FOUND)
+        serializer = WeddingBookSerializer(book, context={'request': request})
+        return Response(serializer.data)
+
+
 class WeddingBookGenerateView(APIView):
     permission_classes = [IsAdminUser]
 
