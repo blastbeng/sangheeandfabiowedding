@@ -301,7 +301,7 @@ const Gallery = () => {
     setModalImageState('loading');
     const fullUrl = `${API_URL}/api/auth/media/${selectedMedia.id}/file/`;
     if (selectedMedia.media_type === 'image') {
-      const thumbUrl = `${API_URL}/api/auth/media/${selectedMedia.id}/thumbnail/`;
+      const thumbUrl = `${API_URL}/api/auth/media/${selectedMedia.id}/thumbnail/?retry=0`;
       let thumbLoaded = false;
       let fullLoaded = false;
       let cancelled = false;
