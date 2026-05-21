@@ -29,6 +29,7 @@ const Gallery = () => {
   const [copyFeedback, setCopyFeedback] = useState(false);
   const [fullImageLoaded, setFullImageLoaded] = useState(false);
   const [thumbnailFailed, setThumbnailFailed] = useState(false);
+  const [thumbnailLoading, setThumbnailLoading] = useState(false);
   const API_URL = import.meta.env.VITE_API_URL;
 
   const sentinelRef = useRef(null);
@@ -305,6 +306,7 @@ const Gallery = () => {
     setModalLoading(true);
     setFullImageLoaded(false);
     setThumbnailFailed(false);
+    setThumbnailLoading(selectedMedia.media_type === 'image');
     const url = `${API_URL}/api/auth/media/${selectedMedia.id}/file/`;
     if (selectedMedia.media_type === 'image') {
       const img = new Image();
@@ -716,15 +718,35 @@ const Gallery = () => {
             onTouchEnd={handleTouchEnd}
           >
             {/* Media display */}
-            {selectedMedia.media_type === 'image' && !fullImageLoaded && !thumbnailFailed ? (
-              <div className="w-full flex items-center justify-center bg-black" style={{ minHeight: '50vh' }}>
-                <img
-                  src={`${API_URL}/api/auth/media/${selectedMedia.id}/thumbnail/`}
-                  alt=""
-                  className="max-w-full max-h-[70vh] object-contain"
-                  onError={() => setThumbnailFailed(true)}
-                />
-              </div>
+            {selectedMedia.media_type === 'image' && !fullImageLoaded ? (
+              thumbnailLoading ? (
+                <div className="w-full flex items-center justify-center bg-gray-200" style={{ minHeight: '50vh' }}>
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500"></div>
+                </div>
+              ) : !thumbnailFailed ? (
+                <div className="w-full flex items-center justify-center bg-black" style={{ minHeight: '50vh' }}>
+                  <img
+                    src={`${API_URL}/api/auth/media/${selectedMedia.id}/thumbnail/`}
+                    alt=""
+                    className="max-w-full max-h-[70vh] object-contain"
+                    onLoad={() => setThumbnailLoading(false)}
+                    onError={() => { setThumbnailFailed(true); setThumbnailLoading(false); }}
+                  />
+                </div>
+              ) : modalLoading ? (
+                <div className="w-full flex items-center justify-center bg-gray-200" style={{ minHeight: '50vh' }}>
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500"></div>
+                </div>
+              ) : (
+                <div className="w-full flex items-center justify-center bg-black">
+                  <ProtectedMediaPreview
+                    fileUrl={`${API_URL}/api/auth/media/${selectedMedia.id}/file/`}
+                    mediaType={selectedMedia.media_type}
+                    className="max-w-full max-h-[70vh] object-contain"
+                    alt={selectedMedia.caption || t('beautiful_moment')}
+                  />
+                </div>
+              )
             ) : modalLoading ? (
               <div className="w-full flex items-center justify-center bg-gray-200" style={{ minHeight: '50vh' }}>
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500"></div>
