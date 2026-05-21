@@ -1999,6 +1999,17 @@ class WeddingBookRegenerateView(APIView):
         except WeddingBook.DoesNotExist:
             return Response({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
 
+        # Accept new media_ids if provided
+        media_ids = request.data.get('media_ids')
+        if media_ids:
+            # Validate that at least some are approved
+            valid_ids = Media.objects.filter(
+                id__in=media_ids, status='approved'
+            ).values_list('id', flat=True)
+            if not valid_ids:
+                return Response({'error': 'No valid approved media found.'}, status=status.HTTP_400_BAD_REQUEST)
+            book.selected_media_ids = list(valid_ids)
+
         book.status = WeddingBook.Status.PENDING
         book.progress = 0
         book.error_message = ''
