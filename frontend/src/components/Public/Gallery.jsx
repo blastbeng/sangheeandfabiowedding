@@ -701,6 +701,8 @@ const Gallery = () => {
             if (isSwiping.current) return;
             setSelectedMedia(null);
           }}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
         >
           {/* Close button */}
           <button
@@ -743,8 +745,6 @@ const Gallery = () => {
           <div
             className="relative max-w-4xl w-full max-h-full overflow-auto bg-white rounded-lg shadow-2xl"
             onClick={(e) => e.stopPropagation()}
-            onTouchStart={handleTouchStart}
-            onTouchEnd={handleTouchEnd}
           >
             {/* Media display */}
             {modalImageState === 'loading' ? (
@@ -769,8 +769,6 @@ const Gallery = () => {
                     playsInline
                     className="max-w-full max-h-[70vh]"
                     onError={() => setModalImageState('loading')}
-                    onTouchStart={handleTouchStart}
-                    onTouchEnd={handleTouchEnd}
                   >
                     Your browser does not support the video tag.
                   </video>
