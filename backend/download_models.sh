@@ -1,6 +1,4 @@
 #!/bin/sh
-set -e
-
 if ! command -v curl >/dev/null 2>&1; then
     echo "ERROR: curl is required but not installed."
     exit 1
@@ -16,22 +14,16 @@ SIM_URL="https://tfhub.dev/google/lite-model/mobilenet_v2/1.0_224/feature-vector
 if [ -f "$SIM_MODEL" ] && [ -s "$SIM_MODEL" ] && [ "$(head -c 4 "$SIM_MODEL")" = "TFL3" ]; then
     echo "Similarity model already exists and is valid, skipping download."
 else
-    # Remove any existing invalid file
     rm -f "$SIM_MODEL"
     echo "Downloading similarity model..."
     curl -fSL --compressed --retry 5 --retry-delay 5 --connect-timeout 30 --max-time 120 \
-         -o "$SIM_MODEL" "$SIM_URL"
-    if [ ! -s "$SIM_MODEL" ]; then
-        echo "ERROR: similarity_model.tflite is empty – download failed."
+         -o "$SIM_MODEL" "$SIM_URL" || echo "WARNING: similarity model download failed"
+    if [ -s "$SIM_MODEL" ] && [ "$(head -c 4 "$SIM_MODEL")" = "TFL3" ]; then
+        echo "Similarity model downloaded successfully."
+    else
+        echo "WARNING: similarity_model.tflite is invalid or missing – continuing without it."
         rm -f "$SIM_MODEL"
-        exit 1
     fi
-    if [ "$(head -c 4 "$SIM_MODEL")" != "TFL3" ]; then
-        echo "ERROR: similarity_model.tflite is not a valid TFLite file!"
-        rm -f "$SIM_MODEL"
-        exit 1
-    fi
-    echo "Similarity model downloaded successfully."
 fi
 
 # --- caption_classifier.tflite (classification) ---
@@ -44,18 +36,13 @@ else
     rm -f "$CAP_MODEL"
     echo "Downloading caption classifier model..."
     curl -fSL --compressed --retry 5 --retry-delay 5 --connect-timeout 30 --max-time 120 \
-         -o "$CAP_MODEL" "$CAP_URL"
-    if [ ! -s "$CAP_MODEL" ]; then
-        echo "ERROR: caption_classifier.tflite is empty – download failed."
+         -o "$CAP_MODEL" "$CAP_URL" || echo "WARNING: caption classifier download failed"
+    if [ -s "$CAP_MODEL" ] && [ "$(head -c 4 "$CAP_MODEL")" = "TFL3" ]; then
+        echo "Caption classifier model downloaded successfully."
+    else
+        echo "WARNING: caption_classifier.tflite is invalid or missing – continuing without it."
         rm -f "$CAP_MODEL"
-        exit 1
     fi
-    if [ "$(head -c 4 "$CAP_MODEL")" != "TFL3" ]; then
-        echo "ERROR: caption_classifier.tflite is not a valid TFLite file!"
-        rm -f "$CAP_MODEL"
-        exit 1
-    fi
-    echo "Caption classifier model downloaded successfully."
 fi
 
 # --- imagenet_labels.json ---

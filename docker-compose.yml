@@ -47,11 +47,17 @@ services:
       - sh
       - -c
       - |
-        echo "Waiting for similarity model to be downloaded..."
-        while [ ! -s /app/models/similarity_model.tflite ]; do
+        echo "Waiting for similarity model (timeout 60s)..."
+        for i in $(seq 1 30); do
+          if [ -s /app/models/similarity_model.tflite ]; then
+            echo "Model ready."
+            break
+          fi
           sleep 2
         done
-        echo "Model ready."
+        if [ ! -s /app/models/similarity_model.tflite ]; then
+          echo "WARNING: similarity model not available, starting without it."
+        fi
         python manage.py migrate &&
         python manage.py create_default_admin &&
         python manage.py create_social_apps &&
@@ -116,7 +122,7 @@ services:
     pull_policy: build
     build: ./backend
     container_name: wedding-celery
-    command: sh -c "/usr/local/bin/download_models.sh && celery -A config worker --loglevel=info"
+    command: sh -c "/usr/local/bin/download_models.sh; celery -A config worker --loglevel=info"
     devices:
       - /dev/dri:/dev/dri
     volumes:
@@ -167,7 +173,7 @@ services:
     pull_policy: build
     build: ./backend
     container_name: wedding-celery-beat
-    command: sh -c "/usr/local/bin/download_models.sh && celery -A config beat --loglevel=info"
+    command: sh -c "/usr/local/bin/download_models.sh; celery -A config beat --loglevel=info"
     volumes:
       - models_data:/app/models
     environment:
