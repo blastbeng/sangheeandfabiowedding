@@ -120,9 +120,8 @@ def _load_caption_classifier():
     from django.conf import settings as django_settings
 
     MODEL_URL = (
-        "https://storage.googleapis.com/tfhub-modules/google/"
-        "lite-model/imagenet/mobilenet_v2_100_224/classification/5/"
-        "default/1/lite-model.tflite"
+        "https://storage.googleapis.com/tf-lite-models/"
+        "mobilenet_v2_1.0_224_quantized.tflite"
     )
     MODELS_DIR = os.path.join(django_settings.BASE_DIR, 'models')
     os.makedirs(MODELS_DIR, exist_ok=True)
@@ -1164,9 +1163,9 @@ def generate_caption_rpi5(image_bytes: bytes) -> str:
     input_details = interpreter.get_input_details()
     output_details = interpreter.get_output_details()
 
-    # Preprocess image: resize to 224x224, normalize to [-1,1]
+    # Preprocess image: resize to 224x224, keep as uint8 [0,255]
     img = Image.open(io.BytesIO(image_bytes)).convert('RGB').resize((224, 224))
-    img_array = np.array(img, dtype=np.float32) / 127.5 - 1.0
+    img_array = np.array(img, dtype=np.uint8)
     img_array = np.expand_dims(img_array, axis=0)
 
     interpreter.set_tensor(input_details[0]['index'], img_array)
