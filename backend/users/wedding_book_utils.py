@@ -10,6 +10,33 @@ from .models import Media
 
 logger = logging.getLogger(__name__)
 
+ROMANTIC_ADJECTIVES = [
+    "romantic", "joyful", "tender", "magical", "elegant", "sweet",
+    "radiant", "intimate", "blissful", "enchanting", "graceful",
+    "heartwarming", "dreamy", "passionate", "serene"
+]
+
+
+def _pick_adjective(caption: str) -> str:
+    """Pick a romantic adjective based on keywords in the caption."""
+    caption_lower = caption.lower()
+    if any(w in caption_lower for w in ["dance", "dancing", "party"]):
+        return "joyful"
+    if any(w in caption_lower for w in ["kiss", "kissing", "embrace"]):
+        return "passionate"
+    if any(w in caption_lower for w in ["smile", "laugh", "happy"]):
+        return "radiant"
+    if any(w in caption_lower for w in ["sunset", "golden", "light"]):
+        return "magical"
+    if any(w in caption_lower for w in ["flower", "bouquet", "garden"]):
+        return "enchanting"
+    if any(w in caption_lower for w in ["ceremony", "vows", "ring"]):
+        return "elegant"
+    # fallback: random from list
+    import random
+    return random.choice(ROMANTIC_ADJECTIVES)
+
+
 # ---------- lazy model loading ----------
 _caption_feature_extractor = None
 _caption_tokenizer = None
@@ -82,8 +109,15 @@ def generate_english_caption(image_bytes: bytes) -> str:
         pixel_values = pixel_values.to("cuda")
     with torch.no_grad():
         out = model.generate(pixel_values, max_length=50, num_beams=5)
-    caption = tokenizer.decode(out[0], skip_special_tokens=True)
-    return caption.strip()
+    raw_caption = tokenizer.decode(out[0], skip_special_tokens=True).strip()
+
+    # Make it wedding-themed
+    adjective = _pick_adjective(raw_caption)
+    # Capitalize first letter of raw caption
+    if raw_caption:
+        raw_caption = raw_caption[0].upper() + raw_caption[1:]
+    creative_caption = f"A {adjective} moment: {raw_caption}"
+    return creative_caption
 
 
 def translate_text(text: str, target_lang: str) -> str:

@@ -1431,23 +1431,31 @@ def generate_wedding_book_task(self, book_id):
         except Exception:
             pass
 
-        # Predefined creative layouts (x, y, width, height) for 1-4 images
-        layouts = [
-            # 1 image: centered large
-            [(70, 200, 455, 400)],
-            # 2 images: side by side
-            [(40, 250, 250, 300), (305, 250, 250, 300)],
-            # 2 images: stacked
-            [(70, 450, 455, 250), (70, 100, 455, 250)],
-            # 3 images: one large left, two small right stacked
-            [(40, 200, 280, 400), (340, 400, 220, 200), (340, 150, 220, 200)],
-            # 3 images: three across
-            [(40, 500, 250, 200), (305, 500, 250, 200), (170, 150, 250, 200)],
-            # 4 images: grid
-            [(40, 450, 250, 250), (305, 450, 250, 250), (40, 150, 250, 250), (305, 150, 250, 250)],
-            # 4 images: diamond-ish
-            [(170, 500, 250, 200), (40, 250, 200, 200), (350, 250, 200, 200), (170, 50, 250, 200)],
-        ]
+        # Creative layouts for 1, 2, or 3 photos (x, y, w, h, rotation)
+        layouts = {
+            1: [
+                # Centered large with slight tilt
+                [(70, 200, 455, 400, 2)],
+                # Off-center with decorative corner
+                [(40, 150, 400, 450, -3)],
+            ],
+            2: [
+                # Diagonal split
+                [(30, 300, 250, 300, 5), (310, 100, 250, 300, -5)],
+                # Overlapping frames
+                [(50, 250, 280, 350, 0), (250, 150, 280, 350, 8)],
+                # Side-by-side with tilt
+                [(40, 250, 250, 300, -4), (305, 250, 250, 300, 4)],
+            ],
+            3: [
+                # One large left, two small right stacked
+                [(30, 200, 280, 400, 0), (330, 420, 220, 180, 5), (330, 180, 220, 180, -5)],
+                # Triangle arrangement
+                [(170, 450, 250, 200, 0), (40, 150, 200, 200, -6), (350, 150, 200, 200, 6)],
+                # Vertical strip with overlapping
+                [(40, 400, 250, 250, 3), (200, 200, 250, 250, -3), (120, 50, 250, 250, 0)],
+            ],
+        }
 
         def draw_floral_border(pdf_canvas, width, height, color=GOLD):
             pdf_canvas.setStrokeColor(color)
@@ -1475,39 +1483,42 @@ def generate_wedding_book_task(self, book_id):
         pdf_canvas.drawCentredString(width / 2, height / 2 - 20, "Sang Hee & Fabio")
         pdf_canvas.showPage()
 
-        page_images = []
-        i = 0
-        # Shuffle layouts to ensure variety, but avoid repeating the same layout consecutively
-        random.shuffle(layouts)
-        layout_index = 0
+        def caption_similarity(cap1, cap2):
+            """Simple word overlap similarity between two captions."""
+            words1 = set(cap1.lower().split())
+            words2 = set(cap2.lower().split())
+            if not words1 or not words2:
+                return 0.0
+            intersection = words1 & words2
+            union = words1 | words2
+            return len(intersection) / len(union)
 
-        while i < total:
-            remaining = total - i
-            max_on_page = min(4, remaining)
-            # Pick a layout that fits the number of images, cycling through shuffled list
-            possible = [lay for lay in layouts if len(lay) == max_on_page]
-            if not possible:
-                # Fallback: create a simple grid
-                cols = min(2, max_on_page)
-                rows = math.ceil(max_on_page / cols)
-                cell_w = (width - 80) / cols
-                cell_h = (height - 200) / rows
-                lay = []
-                for r in range(rows):
-                    for col_idx in range(cols):
-                        if len(lay) < max_on_page:
-                            x = 40 + col_idx * cell_w
-                            y = height - 150 - (r + 1) * cell_h
-                            lay.append((x, y, cell_w - 10, cell_h - 10))
-                possible = [lay]
-            chosen_layout = possible[layout_index % len(possible)]
-            layout_index += 1
-            page_images.append((media_list[i:i + max_on_page], chosen_layout))
-            i += max_on_page
+        # Group media into pages of 1-3 based on caption similarity
+        page_groups = []
+        used = set()
+        for idx, media_obj in enumerate(media_list):
+            if idx in used:
+                continue
+            group = [media_obj]
+            used.add(idx)
+            # Try to add up to 2 more similar items
+            for j in range(idx + 1, min(idx + 3, total)):
+                if j in used:
+                    continue
+                if len(group) >= 3:
+                    break
+                # Check similarity with the first item in the group
+                cap1 = captions.get(str(media_obj.id), {}).get('it', '')
+                cap2 = captions.get(str(media_list[j].id), {}).get('it', '')
+                sim = caption_similarity(cap1, cap2)
+                if sim > 0.2:   # threshold – tune as needed
+                    group.append(media_list[j])
+                    used.add(j)
+            page_groups.append(group)
 
-        total_pages = len(page_images) + 1  # +1 for cover
+        total_pages = len(page_groups) + 1  # +1 for cover
 
-        for page_idx, (media_group, layout) in enumerate(page_images):
+        for page_idx, group in enumerate(page_groups):
             # Alternate background colors
             if page_idx % 2 == 0:
                 bg_color = SOFT_PINK
@@ -1517,15 +1528,27 @@ def generate_wedding_book_task(self, book_id):
             pdf_canvas.rect(0, 0, width, height, fill=1)
             draw_floral_border(pdf_canvas, width, height)
 
-            # Draw images
-            for slot_idx, media_obj in enumerate(media_group):
-                if slot_idx >= len(layout):
+            # Pick a random layout for the group size
+            group_size = len(group)
+            possible_layouts = layouts.get(group_size, layouts[1])
+            chosen_layout = random.choice(possible_layouts)
+
+            # Draw images with rotation
+            for slot_idx, media_obj in enumerate(group):
+                if slot_idx >= len(chosen_layout):
                     break
-                x, y, w, h = layout[slot_idx]
+                x, y, w, h, rotation = chosen_layout[slot_idx]
                 try:
                     file_content, _ = get_file_from_cloud(media_obj)
                     img = ImageReader(BytesIO(file_content))
-                    pdf_canvas.drawImage(img, x, y, w, h, preserveAspectRatio=True, mask='auto')
+                    pdf_canvas.saveState()
+                    # Translate to center of image, rotate, then draw
+                    cx = x + w / 2
+                    cy = y + h / 2
+                    pdf_canvas.translate(cx, cy)
+                    pdf_canvas.rotate(rotation)
+                    pdf_canvas.drawImage(img, -w/2, -h/2, w, h, preserveAspectRatio=True, mask='auto')
+                    pdf_canvas.restoreState()
                 except Exception as e:
                     logger.error(f"Could not draw image {media_obj.id}: {e}")
                     pdf_canvas.setFillColor(HexColor('#CCCCCC'))
@@ -1541,7 +1564,7 @@ def generate_wedding_book_task(self, book_id):
             pdf_canvas.setFont(FONT_NAME, 9)
             pdf_canvas.setFillColor(DARK)
             y_offset = caption_y
-            for media_obj in media_group:
+            for media_obj in group:
                 cap = captions.get(str(media_obj.id), {'it': '', 'ko': ''})
                 it_text = cap.get('it', '')
                 ko_text = cap.get('ko', '')
@@ -1557,11 +1580,11 @@ def generate_wedding_book_task(self, book_id):
                 if y_offset < 40:
                     break
 
-            draw_page_number(pdf_canvas, page_idx + 2, total_pages)  # +2 because cover is page 1
+            draw_page_number(pdf_canvas, page_idx + 2, total_pages)
             pdf_canvas.showPage()
 
             # Update progress (50% -> 100%)
-            progress = 50 + int((page_idx + 1) / len(page_images) * 50)
+            progress = 50 + int((page_idx + 1) / len(page_groups) * 50)
             book.progress = progress
             book.save()
 
