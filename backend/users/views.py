@@ -1344,7 +1344,31 @@ class MediaFileView(APIView):
         redis_client.set(cache_key, content)
         media.view_count += 1
         media.save(update_fields=['view_count'])
-        return HttpResponse(content, content_type=content_type)
+
+        # Support HTTP range requests for video streaming
+        range_header = request.META.get('HTTP_RANGE')
+        if range_header and media.media_type == 'video':
+            total_size = len(content)
+            # Parse "bytes=start-end"
+            range_match = re.match(r'bytes=(\d*)-(\d*)', range_header)
+            if range_match:
+                start_str, end_str = range_match.groups()
+                start = int(start_str) if start_str else 0
+                end = int(end_str) if end_str else total_size - 1
+                # Clamp to valid range
+                start = max(0, min(start, total_size - 1))
+                end = max(start, min(end, total_size - 1))
+                length = end - start + 1
+                partial_content = content[start:start + length]
+                response = HttpResponse(partial_content, status=206, content_type=content_type)
+                response['Content-Range'] = f'bytes {start}-{end}/{total_size}'
+                response['Accept-Ranges'] = 'bytes'
+                response['Content-Length'] = str(length)
+                return response
+
+        response = HttpResponse(content, content_type=content_type)
+        response['Accept-Ranges'] = 'bytes'
+        return response
 
 
 class MediaThumbnailView(APIView):

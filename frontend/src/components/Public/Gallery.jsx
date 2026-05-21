@@ -357,11 +357,8 @@ const Gallery = () => {
         fullImg.onerror = null;
       };
     } else {
-      // For video, show loading briefly then reveal the player
-      const timer = setTimeout(() => {
-        setModalImageState('full');
-      }, 1000);
-      return () => clearTimeout(timer);
+      // For video, start streaming immediately
+      setModalImageState('full');
     }
   }, [selectedMedia, API_URL]);
 
@@ -764,12 +761,25 @@ const Gallery = () => {
               </div>
             ) : (
               <div className="w-full flex items-center justify-center bg-black">
-                <ProtectedMediaPreview
-                  fileUrl={`${API_URL}/api/auth/media/${selectedMedia.id}/file/`}
-                  mediaType={selectedMedia.media_type}
-                  className="max-w-full max-h-[70vh] object-contain"
-                  alt={selectedMedia.caption || t('beautiful_moment')}
-                />
+                {selectedMedia.media_type === 'video' ? (
+                  <video
+                    src={`${API_URL}/api/auth/media/${selectedMedia.id}/file/`}
+                    controls
+                    autoPlay
+                    playsInline
+                    className="max-w-full max-h-[70vh]"
+                    onError={() => setModalImageState('loading')}
+                  >
+                    Your browser does not support the video tag.
+                  </video>
+                ) : (
+                  <ProtectedMediaPreview
+                    fileUrl={`${API_URL}/api/auth/media/${selectedMedia.id}/file/`}
+                    mediaType={selectedMedia.media_type}
+                    className="max-w-full max-h-[70vh] object-contain"
+                    alt={selectedMedia.caption || t('beautiful_moment')}
+                  />
+                )}
               </div>
             )}
 
