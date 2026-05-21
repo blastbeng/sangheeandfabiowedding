@@ -8,7 +8,11 @@ mkdir -p "$MODELS_DIR"
 SIM_MODEL="$MODELS_DIR/similarity_model.tflite"
 SIM_URL="https://storage.googleapis.com/tfhub-lite-models/google/lite-model/mobilenet_v2/1.0_224/feature-vector/1.tflite"
 
-if [ ! -f "$SIM_MODEL" ]; then
+if [ -f "$SIM_MODEL" ] && [ -s "$SIM_MODEL" ] && [ "$(head -c 4 "$SIM_MODEL")" = "TFL3" ]; then
+    echo "Similarity model already exists and is valid, skipping download."
+else
+    # Remove any existing invalid file
+    rm -f "$SIM_MODEL"
     echo "Downloading similarity model..."
     wget -q --show-progress --retry-connrefused --waitretry=5 --timeout=120 \
          -O "$SIM_MODEL" "$SIM_URL"
@@ -17,22 +21,22 @@ if [ ! -f "$SIM_MODEL" ]; then
         rm -f "$SIM_MODEL"
         exit 1
     fi
-    # Verify it's a valid TFLite file
     if [ "$(head -c 4 "$SIM_MODEL")" != "TFL3" ]; then
         echo "ERROR: similarity_model.tflite is not a valid TFLite file!"
         rm -f "$SIM_MODEL"
         exit 1
     fi
     echo "Similarity model downloaded successfully."
-else
-    echo "Similarity model already exists, skipping download."
 fi
 
 # --- caption_classifier.tflite (classification) ---
 CAP_MODEL="$MODELS_DIR/caption_classifier.tflite"
 CAP_URL="https://storage.googleapis.com/tfhub-lite-models/google/lite-model/mobilenet_v2/1.0_224/1.tflite"
 
-if [ ! -f "$CAP_MODEL" ]; then
+if [ -f "$CAP_MODEL" ] && [ -s "$CAP_MODEL" ] && [ "$(head -c 4 "$CAP_MODEL")" = "TFL3" ]; then
+    echo "Caption classifier model already exists and is valid, skipping download."
+else
+    rm -f "$CAP_MODEL"
     echo "Downloading caption classifier model..."
     wget -q --show-progress --retry-connrefused --waitretry=5 --timeout=120 \
          -O "$CAP_MODEL" "$CAP_URL"
@@ -47,19 +51,19 @@ if [ ! -f "$CAP_MODEL" ]; then
         exit 1
     fi
     echo "Caption classifier model downloaded successfully."
-else
-    echo "Caption classifier model already exists, skipping download."
 fi
 
 # --- imagenet_labels.json ---
 LABELS_FILE="$MODELS_DIR/imagenet_labels.json"
 LABELS_URL="https://storage.googleapis.com/download.tensorflow.org/data/ImageNetLabels.txt"
 
-if [ ! -f "$LABELS_FILE" ]; then
+if [ -f "$LABELS_FILE" ] && [ -s "$LABELS_FILE" ]; then
+    echo "ImageNet labels already exist and are non-empty, skipping download."
+else
+    rm -f "$LABELS_FILE"
     echo "Downloading ImageNet labels..."
     wget -q --show-progress --retry-connrefused --waitretry=5 --timeout=60 \
          -O /tmp/ImageNetLabels.txt "$LABELS_URL"
-    # Convert text file (one label per line) to JSON array
     python3 -c "
 import json
 with open('/tmp/ImageNetLabels.txt') as f:
@@ -69,8 +73,6 @@ with open('$LABELS_FILE', 'w') as f:
 "
     rm /tmp/ImageNetLabels.txt
     echo "ImageNet labels downloaded and converted."
-else
-    echo "ImageNet labels already exist, skipping download."
 fi
 
 echo "All models ready."
