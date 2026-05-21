@@ -800,7 +800,8 @@ const Gallery = () => {
             <div
               className="flex-1 min-h-0 relative bg-black"
               ref={mediaRef}
-              {...(isFullscreen ? { onTouchStart: handleTouchStart, onTouchEnd: handleTouchEnd } : {})}
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
             >
               {isFullscreen && (
                 <button
@@ -839,6 +840,8 @@ const Gallery = () => {
                       playsInline
                       className="absolute inset-0 w-full h-full object-contain"
                       onError={() => setModalImageState('loading')}
+                      onTouchStart={handleTouchStart}
+                      onTouchEnd={handleTouchEnd}
                     >
                       Your browser does not support the video tag.
                     </video>
@@ -848,6 +851,8 @@ const Gallery = () => {
                       src={`${API_URL}/api/auth/media/${selectedMedia.id}/file/`}
                       alt={selectedMedia.caption || t('beautiful_moment')}
                       className="absolute inset-0 w-full h-full object-contain"
+                      onTouchStart={handleTouchStart}
+                      onTouchEnd={handleTouchEnd}
                     />
                   )}
                   {/* Fullscreen button */}
