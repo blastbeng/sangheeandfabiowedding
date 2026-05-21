@@ -485,7 +485,9 @@ const resources = {
       "Actions": "Azioni",
       "Download": "Scarica",
       "Delete": "Elimina",
-      "Delete this wedding book?": "Eliminare questo libro di nozze?"
+      "Delete this wedding book?": "Eliminare questo libro di nozze?",
+      "Generating...": "Generazione in corso...",
+      "Need at least 20 approved media. Currently: {count}": "Servono almeno 20 media approvati. Attuali: {count}"
     }
   },
   ko: {
@@ -971,7 +973,9 @@ const resources = {
       "Actions": "작업",
       "Download": "다운로드",
       "Delete": "삭제",
-      "Delete this wedding book?": "이 웨딩북을 삭제하시겠습니까?"
+      "Delete this wedding book?": "이 웨딩북을 삭제하시겠습니까?",
+      "Generating...": "생성 중...",
+      "Need at least 20 approved media. Currently: {count}": "승인된 미디어가 최소 20개 필요합니다. 현재: {count}"
     }
   },
   en: {
@@ -1457,7 +1461,9 @@ const resources = {
       "Actions": "Actions",
       "Download": "Download",
       "Delete": "Delete",
-      "Delete this wedding book?": "Delete this wedding book?"
+      "Delete this wedding book?": "Delete this wedding book?",
+      "Generating...": "Generating...",
+      "Need at least 20 approved media. Currently: {count}": "Need at least 20 approved media. Currently: {count}"
     }
   }
 };

@@ -249,7 +249,9 @@ const WeddingBook = () => {
           <option value="">{t('All users')}</option>
           {users.map(u => (
             <option key={u.id} value={u.id}>
-              {u.first_name} {u.last_name} ({u.username})
+              {u.first_name || u.last_name
+                ? `${u.first_name || ''} ${u.last_name || ''}`.trim()
+                : u.username}
             </option>
           ))}
         </select>
@@ -260,9 +262,16 @@ const WeddingBook = () => {
         <button
           onClick={startGeneration}
           disabled={status === 'generating' || !canGenerate}
-          className="px-4 py-2 bg-wedding-navy text-white rounded disabled:opacity-50"
+          className="px-4 py-2 bg-wedding-navy text-white rounded disabled:opacity-50 flex items-center gap-2"
         >
-          {t('Generate Wedding Book')}
+          {status === 'generating' ? (
+            <>
+              <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
+              {t('Generating...')}
+            </>
+          ) : (
+            t('Generate Wedding Book')
+          )}
         </button>
         {bookId && (
           <button onClick={handleNewBook} className="px-4 py-2 bg-gray-500 text-white rounded">
@@ -279,11 +288,16 @@ const WeddingBook = () => {
           {selectedIds.length} / {MIN_MEDIA} {t('selected')}
         </span>
       </div>
+      {!canGenerate && !mediaLoading && (
+        <p className="text-sm text-red-500 mt-1">
+          {t('Need at least 20 approved media. Currently: {count}', { count: totalApproved })}
+        </p>
+      )}
 
       {status === 'generating' && (
-        <div className="mt-4">
+        <div className="mt-4 w-full max-w-full overflow-hidden">
           <progress value={progress} max="100" className="w-full" />
-          <span>{progress}%</span>
+          <span className="text-sm">{progress}%</span>
         </div>
       )}
 
@@ -304,44 +318,6 @@ const WeddingBook = () => {
           <button onClick={handleRegenerate} className="px-4 py-2 bg-yellow-500 text-white rounded mt-2">
             {t('Retry')}
           </button>
-        </div>
-      )}
-
-      {/* Media selection grid */}
-      {mediaLoading ? (
-        <div className="text-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500 mx-auto"></div>
-          <p className="text-gray-500 mt-2">{t('Loading media...')}</p>
-        </div>
-      ) : mediaError ? (
-        <div className="text-center py-8">
-          <p className="text-red-500 mb-2">{mediaError}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-gray-200 rounded"
-          >
-            {t('Retry')}
-          </button>
-        </div>
-      ) : filteredMedia.length === 0 ? (
-        <div className="text-center py-8 text-gray-500">{t('No approved media found.')}</div>
-      ) : (
-        <div className="grid grid-cols-4 gap-2 mb-4">
-          {filteredMedia.map(item => (
-            <div
-              key={item.id}
-              className={`cursor-pointer border-2 ${selectedIds.includes(item.id) ? 'border-wedding-azure' : 'border-transparent'}`}
-              onClick={() => toggleSelect(item.id)}
-            >
-              <ThumbnailImage
-                mediaId={item.id}
-                apiUrl={API_URL}
-                alt={item.caption || t('beautiful_moment')}
-                className="w-full h-32 object-cover"
-                mediaType={item.media_type}
-              />
-            </div>
-          ))}
         </div>
       )}
 
@@ -391,6 +367,45 @@ const WeddingBook = () => {
           </div>
         )}
       </div>
+
+      {/* Media selection grid */}
+      {mediaLoading ? (
+        <div className="text-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500 mx-auto"></div>
+          <p className="text-gray-500 mt-2">{t('Loading media...')}</p>
+        </div>
+      ) : mediaError ? (
+        <div className="text-center py-8">
+          <p className="text-red-500 mb-2">{mediaError}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-gray-200 rounded"
+          >
+            {t('Retry')}
+          </button>
+        </div>
+      ) : filteredMedia.length === 0 ? (
+        <div className="text-center py-8 text-gray-500">{t('No approved media found.')}</div>
+      ) : (
+        <div className="grid grid-cols-4 gap-2 mb-4">
+          {filteredMedia.map(item => (
+            <div
+              key={item.id}
+              className={`cursor-pointer border-2 ${selectedIds.includes(item.id) ? 'border-wedding-azure' : 'border-transparent'}`}
+              onClick={() => toggleSelect(item.id)}
+            >
+              <ThumbnailImage
+                mediaId={item.id}
+                apiUrl={API_URL}
+                alt={item.caption || t('beautiful_moment')}
+                className="w-full h-32 object-cover"
+                mediaType={item.media_type}
+              />
+            </div>
+          ))}
+        </div>
+      )}
+
     </div>
   );
 };
