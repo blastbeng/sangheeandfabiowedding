@@ -1,8 +1,6 @@
 import io
 import logging
 from PIL import Image
-from transformers import VisionEncoderDecoderModel, ViTFeatureExtractor, AutoTokenizer, MarianMTModel, MarianTokenizer
-import torch
 import cv2
 import numpy as np
 from .cloud_clients import get_file_from_cloud
@@ -50,6 +48,8 @@ _tokenizer_ko = None
 def _load_caption_model():
     global _caption_feature_extractor, _caption_tokenizer, _caption_model
     if _caption_model is None:
+        from transformers import VisionEncoderDecoderModel, ViTFeatureExtractor, AutoTokenizer
+        import torch
         logger.info("Loading ViT-GPT2 image captioning model (optimized for CPU)...")
         _caption_feature_extractor = ViTFeatureExtractor.from_pretrained("nlpconnect/vit-gpt2-image-captioning")
         _caption_tokenizer = AutoTokenizer.from_pretrained("nlpconnect/vit-gpt2-image-captioning")
@@ -71,6 +71,8 @@ def _load_translator(lang):
     global _translator_it, _translator_ko, _tokenizer_it, _tokenizer_ko
     if lang == 'it':
         if _translator_it is None:
+            from transformers import MarianMTModel, MarianTokenizer
+            import torch
             logger.info("Loading English→Italian translation model (optimized)...")
             _tokenizer_it = MarianTokenizer.from_pretrained("Helsinki-NLP/opus-mt-en-it")
             _translator_it = MarianMTModel.from_pretrained(
@@ -86,6 +88,8 @@ def _load_translator(lang):
         return _tokenizer_it, _translator_it
     else:  # ko
         if _translator_ko is None:
+            from transformers import MarianMTModel, MarianTokenizer
+            import torch
             logger.info("Loading English→Korean translation model (optimized)...")
             _tokenizer_ko = MarianTokenizer.from_pretrained("Helsinki-NLP/opus-mt-en-ko")
             _translator_ko = MarianMTModel.from_pretrained(
@@ -102,6 +106,7 @@ def _load_translator(lang):
 
 
 def generate_english_caption(image_bytes: bytes) -> str:
+    import torch
     feature_extractor, tokenizer, model = _load_caption_model()
     image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
     pixel_values = feature_extractor(images=image, return_tensors="pt").pixel_values
@@ -121,6 +126,7 @@ def generate_english_caption(image_bytes: bytes) -> str:
 
 
 def translate_text(text: str, target_lang: str) -> str:
+    import torch
     tokenizer, model = _load_translator(target_lang)
     inputs = tokenizer(text, return_tensors="pt", padding=True, truncation=True)
     if torch.cuda.is_available():
@@ -132,6 +138,7 @@ def translate_text(text: str, target_lang: str) -> str:
 
 def unload_models():
     """Unload all AI models to free memory on Raspberry Pi."""
+    import torch
     global _caption_feature_extractor, _caption_tokenizer, _caption_model
     global _translator_it, _translator_ko, _tokenizer_it, _tokenizer_ko
     _caption_feature_extractor = None
