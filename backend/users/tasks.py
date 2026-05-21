@@ -7,6 +7,8 @@ from django.core.files.base import ContentFile
 from django.db.models import Count, Q
 import hashlib
 import os
+import math
+import random
 import requests
 import cv2
 import face_recognition
@@ -15,9 +17,15 @@ import numpy as np
 import pickle
 from PIL import Image, ImageOps
 from io import BytesIO
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.units import mm
+from reportlab.pdfgen import canvas
+from reportlab.lib.utils import ImageReader
+from reportlab.lib.colors import HexColor
 
-from .models import Media, CustomUser, FaceTag, FaceGroup
+from .models import Media, CustomUser, FaceTag, FaceGroup, WeddingBook
 from .cloud_clients import NextcloudClient, get_file_from_cloud
+from .wedding_book_utils import generate_english_caption, translate_text
 from config.settings import (
     NEXTCLOUD_URL, NEXTCLOUD_USERNAME, NEXTCLOUD_PASSWORD, NEXTCLOUD_FOLDER
 )
@@ -1346,3 +1354,180 @@ def compute_similarity_ordering():
     ).update(similarity_position=None)
 
     logger.info(f"[similarity] Ordered {len(valid_media)} media items by visual similarity.")
+
+
+@shared_task(bind=True, max_retries=1)
+def generate_wedding_book_task(self, book_id):
+    try:
+        book = WeddingBook.objects.get(id=book_id)
+    except WeddingBook.DoesNotExist:
+        return
+
+    try:
+        book.status = WeddingBook.Status.PROCESSING
+        book.progress = 0
+        book.error_message = ''
+        book.save()
+
+        media_ids = book.selected_media_ids
+        if not media_ids:
+            book.status = WeddingBook.Status.FAILED
+            book.error_message = 'No media selected.'
+            book.save()
+            return
+
+        media_list = list(Media.objects.filter(id__in=media_ids, status='approved').order_by('id'))
+        if not media_list:
+            book.status = WeddingBook.Status.FAILED
+            book.error_message = 'No approved media found for the selected IDs.'
+            book.save()
+            return
+
+        total = len(media_list)
+        captions = {}
+
+        # Step 1: generate captions
+        for idx, media_obj in enumerate(media_list):
+            try:
+                file_content, _ = get_file_from_cloud(media_obj)
+                if file_content is None:
+                    raise Exception("File not found in cloud")
+                eng_caption = generate_english_caption(file_content)
+                it_caption = translate_text(eng_caption, 'it')
+                ko_caption = translate_text(eng_caption, 'ko')
+                captions[str(media_obj.id)] = {'it': it_caption, 'ko': ko_caption}
+            except Exception as e:
+                logger.error(f"Caption generation failed for media {media_obj.id}: {e}")
+                captions[str(media_obj.id)] = {'it': '', 'ko': ''}
+
+            progress = int((idx + 1) / total * 50)
+            book.progress = progress
+            book.captions_data = captions
+            book.save()
+
+        # Step 2: build PDF
+        buffer = BytesIO()
+        pdf_canvas = canvas.Canvas(buffer, pagesize=A4)
+        width, height = A4
+
+        GOLD = HexColor('#D4AF37')
+        SOFT_PINK = HexColor('#F8E8E8')
+        WHITE = HexColor('#FFFFFF')
+        DARK = HexColor('#333333')
+        FONT_NAME = 'Helvetica'
+        FONT_BOLD = 'Helvetica-Bold'
+
+        layouts = [
+            [(70, 200, 455, 400)],
+            [(40, 250, 250, 300), (305, 250, 250, 300)],
+            [(70, 450, 455, 250), (70, 100, 455, 250)],
+            [(40, 200, 280, 400), (340, 400, 220, 200), (340, 150, 220, 200)],
+            [(40, 450, 250, 250), (305, 450, 250, 250), (170, 100, 250, 250)],
+            [(40, 450, 250, 250), (305, 450, 250, 250), (40, 150, 250, 250), (305, 150, 250, 250)],
+        ]
+
+        def draw_floral_border(pdf_canvas, width, height):
+            pdf_canvas.setStrokeColor(GOLD)
+            pdf_canvas.setLineWidth(1.5)
+            pdf_canvas.rect(15, 15, width - 30, height - 30)
+            pdf_canvas.rect(18, 18, width - 36, height - 36)
+            pdf_canvas.setLineWidth(1)
+            for x, y in [(20, 20), (width - 20, 20), (20, height - 20), (width - 20, height - 20)]:
+                pdf_canvas.arc(x - 10, y - 10, x + 10, y + 10, 0, 360)
+
+        page_images = []
+        i = 0
+        while i < total:
+            remaining = total - i
+            max_on_page = min(4, remaining)
+            possible = [lay for lay in layouts if len(lay) == max_on_page]
+            if not possible:
+                cols = min(2, max_on_page)
+                rows = math.ceil(max_on_page / cols)
+                cell_w = (width - 80) / cols
+                cell_h = (height - 200) / rows
+                lay = []
+                for r in range(rows):
+                    for col_idx in range(cols):
+                        if len(lay) < max_on_page:
+                            x = 40 + col_idx * cell_w
+                            y = height - 150 - (r + 1) * cell_h
+                            lay.append((x, y, cell_w - 10, cell_h - 10))
+                possible = [lay]
+            chosen_layout = random.choice(possible)
+            page_images.append((media_list[i:i + max_on_page], chosen_layout))
+            i += max_on_page
+
+        total_pages = len(page_images)
+
+        for page_idx, (media_group, layout) in enumerate(page_images):
+            pdf_canvas.setFillColor(SOFT_PINK if page_idx % 2 == 0 else WHITE)
+            pdf_canvas.rect(0, 0, width, height, fill=1)
+            draw_floral_border(pdf_canvas, width, height)
+
+            for slot_idx, media_obj in enumerate(media_group):
+                if slot_idx >= len(layout):
+                    break
+                x, y, w, h = layout[slot_idx]
+                try:
+                    file_content, _ = get_file_from_cloud(media_obj)
+                    img = ImageReader(BytesIO(file_content))
+                    pdf_canvas.drawImage(img, x, y, w, h, preserveAspectRatio=True, mask='auto')
+                except Exception as e:
+                    logger.error(f"Could not draw image {media_obj.id}: {e}")
+                    pdf_canvas.setFillColor(HexColor('#CCCCCC'))
+                    pdf_canvas.rect(x, y, w, h, fill=1)
+                    pdf_canvas.setFillColor(DARK)
+                    pdf_canvas.drawString(x + 10, y + h / 2, "Image missing")
+
+            caption_y = 120
+            pdf_canvas.setFont(FONT_BOLD, 10)
+            pdf_canvas.setFillColor(GOLD)
+            pdf_canvas.drawString(40, caption_y + 20, "Didascalia / 캡션")
+            pdf_canvas.setFont(FONT_NAME, 9)
+            pdf_canvas.setFillColor(DARK)
+            y_offset = caption_y
+            for media_obj in media_group:
+                cap = captions.get(str(media_obj.id), {'it': '', 'ko': ''})
+                it_text = cap.get('it', '')
+                ko_text = cap.get('ko', '')
+                combined = f"{it_text}  |  {ko_text}"
+                if pdf_canvas.stringWidth(combined, FONT_NAME, 9) > width - 80:
+                    pdf_canvas.drawString(40, y_offset, it_text[:80])
+                    y_offset -= 12
+                    pdf_canvas.drawString(40, y_offset, ko_text[:80])
+                    y_offset -= 12
+                else:
+                    pdf_canvas.drawString(40, y_offset, combined)
+                    y_offset -= 14
+                if y_offset < 40:
+                    break
+
+            pdf_canvas.setFont(FONT_NAME, 8)
+            pdf_canvas.setFillColor(GOLD)
+            pdf_canvas.drawRightString(width - 40, 20, f"{page_idx + 1} / {total_pages}")
+            pdf_canvas.showPage()
+
+            progress = 50 + int((page_idx + 1) / total_pages * 50)
+            book.progress = progress
+            book.save()
+
+        pdf_canvas.save()
+        pdf_content = buffer.getvalue()
+        buffer.close()
+
+        filename = f"wedding_book_{book.id}.pdf"
+        book.pdf_file.save(filename, ContentFile(pdf_content), save=False)
+        book.status = WeddingBook.Status.COMPLETED
+        book.progress = 100
+        book.save()
+
+    except Exception as e:
+        logger.exception("Wedding book generation failed")
+        try:
+            book = WeddingBook.objects.get(id=book_id)
+            book.status = WeddingBook.Status.FAILED
+            book.error_message = str(e)[:500]
+            book.save()
+        except Exception:
+            pass

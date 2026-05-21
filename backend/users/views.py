@@ -26,7 +26,7 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings as django_settings
-from django.http import HttpResponse, Http404
+from django.http import FileResponse, HttpResponse, Http404
 from dotenv import load_dotenv, set_key
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -37,16 +37,17 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenRefreshView
 from allauth.socialaccount.models import SocialAccount
 from celery.result import AsyncResult
-from .models import Media, SiteSettings, FaceGroup, FaceTag, CookieConsent
+from .models import Media, SiteSettings, FaceGroup, FaceTag, CookieConsent, WeddingBook
 from .serializers import (
     CustomUserSerializer, MediaSerializer, MediaModerationSerializer,
     AdminUserSerializer, SiteSettingsSerializer, BulkModerationSerializer,
     PublicMediaSerializer, PublicUserSerializer, FaceGroupSerializer,
     FaceTagSerializer,
-    CookieConsentSerializer
+    CookieConsentSerializer,
+    WeddingBookSerializer, GenerateWeddingBookSerializer,
 )
 from .cloud_clients import get_file_from_cloud, NextcloudClient
-from .tasks import upload_media_task, delete_media_task, detect_faces_task, backfill_faces_periodic
+from .tasks import upload_media_task, delete_media_task, detect_faces_task, backfill_faces_periodic, generate_wedding_book_task
 from .utils import process_profile_picture
 from .thumbnails import PROFILE_CACHE_KEY_PREFIX
 from .rate_limit import check_rate_limit, record_failed_attempt
@@ -1924,3 +1925,75 @@ class CookieConsentView(APIView):
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+# ==================== WEDDING BOOK VIEWS ====================
+
+class WeddingBookGenerateView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def post(self, request):
+        serializer = GenerateWeddingBookSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        media_ids = serializer.validated_data['media_ids']
+
+        valid_ids = Media.objects.filter(
+            id__in=media_ids, status='approved'
+        ).values_list('id', flat=True)
+        if not valid_ids:
+            return Response({'error': 'No valid approved media found.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        book = WeddingBook.objects.create(
+            selected_media_ids=list(valid_ids),
+            status=WeddingBook.Status.PENDING,
+        )
+        generate_wedding_book_task.delay(book.id)
+        return Response({'id': book.id}, status=status.HTTP_201_CREATED)
+
+
+class WeddingBookStatusView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def get(self, request, book_id):
+        try:
+            book = WeddingBook.objects.get(id=book_id)
+        except WeddingBook.DoesNotExist:
+            return Response({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
+        serializer = WeddingBookSerializer(book, context={'request': request})
+        return Response(serializer.data)
+
+
+class WeddingBookDownloadView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def get(self, request, book_id):
+        try:
+            book = WeddingBook.objects.get(id=book_id, status=WeddingBook.Status.COMPLETED)
+        except WeddingBook.DoesNotExist:
+            return Response({'error': 'Completed book not found'}, status=status.HTTP_404_NOT_FOUND)
+        if not book.pdf_file:
+            return Response({'error': 'PDF file missing'}, status=status.HTTP_404_NOT_FOUND)
+        file_path = book.pdf_file.path
+        if not os.path.exists(file_path):
+            return Response({'error': 'File not found on disk'}, status=status.HTTP_404_NOT_FOUND)
+        return FileResponse(open(file_path, 'rb'), as_attachment=True, filename=os.path.basename(file_path))
+
+
+class WeddingBookRegenerateView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def post(self, request, book_id):
+        try:
+            book = WeddingBook.objects.get(id=book_id)
+        except WeddingBook.DoesNotExist:
+            return Response({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        book.status = WeddingBook.Status.PENDING
+        book.progress = 0
+        book.error_message = ''
+        book.captions_data = {}
+        if book.pdf_file:
+            book.pdf_file.delete(save=False)
+        book.save()
+        generate_wedding_book_task.delay(book.id)
+        return Response({'id': book.id, 'status': 'pending'})

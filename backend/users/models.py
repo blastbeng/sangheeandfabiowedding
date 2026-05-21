@@ -289,6 +289,34 @@ class FailedAttempt(models.Model):
         return f"{self.ip_address} - {self.endpoint} at {self.timestamp}"
 
 
+class WeddingBook(models.Model):
+    class Status(models.TextChoices):
+        PENDING = 'pending', 'Pending'
+        PROCESSING = 'processing', 'Processing'
+        COMPLETED = 'completed', 'Completed'
+        FAILED = 'failed', 'Failed'
+
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.PENDING,
+        db_index=True,
+    )
+    progress = models.PositiveSmallIntegerField(default=0)  # 0-100
+    selected_media_ids = models.JSONField(default=list)     # list of Media IDs
+    captions_data = models.JSONField(default=dict)          # {media_id: {"it": "...", "ko": "..."}}
+    pdf_file = models.FileField(upload_to='wedding_books/', null=True, blank=True)
+    error_message = models.TextField(blank=True, default='')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"WeddingBook {self.id} ({self.status})"
+
+
 @receiver(post_save, sender=Media)
 def trigger_face_detection(sender, instance, created, **kwargs):
     if instance.status == 'approved' and instance.media_type == 'image':

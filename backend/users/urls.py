@@ -24,6 +24,10 @@ from .views import (
     MediaShareView,
     PublicMediaThumbnailView,
     MediaThumbnailView,
+    WeddingBookGenerateView,
+    WeddingBookStatusView,
+    WeddingBookDownloadView,
+    WeddingBookRegenerateView,
 )
 
 urlpatterns = [
@@ -71,6 +75,10 @@ urlpatterns = [
     path('admin/users/<int:user_id>/toggle-staff/', AdminUserToggleStaffView.as_view(), name='admin-user-toggle-staff'),
     path('admin/facetags/', FaceTagListView.as_view(), name='facetag-list'),
     path('admin/facetags/<int:tag_id>/', FaceTagDetailView.as_view(), name='facetag-detail'),
+    path('admin/wedding-book/generate/', WeddingBookGenerateView.as_view(), name='wedding-book-generate'),
+    path('admin/wedding-book/status/<int:book_id>/', WeddingBookStatusView.as_view(), name='wedding-book-status'),
+    path('admin/wedding-book/download/<int:book_id>/', WeddingBookDownloadView.as_view(), name='wedding-book-download'),
+    path('admin/wedding-book/regenerate/<int:book_id>/', WeddingBookRegenerateView.as_view(), name='wedding-book-regenerate'),
     path('face-groups/', FaceGroupListView.as_view(), name='face-group-list'),
     path('cookie-consent/', CookieConsentView.as_view(), name='cookie-consent'),
 ]

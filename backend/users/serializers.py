@@ -5,7 +5,7 @@ from django.conf import settings
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.staticfiles.storage import staticfiles_storage
 from django.utils.translation import gettext_lazy as _
-from .models import CustomUser, Media, SiteSettings, FaceGroup, FaceTag, CookieConsent
+from .models import CustomUser, Media, SiteSettings, FaceGroup, FaceTag, CookieConsent, WeddingBook
 from .profanity_words import contains_profanity
 from .nsfw_utils import check_nsfw_image, is_image_file
 
@@ -469,3 +469,30 @@ class CookieConsentSerializer(serializers.ModelSerializer):
         model = CookieConsent
         fields = ('id', 'user', 'analytics', 'marketing', 'necessary', 'created_at', 'updated_at')
         read_only_fields = ('id', 'user', 'created_at', 'updated_at')
+
+
+class WeddingBookSerializer(serializers.ModelSerializer):
+    download_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = WeddingBook
+        fields = [
+            'id', 'status', 'progress', 'selected_media_ids',
+            'captions_data', 'error_message', 'created_at', 'updated_at',
+            'download_url',
+        ]
+        read_only_fields = ['status', 'progress', 'captions_data', 'error_message', 'pdf_file', 'download_url']
+
+    def get_download_url(self, obj):
+        if obj.status == WeddingBook.Status.COMPLETED and obj.pdf_file:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.pdf_file.url)
+            return obj.pdf_file.url
+        return None
+
+
+class GenerateWeddingBookSerializer(serializers.Serializer):
+    media_ids = serializers.ListField(
+        child=serializers.IntegerField(), allow_empty=False
+    )
