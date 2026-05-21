@@ -28,20 +28,35 @@ fi
 
 # --- caption_classifier.tflite (classification) ---
 CAP_MODEL="$MODELS_DIR/caption_classifier.tflite"
-CAP_URL="https://tfhub.dev/google/lite-model/mobilenet_v2/1.0_224/1?lite-format=tflite"
+CAP_ARCHIVE="/tmp/cap_model.tar.gz"
+CAP_URL="https://www.kaggle.com/api/v1/models/google/mobilenet-v2/tensorFlow2/100-224-classification/2/download"
 
 if [ -f "$CAP_MODEL" ] && [ -s "$CAP_MODEL" ] && [ "$(head -c 4 "$CAP_MODEL")" = "TFL3" ]; then
     echo "Caption classifier model already exists and is valid, skipping download."
 else
-    rm -f "$CAP_MODEL"
-    echo "Downloading caption classifier model..."
-    curl -fSL --compressed --retry 5 --retry-delay 5 --connect-timeout 30 --max-time 120 \
-         -o "$CAP_MODEL" "$CAP_URL" || echo "WARNING: caption classifier download failed"
-    if [ -s "$CAP_MODEL" ] && [ "$(head -c 4 "$CAP_MODEL")" = "TFL3" ]; then
-        echo "Caption classifier model downloaded successfully."
+    rm -f "$CAP_MODEL" "$CAP_ARCHIVE"
+    echo "Downloading caption classifier model from Kaggle..."
+    if curl -fSL --retry 5 --retry-delay 5 --connect-timeout 30 --max-time 120 \
+         -o "$CAP_ARCHIVE" "$CAP_URL"; then
+        echo "Extracting caption classifier model..."
+        TFLITE_FILE=$(tar -tzf "$CAP_ARCHIVE" | grep '\.tflite$' | head -1)
+        if [ -n "$TFLITE_FILE" ]; then
+            tar -xzf "$CAP_ARCHIVE" -C /tmp "$TFLITE_FILE"
+            mv "/tmp/$TFLITE_FILE" "$CAP_MODEL"
+            rm -f "$CAP_ARCHIVE"
+            if [ -s "$CAP_MODEL" ] && [ "$(head -c 4 "$CAP_MODEL")" = "TFL3" ]; then
+                echo "Caption classifier model downloaded and extracted successfully."
+            else
+                echo "WARNING: Extracted caption_classifier.tflite is invalid – continuing without it."
+                rm -f "$CAP_MODEL"
+            fi
+        else
+            echo "WARNING: No .tflite file found in the Kaggle archive – continuing without caption classifier."
+            rm -f "$CAP_ARCHIVE"
+        fi
     else
-        echo "WARNING: caption_classifier.tflite is invalid or missing – continuing without it."
-        rm -f "$CAP_MODEL"
+        echo "WARNING: caption classifier download failed – continuing without it."
+        rm -f "$CAP_ARCHIVE"
     fi
 fi
 

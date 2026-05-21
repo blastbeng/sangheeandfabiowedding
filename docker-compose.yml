@@ -173,7 +173,7 @@ services:
     pull_policy: build
     build: ./backend
     container_name: wedding-celery-beat
-    command: sh -c "/usr/local/bin/download_models.sh; celery -A config beat --loglevel=info"
+    command: celery -A config beat --loglevel=info
     volumes:
       - models_data:/app/models
     environment:
