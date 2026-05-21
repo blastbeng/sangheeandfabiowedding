@@ -1,13 +1,14 @@
 import io
 import logging
 from PIL import Image
-from transformers import BlipProcessor, BlipForConditionalGeneration, MarianMTModel, MarianTokenizer
+from transformers import VisionEncoderDecoderModel, ViTFeatureExtractor, AutoTokenizer, MarianMTModel, MarianTokenizer
 import torch
 
 logger = logging.getLogger(__name__)
 
 # ---------- lazy model loading ----------
-_caption_processor = None
+_caption_feature_extractor = None
+_caption_tokenizer = None
 _caption_model = None
 _translator_it = None
 _translator_ko = None
@@ -16,22 +17,23 @@ _tokenizer_ko = None
 
 
 def _load_caption_model():
-    global _caption_processor, _caption_model
+    global _caption_feature_extractor, _caption_tokenizer, _caption_model
     if _caption_model is None:
-        logger.info("Loading BLIP image captioning model (optimized for CPU)...")
-        _caption_processor = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-base")
-        _caption_model = BlipForConditionalGeneration.from_pretrained(
-            "Salesforce/blip-image-captioning-base",
+        logger.info("Loading ViT-GPT2 image captioning model (optimized for CPU)...")
+        _caption_feature_extractor = ViTFeatureExtractor.from_pretrained("nlpconnect/vit-gpt2-image-captioning")
+        _caption_tokenizer = AutoTokenizer.from_pretrained("nlpconnect/vit-gpt2-image-captioning")
+        _caption_model = VisionEncoderDecoderModel.from_pretrained(
+            "nlpconnect/vit-gpt2-image-captioning",
             torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32
         )
         # Limit CPU threads to avoid overloading the Raspberry Pi
-        torch.set_num_threads(4)
+        torch.set_num_threads(2)
         if torch.cuda.is_available():
             _caption_model = _caption_model.to("cuda")
         else:
             _caption_model = _caption_model.to('cpu')
         _caption_model.eval()
-    return _caption_processor, _caption_model
+    return _caption_feature_extractor, _caption_tokenizer, _caption_model
 
 
 def _load_translator(lang):
@@ -44,7 +46,7 @@ def _load_translator(lang):
                 "Helsinki-NLP/opus-mt-en-it",
                 torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32
             )
-            torch.set_num_threads(4)
+            torch.set_num_threads(2)
             if torch.cuda.is_available():
                 _translator_it = _translator_it.to("cuda")
             else:
@@ -59,7 +61,7 @@ def _load_translator(lang):
                 "Helsinki-NLP/opus-mt-en-ko",
                 torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32
             )
-            torch.set_num_threads(4)
+            torch.set_num_threads(2)
             if torch.cuda.is_available():
                 _translator_ko = _translator_ko.to("cuda")
             else:
@@ -69,14 +71,14 @@ def _load_translator(lang):
 
 
 def generate_english_caption(image_bytes: bytes) -> str:
-    processor, model = _load_caption_model()
+    feature_extractor, tokenizer, model = _load_caption_model()
     image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
-    inputs = processor(image, return_tensors="pt")
+    pixel_values = feature_extractor(images=image, return_tensors="pt").pixel_values
     if torch.cuda.is_available():
-        inputs = {k: v.to("cuda") for k, v in inputs.items()}
+        pixel_values = pixel_values.to("cuda")
     with torch.no_grad():
-        out = model.generate(**inputs, max_length=50, num_beams=5)
-    caption = processor.decode(out[0], skip_special_tokens=True)
+        out = model.generate(pixel_values, max_length=50, num_beams=5)
+    caption = tokenizer.decode(out[0], skip_special_tokens=True)
     return caption.strip()
 
 
@@ -88,3 +90,18 @@ def translate_text(text: str, target_lang: str) -> str:
     with torch.no_grad():
         translated = model.generate(**inputs)
     return tokenizer.decode(translated[0], skip_special_tokens=True).strip()
+
+
+def unload_models():
+    """Unload all AI models to free memory on Raspberry Pi."""
+    global _caption_feature_extractor, _caption_tokenizer, _caption_model
+    global _translator_it, _translator_ko, _tokenizer_it, _tokenizer_ko
+    _caption_feature_extractor = None
+    _caption_tokenizer = None
+    _caption_model = None
+    _translator_it = None
+    _translator_ko = None
+    _tokenizer_it = None
+    _tokenizer_ko = None
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()

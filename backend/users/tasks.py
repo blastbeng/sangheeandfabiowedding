@@ -25,7 +25,7 @@ from reportlab.lib.colors import HexColor
 
 from .models import Media, CustomUser, FaceTag, FaceGroup, WeddingBook
 from .cloud_clients import NextcloudClient, get_file_from_cloud
-from .wedding_book_utils import generate_english_caption, translate_text
+from .wedding_book_utils import generate_english_caption, translate_text, unload_models
 from config.settings import (
     NEXTCLOUD_URL, NEXTCLOUD_USERNAME, NEXTCLOUD_PASSWORD, NEXTCLOUD_FOLDER
 )
@@ -1425,9 +1425,9 @@ def generate_wedding_book_task(self, book_id):
         try:
             from reportlab.pdfbase import pdfmetrics
             from reportlab.pdfbase.ttfonts import TTFont
-            # Uncomment and adjust path to register a custom cursive font:
-            # pdfmetrics.registerFont(TTFont('Cursive', os.path.join(django_settings.BASE_DIR, 'static', 'fonts', 'GreatVibes-Regular.ttf')))
-            # CURSIVE = 'Cursive'
+            font_path = os.path.join(django_settings.BASE_DIR, 'static', 'fonts', 'GreatVibes-Regular.ttf')
+            pdfmetrics.registerFont(TTFont('Cursive', font_path))
+            CURSIVE = 'Cursive'
         except Exception:
             pass
 
@@ -1574,6 +1574,9 @@ def generate_wedding_book_task(self, book_id):
         book.status = WeddingBook.Status.COMPLETED
         book.progress = 100
         book.save()
+
+        # Unload AI models to free memory on Raspberry Pi
+        unload_models()
 
     except Exception as e:
         logger.exception("Wedding book generation failed")
