@@ -1378,6 +1378,102 @@ def compute_similarity_ordering():
     logger.info(f"[similarity] Ordered {len(valid_media)} media items by visual similarity.")
 
 
+def _cluster_images_for_pages(media_list):
+    """
+    Cluster a list of Media objects (images only) into groups of 1-3
+    using MobileNetV2 embeddings. Returns a list of lists of Media objects.
+    """
+    import tflite_runtime.interpreter as tflite
+    import numpy as np
+    from PIL import Image
+    from io import BytesIO
+    import os, requests
+    from django.conf import settings as django_settings
+
+    MODEL_URL = (
+        "https://tfhub.dev/google/lite-model/imagenet/mobilenet_v2_100_224/"
+        "feature_vector/2/default/1?lite-format=tflite"
+    )
+    MODELS_DIR = os.path.join(django_settings.BASE_DIR, 'models')
+    os.makedirs(MODELS_DIR, exist_ok=True)
+    MODEL_PATH = os.path.join(MODELS_DIR, 'similarity_model.tflite')
+
+    if not os.path.exists(MODEL_PATH):
+        logger.info("[wedding_book] Downloading MobileNetV2 TFLite model...")
+        resp = requests.get(MODEL_URL, timeout=120)
+        resp.raise_for_status()
+        with open(MODEL_PATH, "wb") as f:
+            f.write(resp.content)
+
+    interpreter = tflite.Interpreter(model_path=MODEL_PATH)
+    interpreter.allocate_tensors()
+    input_details = interpreter.get_input_details()
+    output_details = interpreter.get_output_details()
+
+    embeddings = []
+    valid_media = []
+
+    for media in media_list:
+        try:
+            content, _ = get_file_from_cloud(media)
+            if content is None:
+                continue
+            img = Image.open(BytesIO(content)).convert('RGB').resize((224, 224))
+            img_array = np.array(img, dtype=np.float32) / 127.5 - 1.0
+            img_array = np.expand_dims(img_array, axis=0)
+            interpreter.set_tensor(input_details[0]['index'], img_array)
+            interpreter.invoke()
+            embedding = interpreter.get_tensor(output_details[0]['index'])[0]
+            embeddings.append(embedding)
+            valid_media.append(media)
+        except Exception as e:
+            logger.warning(f"[wedding_book] Could not embed media {media.id}: {e}")
+
+    if len(valid_media) < 2:
+        # Not enough to cluster – just return single-image groups
+        return [[m] for m in valid_media]
+
+    # Normalize embeddings
+    embeddings = np.array(embeddings)
+    norms = np.linalg.norm(embeddings, axis=1, keepdims=True)
+    norms[norms == 0] = 1e-10
+    embeddings = embeddings / norms
+
+    # Greedy agglomerative clustering with max cluster size 3
+    n = len(valid_media)
+    clusters = [[i] for i in range(n)]          # list of lists of indices
+    centroids = [embeddings[i] for i in range(n)]  # mean embedding per cluster
+
+    while True:
+        best_pair = None
+        best_dist = float('inf')
+        for i in range(len(clusters)):
+            for j in range(i + 1, len(clusters)):
+                if len(clusters[i]) + len(clusters[j]) > 3:
+                    continue
+                dist = np.linalg.norm(centroids[i] - centroids[j])
+                if dist < best_dist:
+                    best_dist = dist
+                    best_pair = (i, j)
+        if best_pair is None:
+            break
+        i, j = best_pair
+        # Merge cluster j into i
+        clusters[i].extend(clusters[j])
+        # Update centroid
+        size_i = len(clusters[i])
+        centroids[i] = (centroids[i] * (size_i - len(clusters[j])) + centroids[j] * len(clusters[j])) / size_i
+        # Remove j
+        del clusters[j]
+        del centroids[j]
+
+    # Convert indices back to media objects
+    result = []
+    for cluster in clusters:
+        result.append([valid_media[idx] for idx in cluster])
+    return result
+
+
 @shared_task(bind=True, max_retries=1)
 def generate_wedding_book_task(self, book_id):
     try:
@@ -1514,38 +1610,10 @@ def generate_wedding_book_task(self, book_id):
         pdf_canvas.drawCentredString(width / 2, height / 2 - 20, "Sang Hee & Fabio")
         pdf_canvas.showPage()
 
-        def caption_similarity(cap1, cap2):
-            """Simple word overlap similarity between two captions."""
-            words1 = set(cap1.lower().split())
-            words2 = set(cap2.lower().split())
-            if not words1 or not words2:
-                return 0.0
-            intersection = words1 & words2
-            union = words1 | words2
-            return len(intersection) / len(union)
-
-        # Group media into pages of 1-3 based on caption similarity
-        page_groups = []
-        used = set()
-        for idx, media_obj in enumerate(media_list):
-            if idx in used:
-                continue
-            group = [media_obj]
-            used.add(idx)
-            # Try to add up to 2 more similar items
-            for j in range(idx + 1, min(idx + 3, total)):
-                if j in used:
-                    continue
-                if len(group) >= 3:
-                    break
-                # Check similarity with the first item in the group
-                cap1 = captions.get(str(media_obj.id), {}).get('it', '')
-                cap2 = captions.get(str(media_list[j].id), {}).get('it', '')
-                sim = caption_similarity(cap1, cap2)
-                if sim > 0.2:   # threshold – tune as needed
-                    group.append(media_list[j])
-                    used.add(j)
-            page_groups.append(group)
+        # Cluster images into pages of 1-3 using visual AI (MobileNetV2)
+        page_groups = _cluster_images_for_pages(media_list)
+        # Shuffle groups so pages appear in a varied order
+        random.shuffle(page_groups)
 
         total_pages = len(page_groups) + 1  # +1 for cover
 
