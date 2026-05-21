@@ -25,7 +25,7 @@ from reportlab.lib.colors import HexColor
 
 from .models import Media, CustomUser, FaceTag, FaceGroup, WeddingBook
 from .cloud_clients import NextcloudClient, get_file_from_cloud
-from .wedding_book_utils import generate_english_caption, translate_text, unload_models, auto_select_media
+from .wedding_book_utils import generate_caption_rpi5, translate_text, unload_models, auto_select_media
 from django.conf import settings as django_settings
 from config.settings import (
     NEXTCLOUD_URL, NEXTCLOUD_USERNAME, NEXTCLOUD_PASSWORD, NEXTCLOUD_FOLDER
@@ -1519,7 +1519,7 @@ def generate_wedding_book_task(self, book_id):
                 file_content, _ = get_file_from_cloud(media_obj)
                 if file_content is None:
                     raise Exception("File not found in cloud")
-                eng_caption = generate_english_caption(file_content)
+                eng_caption = generate_caption_rpi5(file_content)
                 it_caption = translate_text(eng_caption, 'it')
                 ko_caption = translate_text(eng_caption, 'ko')
                 captions[str(media_obj.id)] = {'it': it_caption, 'ko': ko_caption}
@@ -1657,10 +1657,7 @@ def generate_wedding_book_task(self, book_id):
                     pdf_canvas.drawString(x + 10, y + h / 2, "Image missing")
 
             # Captions area
-            caption_y = 120
-            pdf_canvas.setFont(FONT_BOLD, 10)
-            pdf_canvas.setFillColor(GOLD)
-            pdf_canvas.drawString(40, caption_y + 20, "Didascalia / 캡션")
+            caption_y = 140
             pdf_canvas.setFont(FONT_NAME, 9)
             pdf_canvas.setFillColor(DARK)
             y_offset = caption_y
