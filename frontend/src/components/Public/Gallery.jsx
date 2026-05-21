@@ -282,6 +282,10 @@ const Gallery = () => {
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
+        if (isFullscreen) {
+          // Let browser exit fullscreen; don't close modal
+          return;
+        }
         setSelectedMedia(null);
       } else if (e.key === 'ArrowLeft' && currentIndex > 0) {
         goToPrev();
@@ -293,7 +297,7 @@ const Gallery = () => {
       window.addEventListener('keydown', handleKeyDown);
       return () => window.removeEventListener('keydown', handleKeyDown);
     }
-  }, [selectedMedia, currentIndex, navigableMedia.length]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [selectedMedia, currentIndex, navigableMedia.length, isFullscreen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Listen for fullscreen changes
   useEffect(() => {
