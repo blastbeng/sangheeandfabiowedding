@@ -19,6 +19,7 @@ const WeddingBook = () => {
   const [downloadUrl, setDownloadUrl] = useState(null);
   const [error, setError] = useState('');
   const [pastBooks, setPastBooks] = useState([]);
+  const [selectedBookIds, setSelectedBookIds] = useState([]);
   const pollingRef = useRef(null);
 
   // Loading/error states for media
@@ -208,6 +209,38 @@ const WeddingBook = () => {
     setSelectedIds([]);
   };
 
+  const handleSelectBook = (id) => {
+    setSelectedBookIds(prev =>
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const handleSelectAllBooks = () => {
+    if (selectedBookIds.length === pastBooks.length) {
+      setSelectedBookIds([]);
+    } else {
+      setSelectedBookIds(pastBooks.map(b => b.id));
+    }
+  };
+
+  const handleBulkDeleteBooks = async () => {
+    if (selectedBookIds.length === 0) return;
+    if (!confirm(t('Delete selected wedding books?'))) return;
+    for (const id of selectedBookIds) {
+      try {
+        await authFetch(`${API_URL}/api/auth/admin/wedding-book/${id}/delete/`, { method: 'DELETE' });
+      } catch (err) {
+        logger.error('[WeddingBook] Bulk delete error for book', id, err);
+      }
+    }
+    setSelectedBookIds([]);
+    fetchPastBooks();
+    // If the active book was deleted, clear it
+    if (bookId && selectedBookIds.includes(bookId)) {
+      handleNewBook();
+    }
+  };
+
   const handleDeleteBook = async (id) => {
     if (!confirm(t('Delete this wedding book?'))) return;
     try {
@@ -328,9 +361,25 @@ const WeddingBook = () => {
           <p className="text-gray-500">{t('No books generated yet.')}</p>
         ) : (
           <div className="overflow-x-auto">
+            <div className="mb-2">
+              <button
+                onClick={handleBulkDeleteBooks}
+                disabled={selectedBookIds.length === 0}
+                className="px-3 py-1 bg-red-500 text-white rounded disabled:opacity-50 text-sm"
+              >
+                {t('Delete')} ({selectedBookIds.length})
+              </button>
+            </div>
             <table className="min-w-full text-sm">
               <thead>
                 <tr className="bg-gray-100">
+                  <th className="px-2 py-1 text-left">
+                    <input
+                      type="checkbox"
+                      checked={selectedBookIds.length === pastBooks.length && pastBooks.length > 0}
+                      onChange={handleSelectAllBooks}
+                    />
+                  </th>
                   <th className="px-2 py-1 text-left">{t('ID')}</th>
                   <th className="px-2 py-1 text-left">{t('Status')}</th>
                   <th className="px-2 py-1 text-left">{t('Progress')}</th>
@@ -342,6 +391,13 @@ const WeddingBook = () => {
               <tbody>
                 {pastBooks.map(book => (
                   <tr key={book.id} className="border-t">
+                    <td className="px-2 py-1">
+                      <input
+                        type="checkbox"
+                        checked={selectedBookIds.includes(book.id)}
+                        onChange={() => handleSelectBook(book.id)}
+                      />
+                    </td>
                     <td className="px-2 py-1">{book.id}</td>
                     <td className="px-2 py-1">{book.status}</td>
                     <td className="px-2 py-1">{book.progress}%</td>
