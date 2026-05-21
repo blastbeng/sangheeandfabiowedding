@@ -272,8 +272,8 @@ const Gallery = () => {
       } else if (deltaX < 0 && currentIndex < navigableMedia.length - 1) {
         goToNext();
       }
-    } else {
-      // Tap (no significant swipe) → close modal
+    } else if (!isFullscreen) {
+      // Tap (no significant swipe) → close modal only if not in fullscreen
       setSelectedMedia(null);
     }
   };
@@ -806,6 +806,7 @@ const Gallery = () => {
               ref={mediaRef}
               onTouchStart={handleTouchStart}
               onTouchEnd={handleTouchEnd}
+              style={isFullscreen ? { touchAction: 'none' } : undefined}
             >
               {isFullscreen && (
                 <button
