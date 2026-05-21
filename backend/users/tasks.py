@@ -26,6 +26,7 @@ from reportlab.lib.colors import HexColor
 from .models import Media, CustomUser, FaceTag, FaceGroup, WeddingBook
 from .cloud_clients import NextcloudClient, get_file_from_cloud
 from .wedding_book_utils import generate_english_caption, translate_text, unload_models
+from django.conf import settings as django_settings
 from config.settings import (
     NEXTCLOUD_URL, NEXTCLOUD_USERNAME, NEXTCLOUD_PASSWORD, NEXTCLOUD_FOLDER
 )
