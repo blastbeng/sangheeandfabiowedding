@@ -244,7 +244,7 @@ const WeddingBook = () => {
         <select
           value={selectedUserId}
           onChange={(e) => setSelectedUserId(e.target.value)}
-          className="border rounded px-2 py-1"
+          className="wedding-input"
         >
           <option value="">{t('All users')}</option>
           {users.map(u => (
