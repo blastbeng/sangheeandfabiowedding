@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     liblapack-dev \
     libgl1 \
     libglib2.0-0 \
+    wget \
     && rm -rf /var/lib/apt/lists/*
 
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -33,6 +34,9 @@ import dlib; \
 predictor = dlib.shape_predictor(face_recognition_models.pose_predictor_model_location()); \
 recognizer = dlib.face_recognition_model_v1(face_recognition_models.face_recognition_model_location()); \
 print('Face recognition models verified OK')"
+
+COPY download_models.sh /usr/local/bin/download_models.sh
+RUN chmod +x /usr/local/bin/download_models.sh
 
 COPY . .
 

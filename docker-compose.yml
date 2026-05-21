@@ -110,7 +110,7 @@ services:
     pull_policy: build
     build: ./backend
     container_name: wedding-celery
-    command: celery -A config worker --loglevel=info
+    command: sh -c "/usr/local/bin/download_models.sh && celery -A config worker --loglevel=info"
     devices:
       - /dev/dri:/dev/dri
     volumes:
@@ -161,7 +161,7 @@ services:
     pull_policy: build
     build: ./backend
     container_name: wedding-celery-beat
-    command: celery -A config beat --loglevel=info
+    command: sh -c "/usr/local/bin/download_models.sh && celery -A config beat --loglevel=info"
     volumes:
       - models_data:/app/models
     environment:
