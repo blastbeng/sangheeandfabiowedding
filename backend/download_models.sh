@@ -25,25 +25,31 @@ if [ "$SIM_OK" -eq 1 ] && [ "$CAP_OK" -eq 1 ]; then
     echo "MobileNetV2 model already exists and is valid, skipping download."
 else
     echo "Downloading MobileNetV2 model..."
-    TMP_MODEL="/tmp/mobilenet_v2.tflite"
-    rm -f "$TMP_MODEL"
+    TMP_FILE="/tmp/mobilenet_v2.tflite"
+    rm -f "$TMP_FILE"
 
     if wget -q --show-progress --tries=5 --timeout=30 \
-         --header="Accept-Encoding: identity" \
-         -O "$TMP_MODEL" "$MODEL_URL"; then
-        if [ -s "$TMP_MODEL" ] && [ "$(head -c 4 "$TMP_MODEL")" = "TFL3" ]; then
-            # Copy to both destinations
-            cp "$TMP_MODEL" "$SIM_MODEL"
-            cp "$TMP_MODEL" "$CAP_MODEL"
-            rm -f "$TMP_MODEL"
+         -O "$TMP_FILE" "$MODEL_URL"; then
+        # Hugging Face may serve the file gzip‑compressed.
+        # If the file starts with the gzip magic bytes, decompress it.
+        if [ "$(head -c 2 "$TMP_FILE" | od -A n -t x1 | tr -d ' ')" = "1f8b" ]; then
+            echo "Decompressing gzipped model..."
+            gunzip -c "$TMP_FILE" > "${TMP_FILE}.raw"
+            mv "${TMP_FILE}.raw" "$TMP_FILE"
+        fi
+
+        if [ -s "$TMP_FILE" ] && [ "$(head -c 4 "$TMP_FILE")" = "TFL3" ]; then
+            cp "$TMP_FILE" "$SIM_MODEL"
+            cp "$TMP_FILE" "$CAP_MODEL"
+            rm -f "$TMP_FILE"
             echo "MobileNetV2 model downloaded and copied successfully."
         else
             echo "WARNING: Downloaded file is invalid or empty – continuing without model."
-            rm -f "$TMP_MODEL"
+            rm -f "$TMP_FILE"
         fi
     else
         echo "WARNING: MobileNetV2 model download failed – continuing without it."
-        rm -f "$TMP_MODEL"
+        rm -f "$TMP_FILE"
     fi
 fi
 
