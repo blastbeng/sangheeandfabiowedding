@@ -20,6 +20,7 @@ const WeddingBook = () => {
   const [error, setError] = useState('');
   const [pastBooks, setPastBooks] = useState([]);
   const [selectedBookIds, setSelectedBookIds] = useState([]);
+  const [viewMode, setViewMode] = useState('gallery'); // 'gallery' | 'table'
   const pollingRef = useRef(null);
 
   // Loading/error states for media
@@ -139,6 +140,15 @@ const WeddingBook = () => {
   const toggleSelect = (id) => {
     setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
   };
+
+  // Keep selectAll checkbox in sync with individual selections
+  useEffect(() => {
+    if (selectedIds.length === filteredMedia.length && filteredMedia.length > 0) {
+      setSelectAll(true);
+    } else {
+      setSelectAll(false);
+    }
+  }, [selectedIds, filteredMedia]);
 
   // Select All / Deselect All
   const handleSelectAll = () => {
@@ -331,6 +341,34 @@ const WeddingBook = () => {
         </p>
       )}
 
+      {/* View mode toggle */}
+      <div className="flex justify-end mb-4">
+        <div className="inline-flex rounded-md shadow-sm" role="group">
+          <button
+            type="button"
+            onClick={() => setViewMode('gallery')}
+            className={`px-4 py-2 text-sm font-medium rounded-l-lg border ${
+              viewMode === 'gallery'
+                ? 'bg-pink-500 text-white border-pink-500'
+                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+            }`}
+          >
+            🖼️ {t('gallery_view')}
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode('table')}
+            className={`px-4 py-2 text-sm font-medium rounded-r-lg border-t border-b border-r ${
+              viewMode === 'table'
+                ? 'bg-pink-500 text-white border-pink-500'
+                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+            }`}
+          >
+            📋 {t('table_view')}
+          </button>
+        </div>
+      </div>
+
       {status === 'generating' && (
         <div className="mt-4 w-full max-w-full overflow-hidden">
           <progress value={progress} max="100" className="w-full" />
@@ -430,7 +468,7 @@ const WeddingBook = () => {
         )}
       </div>
 
-      {/* Media selection grid */}
+      {/* Media selection grid / table */}
       {mediaLoading ? (
         <div className="text-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500 mx-auto"></div>
@@ -448,24 +486,83 @@ const WeddingBook = () => {
         </div>
       ) : filteredMedia.length === 0 ? (
         <div className="text-center py-8 text-gray-500">{t('No approved media found.')}</div>
-      ) : (
-        <div className="grid grid-cols-4 gap-2 mb-4">
-          {filteredMedia.map(item => (
-            <div
-              key={item.id}
-              className={`cursor-pointer border-2 ${selectedIds.includes(item.id) ? 'border-wedding-azure' : 'border-transparent'}`}
-              onClick={() => toggleSelect(item.id)}
-            >
-              <ThumbnailImage
-                mediaId={item.id}
-                apiUrl={API_URL}
-                alt={item.caption || t('beautiful_moment')}
-                className="w-full h-32 object-cover"
-                mediaType={item.media_type}
-              />
-            </div>
-          ))}
+      ) : viewMode === 'table' ? (
+        /* ---------- TABLE VIEW ---------- */
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b-2 border-pink-200">
+                <th className="text-left py-3 text-pink-600">
+                  <input type="checkbox" checked={selectAll} onChange={handleSelectAll} />
+                </th>
+                <th className="text-left py-3 text-pink-600">{t('admin_mod_col_preview')}</th>
+                <th className="text-left py-3 text-pink-600">{t('admin_mod_col_user')}</th>
+                <th className="text-left py-3 text-pink-600">{t('admin_mod_col_caption')}</th>
+                <th className="text-left py-3 text-pink-600">{t('admin_mod_col_date')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredMedia.map((item) => (
+                <tr key={item.id} className="border-b border-pink-100 hover:bg-pink-50">
+                  <td className="py-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(item.id)}
+                      onChange={() => toggleSelect(item.id)}
+                    />
+                  </td>
+                  <td className="py-3">
+                    <ThumbnailImage
+                      mediaId={item.id}
+                      apiUrl={API_URL}
+                      alt={item.caption || t('beautiful_moment')}
+                      className="w-16 h-16 object-cover rounded-lg border-2 border-pink-200"
+                      mediaType={item.media_type}
+                    />
+                  </td>
+                  <td className="py-3 text-gray-700">
+                    {item.username || item.user__username || t('unknown')}
+                  </td>
+                  <td className="py-3 text-gray-600 text-sm">{item.caption || '-'}</td>
+                  <td className="py-3 text-gray-600 text-sm">
+                    {new Date(item.uploaded_at).toLocaleDateString()}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
+      ) : (
+        /* ---------- GALLERY VIEW ---------- */
+        <>
+          {/* Select All checkbox for gallery mode */}
+          <div className="flex items-center mb-2">
+            <input
+              type="checkbox"
+              checked={selectAll}
+              onChange={handleSelectAll}
+              className="w-4 h-4 text-wedding-600 border-gray-300 rounded focus:ring-wedding-500"
+            />
+            <span className="ml-2 text-sm text-gray-600">{t('select_all')}</span>
+          </div>
+          <div className="grid grid-cols-4 gap-2 mb-4">
+            {filteredMedia.map(item => (
+              <div
+                key={item.id}
+                className={`cursor-pointer border-2 ${selectedIds.includes(item.id) ? 'border-wedding-azure' : 'border-transparent'}`}
+                onClick={() => toggleSelect(item.id)}
+              >
+                <ThumbnailImage
+                  mediaId={item.id}
+                  apiUrl={API_URL}
+                  alt={item.caption || t('beautiful_moment')}
+                  className="w-full h-32 object-cover"
+                  mediaType={item.media_type}
+                />
+              </div>
+            ))}
+          </div>
+        </>
       )}
 
     </div>
