@@ -1622,7 +1622,7 @@ def _draw_corner_flourish(c, x, y, size=20):
     c.arc(x + size, y, x + 2 * size, y + size, 180, 360)
 
 
-def _draw_polaroid(c, x, y, w, h, caption, font_name, font_size=8):
+def _draw_polaroid(c, x, y, w, h, caption, font_name='Helvetica', font_size=8):
     """Draw a polaroid-style photo with a wider bottom border and caption."""
     bottom_margin = 30
     # Shadow
@@ -1716,6 +1716,15 @@ def generate_wedding_book_task(self, book_id):
             CURSIVE = 'Cursive'
         except Exception:
             pass
+
+        # Register Korean font
+        KOREAN_FONT = FONT_NAME  # fallback
+        try:
+            korean_font_path = os.path.join(django_settings.BASE_DIR, 'static', 'fonts', 'NotoSansKR-Regular.ttf')
+            pdfmetrics.registerFont(TTFont('Korean', korean_font_path))
+            KOREAN_FONT = 'Korean'
+        except Exception:
+            logger.warning("Korean font not found, Korean text may not render correctly.")
 
 
         # ---- Cover Page ----
@@ -1822,8 +1831,13 @@ def generate_wedding_book_task(self, book_id):
                                              preserveAspectRatio=True, mask='auto')
                     else:  # polaroid
                         cap = captions.get(str(media_obj.id), {'it': '', 'ko': ''})
-                        caption_text = cap.get('it', '') or cap.get('ko', '')
-                        _draw_polaroid(pdf_canvas, x, y, w, h, caption_text, CURSIVE, 9)
+                        if cap.get('it'):
+                            caption_text = cap['it']
+                            caption_font = CURSIVE
+                        else:
+                            caption_text = cap.get('ko', '')
+                            caption_font = KOREAN_FONT
+                        _draw_polaroid(pdf_canvas, x, y, w, h, caption_text, caption_font, 9)
                         pdf_canvas.drawImage(img, x + 10, y + 35, w - 20, h - 45,
                                              preserveAspectRatio=True, mask='auto')
                 except Exception as e:
@@ -1846,15 +1860,15 @@ def generate_wedding_book_task(self, book_id):
                     cap = captions.get(str(media_obj.id), {'it': '', 'ko': ''})
                     it_text = cap.get('it', '')
                     ko_text = cap.get('ko', '')
-                    combined = f"{it_text}  |  {ko_text}"
-                    if pdf_canvas.stringWidth(combined, CURSIVE, 10) > width - 80:
+                    if it_text:
+                        pdf_canvas.setFont(CURSIVE, 10)
                         pdf_canvas.drawString(40, y_offset, it_text[:80])
                         y_offset -= 14
+                    if ko_text:
+                        pdf_canvas.setFont(KOREAN_FONT, 10)
                         pdf_canvas.drawString(40, y_offset, ko_text[:80])
                         y_offset -= 14
-                    else:
-                        pdf_canvas.drawString(40, y_offset, combined)
-                        y_offset -= 16
+                        pdf_canvas.setFont(CURSIVE, 10)   # reset for next iteration
                     if y_offset < 40:
                         break
 
