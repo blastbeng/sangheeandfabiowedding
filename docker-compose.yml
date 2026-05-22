@@ -117,6 +117,7 @@ services:
     volumes:
       - ./backend/media:/app/media
       - models_data:/app/models
+      - huggingface_cache:/root/.cache/huggingface
     environment:
       - PUID=1000
       - PGID=1000
@@ -165,6 +166,7 @@ services:
     command: celery -A config beat --loglevel=info
     volumes:
       - models_data:/app/models
+      - huggingface_cache:/root/.cache/huggingface
     environment:
       - PUID=1000
       - PGID=1000
@@ -256,3 +258,4 @@ networks:
 
 volumes:
   models_data:
+  huggingface_cache:
