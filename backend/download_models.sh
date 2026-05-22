@@ -35,7 +35,7 @@ if [ -f "$CAP_MODEL" ] && [ -s "$CAP_MODEL" ] && [ "$(head -c 4 "$CAP_MODEL")" =
 else
     rm -f "$CAP_MODEL"
     echo "Downloading caption classifier model..."
-    wget -q --show-progress --tries=5 --timeout=30 -O "$CAP_MODEL" "$CAP_URL" || echo "WARNING: caption classifier download failed"
+    wget -q --show-progress --tries=5 --timeout=30 --header="Accept-Encoding: identity" -O "$CAP_MODEL" "$CAP_URL" || echo "WARNING: caption classifier download failed"
     if [ -s "$CAP_MODEL" ] && [ "$(head -c 4 "$CAP_MODEL")" = "TFL3" ]; then
         echo "Caption classifier model downloaded successfully."
     else
