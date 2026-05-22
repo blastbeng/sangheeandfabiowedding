@@ -9,49 +9,28 @@ MODELS_DIR="/app/models"
 mkdir -p "$MODELS_DIR"
 
 # -------------------------------------------------------------------
-# 1. MobileNetV2 model (used for both similarity and caption tasks)
+# 1. MobileNetV2 model (use local copy, do not download)
 # -------------------------------------------------------------------
-MODEL_URL="https://huggingface.co/qualcomm/MobileNet-v2/resolve/66db89e6808487c877f4e663a9f43d423b811f2f/MobileNet-v2.tflite"
+LOCAL_MODEL="/app/MobileNet-v2.tflite"
 SIM_MODEL="$MODELS_DIR/similarity_model.tflite"
 CAP_MODEL="$MODELS_DIR/caption_classifier.tflite"
 
-# Check if both files already exist and are valid
+# Check if both target files already exist and are valid
 SIM_OK=0
 CAP_OK=0
 [ -s "$SIM_MODEL" ] && [ "$(head -c 4 "$SIM_MODEL")" = "TFL3" ] && SIM_OK=1
 [ -s "$CAP_MODEL" ] && [ "$(head -c 4 "$CAP_MODEL")" = "TFL3" ] && CAP_OK=1
 
 if [ "$SIM_OK" -eq 1 ] && [ "$CAP_OK" -eq 1 ]; then
-    echo "MobileNetV2 model already exists and is valid, skipping download."
+    echo "MobileNetV2 model already exists and is valid, skipping copy."
 else
-    echo "Downloading MobileNetV2 model..."
-    cd "$MODELS_DIR" || exit 1
-
-    # Remove any leftover partial or duplicate downloads
-    rm -f MobileNet-v2.tflite MobileNet-v2.tflite.*
-
-    if wget -q --show-progress --tries=5 --timeout=30 \
-         -O "MobileNet-v2.tflite" "$MODEL_URL"; then
-        # Hugging Face may serve the file gzip‑compressed.
-        # If the file starts with the gzip magic bytes, decompress it.
-        if [ "$(head -c 2 "MobileNet-v2.tflite" | od -A n -t x1 | tr -d ' ')" = "1f8b" ]; then
-            echo "Decompressing gzipped model..."
-            gunzip -c "MobileNet-v2.tflite" > "MobileNet-v2.tflite.raw"
-            mv "MobileNet-v2.tflite.raw" "MobileNet-v2.tflite"
-        fi
-
-        if [ -s "MobileNet-v2.tflite" ] && [ "$(head -c 4 "MobileNet-v2.tflite")" = "TFL3" ]; then
-            cp "MobileNet-v2.tflite" "$SIM_MODEL"
-            cp "MobileNet-v2.tflite" "$CAP_MODEL"
-            rm -f "MobileNet-v2.tflite"
-            echo "MobileNetV2 model downloaded and copied successfully."
-        else
-            echo "WARNING: Downloaded file is invalid or empty – continuing without model."
-            rm -f "MobileNet-v2.tflite"
-        fi
+    if [ -s "$LOCAL_MODEL" ] && [ "$(head -c 4 "$LOCAL_MODEL")" = "TFL3" ]; then
+        echo "Copying local MobileNetV2 model..."
+        cp "$LOCAL_MODEL" "$SIM_MODEL"
+        cp "$LOCAL_MODEL" "$CAP_MODEL"
+        echo "MobileNetV2 model copied successfully."
     else
-        echo "WARNING: MobileNetV2 model download failed – continuing without it."
-        rm -f "MobileNet-v2.tflite"
+        echo "WARNING: Local MobileNetV2 model not found or invalid at $LOCAL_MODEL – continuing without model."
     fi
 fi
 
