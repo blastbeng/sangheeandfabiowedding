@@ -119,7 +119,7 @@ def _load_caption_classifier():
     import os, json
     from django.conf import settings as django_settings
 
-    MODEL_PATH = os.path.join(django_settings.BASE_DIR, 'models', 'MobileNet-v2.tflite')
+    MODEL_PATH = '/app/MobileNet-v2.tflite'
     LABELS_PATH = os.path.join(django_settings.BASE_DIR, 'models', 'imagenet_labels.json')
 
     if not os.path.exists(MODEL_PATH):
