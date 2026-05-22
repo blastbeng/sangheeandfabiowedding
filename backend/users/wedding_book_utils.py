@@ -135,14 +135,6 @@ def _load_caption_classifier():
             "in the 'models/' directory."
         )
 
-    # Validate the model file
-    with open(MODEL_PATH, "rb") as f:
-        header = f.read(4)
-    if header != b'TFL3':
-        raise ValueError(
-            f"Caption classifier model at {MODEL_PATH} is not a valid TFLite file (header {header!r})."
-        )
-
     with open(LABELS_PATH, "r") as f:
         _caption_classifier_labels = json.load(f)
 

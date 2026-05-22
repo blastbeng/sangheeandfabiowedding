@@ -1256,12 +1256,6 @@ def compute_similarity_ordering():
             "Please ensure download_models.sh has run to download the MobileNetV2 TFLite model "
             "into the 'models/' directory."
         )
-    with open(SIMILARITY_MODEL_PATH, "rb") as f:
-        header = f.read(4)
-    if header != b'TFL3':
-        raise ValueError(
-            f"Similarity model at {SIMILARITY_MODEL_PATH} is not a valid TFLite file (header {header!r})."
-        )
     interpreter = tflite.Interpreter(model_path=SIMILARITY_MODEL_PATH)
     interpreter.allocate_tensors()
     input_details = interpreter.get_input_details()
@@ -1394,12 +1388,6 @@ def _cluster_images_for_pages(media_list):
             f"Similarity model not found at {SIMILARITY_MODEL_PATH}. "
             "Please ensure download_models.sh has run to download the MobileNetV2 TFLite model "
             "into the 'models/' directory."
-        )
-    with open(SIMILARITY_MODEL_PATH, "rb") as f:
-        header = f.read(4)
-    if header != b'TFL3':
-        raise ValueError(
-            f"Similarity model at {SIMILARITY_MODEL_PATH} is not a valid TFLite file (header {header!r})."
         )
     interpreter = tflite.Interpreter(model_path=SIMILARITY_MODEL_PATH)
     interpreter.allocate_tensors()
