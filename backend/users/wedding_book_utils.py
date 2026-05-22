@@ -6,6 +6,13 @@ import numpy as np
 from .cloud_clients import get_file_from_cloud
 from .models import Media
 
+# ---------- NumPy / tflite compatibility guard ----------
+try:
+    import tflite_runtime.interpreter as _tflite_test
+    _tflite_available = True
+except Exception:
+    _tflite_available = False
+
 logger = logging.getLogger(__name__)
 
 ROMANTIC_ADJECTIVES = [
@@ -115,11 +122,14 @@ def _load_caption_classifier():
     if _caption_classifier_interpreter is not None:
         return _caption_classifier_interpreter, _caption_classifier_labels
 
+    if not _tflite_available:
+        raise RuntimeError("tflite_runtime is not available (NumPy incompatibility)")
+
     import tflite_runtime.interpreter as tflite
     import os, json
     from django.conf import settings as django_settings
 
-    MODEL_PATH = '/app/MobileNet-v2.tflite'
+    MODEL_PATH = '/app/models/MobileNet-v2.tflite'
     LABELS_PATH = os.path.join(django_settings.BASE_DIR, 'models', 'imagenet_labels.json')
 
     if not os.path.exists(MODEL_PATH):
@@ -1131,40 +1141,46 @@ FALLBACK_CAPTIONS = [
 
 def generate_caption_rpi5(image_bytes: bytes) -> str:
     """Generate a wedding-themed caption using MobileNetV2 classification (RPi5 optimized)."""
-    import numpy as np
-    from PIL import Image
+    try:
+        import numpy as np
+        from PIL import Image
 
-    interpreter, labels = _load_caption_classifier()
-    input_details = interpreter.get_input_details()
-    output_details = interpreter.get_output_details()
+        interpreter, labels = _load_caption_classifier()
+        input_details = interpreter.get_input_details()
+        output_details = interpreter.get_output_details()
 
-    # Preprocess image: resize to 224x224, keep as uint8 [0,255]
-    img = Image.open(io.BytesIO(image_bytes)).convert('RGB').resize((224, 224))
-    img_array = np.array(img, dtype=np.uint8)
-    img_array = np.expand_dims(img_array, axis=0)
+        # Preprocess image: resize to 224x224, keep as uint8 [0,255]
+        img = Image.open(io.BytesIO(image_bytes)).convert('RGB').resize((224, 224))
+        img_array = np.array(img, dtype=np.uint8)
+        img_array = np.expand_dims(img_array, axis=0)
 
-    interpreter.set_tensor(input_details[0]['index'], img_array)
-    interpreter.invoke()
-    predictions = interpreter.get_tensor(output_details[0]['index'])[0]
+        interpreter.set_tensor(input_details[0]['index'], img_array)
+        interpreter.invoke()
+        predictions = interpreter.get_tensor(output_details[0]['index'])[0]
 
-    # Get top-5 predicted class indices
-    top_indices = np.argsort(predictions)[-5:][::-1]
+        # Get top-5 predicted class indices
+        top_indices = np.argsort(predictions)[-5:][::-1]
 
-    # Try to find a matching caption template
-    for idx in top_indices:
-        class_name = labels[idx].lower().replace('_', ' ').strip()
-        # Check for exact match or substring match
-        for key, caption in CAPTION_TEMPLATES.items():
-            if key in class_name or class_name in key:
-                return caption
-        # Also check if any word in class_name matches a key
-        for word in class_name.split():
-            if word in CAPTION_TEMPLATES:
-                return CAPTION_TEMPLATES[word]
+        # Try to find a matching caption template
+        for idx in top_indices:
+            class_name = labels[idx].lower().replace('_', ' ').strip()
+            # Check for exact match or substring match
+            for key, caption in CAPTION_TEMPLATES.items():
+                if key in class_name or class_name in key:
+                    return caption
+            # Also check if any word in class_name matches a key
+            for word in class_name.split():
+                if word in CAPTION_TEMPLATES:
+                    return CAPTION_TEMPLATES[word]
 
-    # Fallback: pick a random romantic caption
-    import random
-    return random.choice(FALLBACK_CAPTIONS)
+        # Fallback: pick a random romantic caption
+        import random
+        return random.choice(FALLBACK_CAPTIONS)
+
+    except Exception as e:
+        logger.warning(f"Caption generation failed, using fallback: {e}")
+        import random
+        return random.choice(FALLBACK_CAPTIONS)
 
 
 def generate_english_caption(image_bytes: bytes) -> str:

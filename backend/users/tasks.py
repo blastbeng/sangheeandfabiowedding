@@ -32,7 +32,7 @@ from config.settings import (
 )
 
 # Path to the MobileNetV2 feature vector model (used by similarity ordering and wedding book clustering)
-SIMILARITY_MODEL_PATH = '/app/MobileNet-v2.tflite'
+SIMILARITY_MODEL_PATH = '/app/models/MobileNet-v2.tflite'
 
 logger = logging.getLogger(__name__)
 
