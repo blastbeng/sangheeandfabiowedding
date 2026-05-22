@@ -44,13 +44,7 @@ RUN mkdir -p /app/models && \
     curl -fSL --retry 10 --retry-delay 10 --connect-timeout 30 --max-time 60 \
       -o /tmp/ImageNetLabels.txt \
       "https://storage.googleapis.com/download.tensorflow.org/data/ImageNetLabels.txt" && \
-    python3 -c "
-import json
-with open('/tmp/ImageNetLabels.txt') as f:
-    labels = [line.strip() for line in f if line.strip()]
-with open('/app/models/imagenet_labels.json', 'w') as f:
-    json.dump(labels, f)
-" && \
+    python3 -c "import json; labels=[l.strip() for l in open('/tmp/ImageNetLabels.txt') if l.strip()]; json.dump(labels, open('/app/models/imagenet_labels.json','w'))" && \
     rm -f /tmp/ImageNetLabels.txt && \
     echo "Pre-downloaded models: $(ls -lh /app/models/)"
 
