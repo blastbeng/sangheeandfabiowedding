@@ -1,50 +1,55 @@
 #!/bin/sh
-if ! command -v curl >/dev/null 2>&1; then
-    echo "ERROR: curl is required but not installed."
-    exit 1
-fi
+# -------------------------------------------------------------------
+# Download helper models for the wedding app.
+# All failures are non‑fatal – the container will start even if a
+# model is missing.
+# -------------------------------------------------------------------
 
 MODELS_DIR="/app/models"
 mkdir -p "$MODELS_DIR"
 
-# --- similarity_model.tflite (feature vector) ---
+# -------------------------------------------------------------------
+# 1. MobileNetV2 model (used for both similarity and caption tasks)
+# -------------------------------------------------------------------
+MODEL_URL="https://huggingface.co/qualcomm/MobileNet-v2/resolve/66db89e6808487c877f4e663a9f43d423b811f2f/MobileNet-v2.tflite"
 SIM_MODEL="$MODELS_DIR/similarity_model.tflite"
-SIM_URL="https://tfhub.dev/google/lite-model/mobilenet_v2/1.0_224/feature-vector/1?lite-format=tflite"
-
-if [ -f "$SIM_MODEL" ] && [ -s "$SIM_MODEL" ] && [ "$(head -c 4 "$SIM_MODEL")" = "TFL3" ]; then
-    echo "Similarity model already exists and is valid, skipping download."
-else
-    rm -f "$SIM_MODEL"
-    echo "Downloading similarity model..."
-    curl -fSL --compressed --retry 5 --retry-delay 5 --connect-timeout 30 --max-time 120 \
-         -o "$SIM_MODEL" "$SIM_URL" || echo "WARNING: similarity model download failed"
-    if [ -s "$SIM_MODEL" ] && [ "$(head -c 4 "$SIM_MODEL")" = "TFL3" ]; then
-        echo "Similarity model downloaded successfully."
-    else
-        echo "WARNING: similarity_model.tflite is invalid or missing – continuing without it."
-        rm -f "$SIM_MODEL"
-    fi
-fi
-
-# --- caption_classifier.tflite (classification) ---
 CAP_MODEL="$MODELS_DIR/caption_classifier.tflite"
-CAP_URL="https://huggingface.co/qualcomm/MobileNet-v2/resolve/66db89e6808487c877f4e663a9f43d423b811f2f/MobileNet-v2.tflite"
 
-if [ -f "$CAP_MODEL" ] && [ -s "$CAP_MODEL" ] && [ "$(head -c 4 "$CAP_MODEL")" = "TFL3" ]; then
-    echo "Caption classifier model already exists and is valid, skipping download."
+# Check if both files already exist and are valid
+SIM_OK=0
+CAP_OK=0
+[ -s "$SIM_MODEL" ] && [ "$(head -c 4 "$SIM_MODEL")" = "TFL3" ] && SIM_OK=1
+[ -s "$CAP_MODEL" ] && [ "$(head -c 4 "$CAP_MODEL")" = "TFL3" ] && CAP_OK=1
+
+if [ "$SIM_OK" -eq 1 ] && [ "$CAP_OK" -eq 1 ]; then
+    echo "MobileNetV2 model already exists and is valid, skipping download."
 else
-    rm -f "$CAP_MODEL"
-    echo "Downloading caption classifier model..."
-    wget -q --show-progress --tries=5 --timeout=30 --header="Accept-Encoding: identity" -O "$CAP_MODEL" "$CAP_URL" || echo "WARNING: caption classifier download failed"
-    if [ -s "$CAP_MODEL" ] && [ "$(head -c 4 "$CAP_MODEL")" = "TFL3" ]; then
-        echo "Caption classifier model downloaded successfully."
+    echo "Downloading MobileNetV2 model..."
+    TMP_MODEL="/tmp/mobilenet_v2.tflite"
+    rm -f "$TMP_MODEL"
+
+    if wget -q --show-progress --tries=5 --timeout=30 \
+         --header="Accept-Encoding: identity" \
+         -O "$TMP_MODEL" "$MODEL_URL"; then
+        if [ -s "$TMP_MODEL" ] && [ "$(head -c 4 "$TMP_MODEL")" = "TFL3" ]; then
+            # Copy to both destinations
+            cp "$TMP_MODEL" "$SIM_MODEL"
+            cp "$TMP_MODEL" "$CAP_MODEL"
+            rm -f "$TMP_MODEL"
+            echo "MobileNetV2 model downloaded and copied successfully."
+        else
+            echo "WARNING: Downloaded file is invalid or empty – continuing without model."
+            rm -f "$TMP_MODEL"
+        fi
     else
-        echo "WARNING: caption_classifier.tflite is invalid or missing – continuing without it."
-        rm -f "$CAP_MODEL"
+        echo "WARNING: MobileNetV2 model download failed – continuing without it."
+        rm -f "$TMP_MODEL"
     fi
 fi
 
-# --- imagenet_labels.json ---
+# -------------------------------------------------------------------
+# 2. ImageNet labels
+# -------------------------------------------------------------------
 LABELS_FILE="$MODELS_DIR/imagenet_labels.json"
 LABELS_URL="https://storage.googleapis.com/download.tensorflow.org/data/ImageNetLabels.txt"
 
@@ -53,17 +58,20 @@ if [ -f "$LABELS_FILE" ] && [ -s "$LABELS_FILE" ]; then
 else
     rm -f "$LABELS_FILE"
     echo "Downloading ImageNet labels..."
-    curl -fSL --retry 5 --retry-delay 5 --connect-timeout 30 --max-time 60 \
-         -o /tmp/ImageNetLabels.txt "$LABELS_URL"
-    python3 -c "
+    if curl -fSL --retry 5 --retry-delay 5 --connect-timeout 30 --max-time 60 \
+         -o /tmp/ImageNetLabels.txt "$LABELS_URL"; then
+        python3 -c "
 import json
 with open('/tmp/ImageNetLabels.txt') as f:
     labels = [line.strip() for line in f if line.strip()]
 with open('$LABELS_FILE', 'w') as f:
     json.dump(labels, f)
 "
-    rm /tmp/ImageNetLabels.txt
-    echo "ImageNet labels downloaded and converted."
+        rm /tmp/ImageNetLabels.txt
+        echo "ImageNet labels downloaded and converted."
+    else
+        echo "WARNING: ImageNet labels download failed – continuing without them."
+    fi
 fi
 
 echo "All models ready."
