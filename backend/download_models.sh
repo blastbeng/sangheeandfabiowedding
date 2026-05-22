@@ -26,20 +26,24 @@ if [ "$SIM_OK" -eq 1 ] && [ "$CAP_OK" -eq 1 ]; then
 else
     echo "Downloading MobileNetV2 model..."
     cd "$MODELS_DIR" || exit 1
-    if wget -q --show-progress --tries=5 --timeout=30 "$MODEL_URL"; then
-        # wget saves the file as MobileNet-v2.tflite in the current directory
-        DOWNLOADED_FILE="MobileNet-v2.tflite"
-        if [ -s "$DOWNLOADED_FILE" ] && [ "$(head -c 4 "$DOWNLOADED_FILE")" = "TFL3" ]; then
-            cp "$DOWNLOADED_FILE" "$SIM_MODEL"
-            cp "$DOWNLOADED_FILE" "$CAP_MODEL"
-            rm -f "$DOWNLOADED_FILE"
+
+    # Remove any leftover partial or duplicate downloads
+    rm -f MobileNet-v2.tflite MobileNet-v2.tflite.*
+
+    if wget -q --show-progress --tries=5 --timeout=30 \
+         -O "MobileNet-v2.tflite" "$MODEL_URL"; then
+        if [ -s "MobileNet-v2.tflite" ] && [ "$(head -c 4 "MobileNet-v2.tflite")" = "TFL3" ]; then
+            cp "MobileNet-v2.tflite" "$SIM_MODEL"
+            cp "MobileNet-v2.tflite" "$CAP_MODEL"
+            rm -f "MobileNet-v2.tflite"
             echo "MobileNetV2 model downloaded and copied successfully."
         else
             echo "WARNING: Downloaded file is invalid or empty – continuing without model."
-            rm -f "$DOWNLOADED_FILE"
+            rm -f "MobileNet-v2.tflite"
         fi
     else
         echo "WARNING: MobileNetV2 model download failed – continuing without it."
+        rm -f "MobileNet-v2.tflite"
     fi
 fi
 
