@@ -1139,6 +1139,40 @@ FALLBACK_CAPTIONS = [
 ]
 
 
+def _build_creative_caption(class_names):
+    """
+    Build a creative wedding caption from a list of ImageNet class names.
+    Uses the first matching template, then adds a second class if available.
+    """
+    import random
+    matched = []
+    for name in class_names:
+        name_lower = name.lower().replace('_', ' ').strip()
+        # Check exact key or word match
+        for key, caption in CAPTION_TEMPLATES.items():
+            if key in name_lower or name_lower in key:
+                matched.append(caption)
+                break
+        else:
+            for word in name_lower.split():
+                if word in CAPTION_TEMPLATES:
+                    matched.append(CAPTION_TEMPLATES[word])
+                    break
+        if len(matched) >= 2:
+            break
+
+    if not matched:
+        return random.choice(FALLBACK_CAPTIONS)
+
+    # Combine up to two matched captions into one sentence
+    if len(matched) == 1:
+        return matched[0]
+    # Remove trailing period from first, combine with "and"
+    first = matched[0].rstrip('.')
+    second = matched[1][0].lower() + matched[1][1:] if matched[1] else ''
+    return f"{first}, and {second}"
+
+
 def generate_caption_rpi5(image_bytes: bytes) -> str:
     """Generate a wedding-themed caption using MobileNetV2 classification (RPi5 optimized)."""
     try:
@@ -1149,7 +1183,6 @@ def generate_caption_rpi5(image_bytes: bytes) -> str:
         input_details = interpreter.get_input_details()
         output_details = interpreter.get_output_details()
 
-        # Preprocess image: resize to 224x224, keep as uint8 [0,255]
         img = Image.open(io.BytesIO(image_bytes)).convert('RGB').resize((224, 224))
         img_array = np.array(img, dtype=np.uint8)
         img_array = np.expand_dims(img_array, axis=0)
@@ -1158,24 +1191,11 @@ def generate_caption_rpi5(image_bytes: bytes) -> str:
         interpreter.invoke()
         predictions = interpreter.get_tensor(output_details[0]['index'])[0]
 
-        # Get top-5 predicted class indices
+        # Get top-5 predicted class names
         top_indices = np.argsort(predictions)[-5:][::-1]
+        class_names = [labels[idx] for idx in top_indices]
 
-        # Try to find a matching caption template
-        for idx in top_indices:
-            class_name = labels[idx].lower().replace('_', ' ').strip()
-            # Check for exact match or substring match
-            for key, caption in CAPTION_TEMPLATES.items():
-                if key in class_name or class_name in key:
-                    return caption
-            # Also check if any word in class_name matches a key
-            for word in class_name.split():
-                if word in CAPTION_TEMPLATES:
-                    return CAPTION_TEMPLATES[word]
-
-        # Fallback: pick a random romantic caption
-        import random
-        return random.choice(FALLBACK_CAPTIONS)
+        return _build_creative_caption(class_names)
 
     except Exception as e:
         logger.info(f"Caption generation failed, using fallback: {e}")

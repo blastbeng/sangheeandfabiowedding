@@ -36,6 +36,75 @@ SIMILARITY_MODEL_PATH = '/app/models/MobileNet-v2.tflite'
 
 logger = logging.getLogger(__name__)
 
+PAGE_THEMES = [
+    {
+        'name': 'classic',
+        'bg_color': '#FDF8F0',
+        'pattern_color': '#F0E4D4',
+        'border_color': '#D4AF37',
+        'corner_color': '#D4AF37',
+        'title_font': 'Cursive',
+        'caption_font': 'Cursive',
+        'caption_color': '#333333',
+        'page_number_color': '#D4AF37',
+    },
+    {
+        'name': 'vintage',
+        'bg_color': '#F5E6D3',
+        'pattern_color': '#E8D5C4',
+        'border_color': '#8B7355',
+        'corner_color': '#8B7355',
+        'title_font': 'Cursive',
+        'caption_font': 'Helvetica-Oblique',
+        'caption_color': '#5C4033',
+        'page_number_color': '#8B7355',
+    },
+    {
+        'name': 'modern',
+        'bg_color': '#FFFFFF',
+        'pattern_color': '#E0E0E0',
+        'border_color': '#333333',
+        'corner_color': '#333333',
+        'title_font': 'Helvetica-Bold',
+        'caption_font': 'Helvetica',
+        'caption_color': '#111111',
+        'page_number_color': '#333333',
+    },
+    {
+        'name': 'floral',
+        'bg_color': '#FFF0F5',
+        'pattern_color': '#FFD1DC',
+        'border_color': '#FF69B4',
+        'corner_color': '#FF69B4',
+        'title_font': 'Cursive',
+        'caption_font': 'Helvetica-Oblique',
+        'caption_color': '#C71585',
+        'page_number_color': '#FF69B4',
+    },
+    {
+        'name': 'golden',
+        'bg_color': '#FFF8DC',
+        'pattern_color': '#FFE4B5',
+        'border_color': '#B8860B',
+        'corner_color': '#B8860B',
+        'title_font': 'Cursive',
+        'caption_font': 'Helvetica',
+        'caption_color': '#8B6508',
+        'page_number_color': '#B8860B',
+    },
+    {
+        'name': 'minimalist',
+        'bg_color': '#FAFAFA',
+        'pattern_color': '#F0F0F0',
+        'border_color': '#AAAAAA',
+        'corner_color': '#AAAAAA',
+        'title_font': 'Helvetica-Light',
+        'caption_font': 'Helvetica',
+        'caption_color': '#555555',
+        'page_number_color': '#AAAAAA',
+    },
+]
+
 
 def compress_image_for_pdf(image_bytes, max_dim=1500, quality=85):
     """Resize and compress an image for PDF embedding to reduce file size."""
@@ -1588,15 +1657,30 @@ def _cluster_images_for_pages_ai(media_list):
 
 # ---------- Wedding Book PDF Helpers ----------
 
-def _draw_lace_background(c, width, height):
-    """Draw a subtle lace-like pattern on a cream background."""
-    c.setFillColor(HexColor('#FDF8F0'))  # warm cream
+def _draw_page_background(c, width, height, theme):
+    """Draw background and decorative border for a given theme."""
+    bg = theme['bg_color']
+    pattern = theme['pattern_color']
+    border = theme['border_color']
+    corner = theme['corner_color']
+
+    c.setFillColor(HexColor(bg))
     c.rect(0, 0, width, height, fill=1)
-    # Simple dotted pattern to simulate lace
-    c.setFillColor(HexColor('#F0E4D4'))
+
+    # Subtle dotted pattern
+    c.setFillColor(HexColor(pattern))
     for x in range(20, int(width), 30):
         for y in range(20, int(height), 30):
             c.circle(x, y, 1.5, fill=1)
+
+    # Decorative border
+    c.setStrokeColor(HexColor(border))
+    c.setLineWidth(1.5)
+    c.rect(25, 25, width - 50, height - 50)
+
+    # Corner flourishes
+    for (cx, cy) in [(35, 35), (width - 35, 35), (35, height - 35), (width - 35, height - 35)]:
+        _draw_corner_flourish(c, cx - 15, cy - 15, 30, color=corner)
 
 
 def _draw_photo_frame(c, x, y, w, h, shadow=True):
@@ -1613,16 +1697,15 @@ def _draw_photo_frame(c, x, y, w, h, shadow=True):
     c.roundRect(x, y, w, h, 6)
 
 
-def _draw_corner_flourish(c, x, y, size=20):
+def _draw_corner_flourish(c, x, y, size=20, color='#D4AF37'):
     """Draw a decorative corner flourish."""
-    c.setStrokeColor(HexColor('#D4AF37'))
+    c.setStrokeColor(HexColor(color))
     c.setLineWidth(1)
-    # Simple swirl
     c.arc(x, y, x + size, y + size, 0, 180)
     c.arc(x + size, y, x + 2 * size, y + size, 180, 360)
 
 
-def _draw_polaroid(c, x, y, w, h, caption, font_name='Helvetica', font_size=8):
+def _draw_polaroid(c, x, y, w, h, caption, font_name='Helvetica', font_size=8, text_color='#333333'):
     """Draw a polaroid-style photo with a wider bottom border and caption."""
     bottom_margin = 30
     # Shadow
@@ -1635,7 +1718,7 @@ def _draw_polaroid(c, x, y, w, h, caption, font_name='Helvetica', font_size=8):
     c.setLineWidth(1)
     c.roundRect(x, y, w, h + bottom_margin, 4)
     # Caption area
-    c.setFillColor(HexColor('#333333'))
+    c.setFillColor(HexColor(text_color))
     c.setFont(font_name, font_size)
     c.drawCentredString(x + w / 2, y + 8, caption[:40])
 
@@ -1726,6 +1809,15 @@ def generate_wedding_book_task(self, book_id):
         except Exception:
             logger.warning("Korean font not found, Korean text may not render correctly.")
 
+        def _safe_font(font_name):
+            """Return a font name that is guaranteed to be available."""
+            standard = ['Helvetica', 'Helvetica-Bold', 'Helvetica-Oblique', 'Helvetica-BoldOblique',
+                        'Times-Roman', 'Times-Bold', 'Times-Italic', 'Times-BoldItalic',
+                        'Courier', 'Courier-Bold', 'Courier-Oblique', 'Courier-BoldOblique']
+            if font_name in standard or font_name == 'Cursive' or font_name == 'Korean':
+                return font_name
+            return 'Helvetica'
+
 
         # ---- Cover Page ----
         # Use the first image as cover photo (if available)
@@ -1780,22 +1872,21 @@ def generate_wedding_book_task(self, book_id):
         # Shuffle groups so pages appear in a varied order
         random.shuffle(page_groups)
 
-        for page_idx, group in enumerate(page_groups):
-            # ---- Background ----
-            _draw_lace_background(pdf_canvas, width, height)
+        # Prepare themes – cycle through them to ensure every page differs
+        themes_cycle = PAGE_THEMES.copy()
+        random.shuffle(themes_cycle)
+        theme_index = 0
 
-            # ---- Decorative border ----
-            pdf_canvas.setStrokeColor(HexColor('#D4AF37'))
-            pdf_canvas.setLineWidth(1.5)
-            pdf_canvas.rect(25, 25, width - 50, height - 50)
-            # Corner flourishes
-            for (cx, cy) in [(35, 35), (width - 35, 35), (35, height - 35), (width - 35, height - 35)]:
-                _draw_corner_flourish(pdf_canvas, cx - 15, cy - 15, 30)
+        for page_idx, group in enumerate(page_groups):
+            # ---- Pick a different theme for this page ----
+            theme = themes_cycle[theme_index % len(themes_cycle)]
+            theme_index += 1
+
+            # ---- Background ----
+            _draw_page_background(pdf_canvas, width, height, theme)
 
             # ---- Layout selection ----
             group_size = len(group)
-            # Define creative layouts (x, y, w, h, style)
-            # style: 'frame' = framed with shadow, 'polaroid' = polaroid with caption
             if group_size == 1:
                 layouts = [
                     [(60, 200, 470, 400, 'frame')],
@@ -1833,11 +1924,12 @@ def generate_wedding_book_task(self, book_id):
                         cap = captions.get(str(media_obj.id), {'it': '', 'ko': ''})
                         if cap.get('it'):
                             caption_text = cap['it']
-                            caption_font = CURSIVE
+                            caption_font = _safe_font(theme['caption_font'])
                         else:
                             caption_text = cap.get('ko', '')
                             caption_font = KOREAN_FONT
-                        _draw_polaroid(pdf_canvas, x, y, w, h, caption_text, caption_font, 9)
+                        _draw_polaroid(pdf_canvas, x, y, w, h, caption_text, caption_font, 9,
+                                       text_color=theme['caption_color'])
                         pdf_canvas.drawImage(img, x + 10, y + 35, w - 20, h - 45,
                                              preserveAspectRatio=True, mask='auto')
                 except Exception as e:
@@ -1849,8 +1941,8 @@ def generate_wedding_book_task(self, book_id):
 
             # ---- Captions area (for framed photos that don't have polaroid caption) ----
             caption_y = 130
-            pdf_canvas.setFont(CURSIVE, 10)
-            pdf_canvas.setFillColor(HexColor('#333333'))
+            pdf_canvas.setFont(_safe_font(theme['caption_font']), 10)
+            pdf_canvas.setFillColor(HexColor(theme['caption_color']))
             y_offset = caption_y
             for slot_idx, media_obj in enumerate(group):
                 if slot_idx >= len(chosen_layout):
@@ -1861,20 +1953,19 @@ def generate_wedding_book_task(self, book_id):
                     it_text = cap.get('it', '')
                     ko_text = cap.get('ko', '')
                     if it_text:
-                        pdf_canvas.setFont(CURSIVE, 10)
+                        pdf_canvas.setFont(_safe_font(theme['caption_font']), 10)
                         pdf_canvas.drawString(40, y_offset, it_text[:80])
                         y_offset -= 14
                     if ko_text:
                         pdf_canvas.setFont(KOREAN_FONT, 10)
                         pdf_canvas.drawString(40, y_offset, ko_text[:80])
                         y_offset -= 14
-                        pdf_canvas.setFont(CURSIVE, 10)   # reset for next iteration
                     if y_offset < 40:
                         break
 
             # ---- Page number ----
             pdf_canvas.setFont(FONT_NAME, 8)
-            pdf_canvas.setFillColor(HexColor('#D4AF37'))
+            pdf_canvas.setFillColor(HexColor(theme['page_number_color']))
             pdf_canvas.drawRightString(width - 40, 20, f"— {page_idx + 2} —")
 
             pdf_canvas.showPage()
