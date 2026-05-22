@@ -36,18 +36,6 @@ predictor = dlib.shape_predictor(face_recognition_models.pose_predictor_model_lo
 recognizer = dlib.face_recognition_model_v1(face_recognition_models.face_recognition_model_location()); \
 print('Face recognition models verified OK')"
 
-# Pre-download AI models so they are always present in the image
-RUN mkdir -p /app/models && \
-    curl -fSL --retry 10 --retry-delay 10 --connect-timeout 30 --max-time 600 \
-      -o /app/models/MobileNet-v2.tflite \
-      "https://storage.googleapis.com/download.tensorflow.org/models/tflite_11_05_08/mobilenet_v2_1.0_224.tflite" && \
-    curl -fSL --retry 10 --retry-delay 10 --connect-timeout 30 --max-time 60 \
-      -o /tmp/ImageNetLabels.txt \
-      "https://storage.googleapis.com/download.tensorflow.org/data/ImageNetLabels.txt" && \
-    python3 -c "import json; labels=[l.strip() for l in open('/tmp/ImageNetLabels.txt') if l.strip()]; json.dump(labels, open('/app/models/imagenet_labels.json','w'))" && \
-    rm -f /tmp/ImageNetLabels.txt && \
-    echo "Pre-downloaded models: $(ls -lh /app/models/)"
-
 COPY download_models.sh /usr/local/bin/download_models.sh
 RUN chmod +x /usr/local/bin/download_models.sh
 
