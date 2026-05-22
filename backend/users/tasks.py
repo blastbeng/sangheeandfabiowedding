@@ -1388,6 +1388,102 @@ def _compute_similarity_ordering_ai():
     logger.info(f"[similarity] Ordered {len(valid_media)} media items by visual similarity.")
 
 
+def _compute_avg_hash(image_bytes):
+    """
+    Compute a 64-bit average hash (aHash) for an image.
+    Returns an integer hash, or None if the image cannot be processed.
+    """
+    try:
+        img = Image.open(BytesIO(image_bytes)).convert('L').resize((8, 8), Image.LANCZOS)
+        pixels = np.array(img, dtype=np.float32)
+        avg = pixels.mean()
+        # Create binary hash: 1 where pixel > average
+        bits = (pixels > avg).flatten()
+        # Convert to integer
+        hash_int = 0
+        for bit in bits:
+            hash_int = (hash_int << 1) | int(bit)
+        return hash_int
+    except Exception:
+        return None
+
+
+def _cluster_images_by_hash(media_list):
+    """
+    Cluster images into groups of 1-3 using average hash similarity.
+    Returns a list of lists of Media objects.
+    """
+    # Compute hashes for all media
+    hashes = []
+    valid_media = []
+    for media in media_list:
+        try:
+            content, _ = get_file_from_cloud(media)
+            if content is None:
+                continue
+            h = _compute_avg_hash(content)
+            if h is not None:
+                hashes.append(h)
+                valid_media.append(media)
+        except Exception:
+            continue
+
+    if len(valid_media) < 2:
+        return [[m] for m in valid_media]
+
+    n = len(valid_media)
+    # Hamming distance between two hashes
+    def hamming(a, b):
+        return bin(a ^ b).count('1')
+
+    # Each image starts as its own cluster
+    clusters = [[i] for i in range(n)]
+    # For each cluster, store the "centroid" hash: majority bit per position
+    def cluster_hash(indices):
+        # For each bit position, count 1s across all members
+        bits = [0] * 64
+        for idx in indices:
+            h = hashes[idx]
+            for bit in range(64):
+                if (h >> (63 - bit)) & 1:
+                    bits[bit] += 1
+        half = len(indices) / 2.0
+        centroid = 0
+        for bit in range(64):
+            centroid = (centroid << 1) | (1 if bits[bit] > half else 0)
+        return centroid
+
+    centroids = [hashes[i] for i in range(n)]
+
+    while True:
+        best_pair = None
+        best_dist = float('inf')
+        for i in range(len(clusters)):
+            for j in range(i + 1, len(clusters)):
+                if len(clusters[i]) + len(clusters[j]) > 3:
+                    continue
+                dist = hamming(centroids[i], centroids[j])
+                if dist < best_dist:
+                    best_dist = dist
+                    best_pair = (i, j)
+        if best_pair is None:
+            break
+        i, j = best_pair
+        # Merge cluster j into i
+        clusters[i].extend(clusters[j])
+        # Update centroid
+        centroids[i] = cluster_hash(clusters[i])
+        # Remove j
+        del clusters[j]
+        del centroids[j]
+
+    # Convert indices back to media objects
+    result = []
+    for cluster in clusters:
+        result.append([valid_media[idx] for idx in cluster])
+    return result
+
+
 def _cluster_images_for_pages(media_list):
     """
     Cluster a list of Media objects (images only) into groups of 1-3
@@ -1398,15 +1494,9 @@ def _cluster_images_for_pages(media_list):
         return _cluster_images_for_pages_ai(media_list)
     except Exception as e:
         logger.warning(
-            f"[wedding_book] AI clustering failed ({e}). Falling back to simple sequential grouping."
+            f"[wedding_book] AI clustering failed ({e}). Falling back to perceptual hash clustering."
         )
-        groups = []
-        i = 0
-        while i < len(media_list):
-            size = min(random.randint(1, 3), len(media_list) - i)
-            groups.append(media_list[i:i + size])
-            i += size
-        return groups
+        return _cluster_images_by_hash(media_list)
 
 
 def _cluster_images_for_pages_ai(media_list):
