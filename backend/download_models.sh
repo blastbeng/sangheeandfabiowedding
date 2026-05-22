@@ -25,31 +25,21 @@ if [ "$SIM_OK" -eq 1 ] && [ "$CAP_OK" -eq 1 ]; then
     echo "MobileNetV2 model already exists and is valid, skipping download."
 else
     echo "Downloading MobileNetV2 model..."
-    TMP_FILE="/tmp/mobilenet_v2.tflite"
-    rm -f "$TMP_FILE"
-
-    if wget -q --show-progress --tries=5 --timeout=30 \
-         -O "$TMP_FILE" "$MODEL_URL"; then
-        # Hugging Face may serve the file gzip‑compressed.
-        # If the file starts with the gzip magic bytes, decompress it.
-        if [ "$(head -c 2 "$TMP_FILE" | od -A n -t x1 | tr -d ' ')" = "1f8b" ]; then
-            echo "Decompressing gzipped model..."
-            gunzip -c "$TMP_FILE" > "${TMP_FILE}.raw"
-            mv "${TMP_FILE}.raw" "$TMP_FILE"
-        fi
-
-        if [ -s "$TMP_FILE" ] && [ "$(head -c 4 "$TMP_FILE")" = "TFL3" ]; then
-            cp "$TMP_FILE" "$SIM_MODEL"
-            cp "$TMP_FILE" "$CAP_MODEL"
-            rm -f "$TMP_FILE"
+    cd "$MODELS_DIR" || exit 1
+    if wget -q --show-progress --tries=5 --timeout=30 "$MODEL_URL"; then
+        # wget saves the file as MobileNet-v2.tflite in the current directory
+        DOWNLOADED_FILE="MobileNet-v2.tflite"
+        if [ -s "$DOWNLOADED_FILE" ] && [ "$(head -c 4 "$DOWNLOADED_FILE")" = "TFL3" ]; then
+            cp "$DOWNLOADED_FILE" "$SIM_MODEL"
+            cp "$DOWNLOADED_FILE" "$CAP_MODEL"
+            rm -f "$DOWNLOADED_FILE"
             echo "MobileNetV2 model downloaded and copied successfully."
         else
             echo "WARNING: Downloaded file is invalid or empty – continuing without model."
-            rm -f "$TMP_FILE"
+            rm -f "$DOWNLOADED_FILE"
         fi
     else
         echo "WARNING: MobileNetV2 model download failed – continuing without it."
-        rm -f "$TMP_FILE"
     fi
 fi
 
