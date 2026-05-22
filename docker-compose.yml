@@ -47,17 +47,6 @@ services:
       - sh
       - -c
       - |
-        echo "Waiting for similarity model (timeout 60s)..."
-        for i in $(seq 1 30); do
-          if [ -s /app/models/similarity_model.tflite ]; then
-            echo "Model ready."
-            break
-          fi
-          sleep 2
-        done
-        if [ ! -s /app/models/similarity_model.tflite ]; then
-          echo "WARNING: similarity model not available, starting without it."
-        fi
         python manage.py migrate &&
         python manage.py create_default_admin &&
         python manage.py create_social_apps &&
