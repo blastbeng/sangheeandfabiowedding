@@ -388,6 +388,7 @@ const WeddingBook = () => {
                   <th className="px-2 py-1 text-left">{t('Status')}</th>
                   <th className="px-2 py-1 text-left">{t('Progress')}</th>
                   <th className="px-2 py-1 text-left">{t('Media Count')}</th>
+                  <th className="px-2 py-1 text-left">{t('File Size')}</th>
                   <th className="px-2 py-1 text-left">{t('Created')}</th>
                   <th className="px-2 py-1 text-left">{t('Actions')}</th>
                 </tr>
@@ -406,6 +407,7 @@ const WeddingBook = () => {
                     <td className="px-2 py-1">{book.status}</td>
                     <td className="px-2 py-1">{book.progress}%</td>
                     <td className="px-2 py-1">{book.media_count}</td>
+                    <td className="px-2 py-1">{book.file_size || '—'}</td>
                     <td className="px-2 py-1">{new Date(book.created_at).toLocaleDateString()}</td>
                     <td className="px-2 py-1">
                       {book.status === 'completed' && book.download_url && (

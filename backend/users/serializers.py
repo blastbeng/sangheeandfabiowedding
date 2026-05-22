@@ -495,12 +495,14 @@ class WeddingBookSerializer(serializers.ModelSerializer):
 class WeddingBookListSerializer(serializers.ModelSerializer):
     download_url = serializers.SerializerMethodField()
     media_count = serializers.SerializerMethodField()
+    file_size = serializers.SerializerMethodField()
 
     class Meta:
         model = WeddingBook
         fields = [
             'id', 'status', 'progress', 'media_count',
             'error_message', 'created_at', 'updated_at', 'download_url',
+            'file_size',
         ]
 
     def get_download_url(self, obj):
@@ -513,6 +515,21 @@ class WeddingBookListSerializer(serializers.ModelSerializer):
 
     def get_media_count(self, obj):
         return len(obj.selected_media_ids) if obj.selected_media_ids else 0
+
+    def get_file_size(self, obj):
+        """Return human-readable file size of the generated PDF."""
+        try:
+            if obj.pdf_file and obj.pdf_file.size:
+                size_bytes = obj.pdf_file.size
+                if size_bytes < 1024:
+                    return f"{size_bytes} B"
+                elif size_bytes < 1024 * 1024:
+                    return f"{size_bytes / 1024:.1f} KB"
+                else:
+                    return f"{size_bytes / (1024 * 1024):.1f} MB"
+        except Exception:
+            pass
+        return None
 
 
 class GenerateWeddingBookSerializer(serializers.Serializer):
