@@ -32,6 +32,14 @@ else
 
     if wget -q --show-progress --tries=5 --timeout=30 \
          -O "MobileNet-v2.tflite" "$MODEL_URL"; then
+        # Hugging Face may serve the file gzip‑compressed.
+        # If the file starts with the gzip magic bytes, decompress it.
+        if [ "$(head -c 2 "MobileNet-v2.tflite" | od -A n -t x1 | tr -d ' ')" = "1f8b" ]; then
+            echo "Decompressing gzipped model..."
+            gunzip -c "MobileNet-v2.tflite" > "MobileNet-v2.tflite.raw"
+            mv "MobileNet-v2.tflite.raw" "MobileNet-v2.tflite"
+        fi
+
         if [ -s "MobileNet-v2.tflite" ] && [ "$(head -c 4 "MobileNet-v2.tflite")" = "TFL3" ]; then
             cp "MobileNet-v2.tflite" "$SIM_MODEL"
             cp "MobileNet-v2.tflite" "$CAP_MODEL"
