@@ -1724,7 +1724,7 @@ def _draw_polaroid(c, x, y, w, h, caption, font_name='Helvetica', font_size=8, t
     c.drawCentredString(x + w / 2, y + 8, caption[:40])
 
 
-@shared_task(bind=True, max_retries=1, soft_time_limit=3600, time_limit=3700)
+@shared_task(bind=True, max_retries=1, soft_time_limit=5400, time_limit=5500)
 def generate_wedding_book_task(self, book_id):
     try:
         book = WeddingBook.objects.get(id=book_id)
