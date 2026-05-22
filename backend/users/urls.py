@@ -31,6 +31,7 @@ from .views import (
     WeddingBookStatusView,
     WeddingBookDownloadView,
     WeddingBookRegenerateView,
+    MediaCaptionView,
 )
 
 urlpatterns = [
@@ -62,6 +63,7 @@ urlpatterns = [
     path('media/moderation/delete-all-faces/', DeleteAllFacesView.as_view(), name='delete-all-faces'),
     path('media/moderation/generate-all-faces/', RegenerateAllFacesView.as_view(), name='media-generate-all-faces'),
     path('media/moderation/regenerate-similarity-ordering/', RegenerateSimilarityOrderingView.as_view(), name='regenerate-similarity-ordering'),
+    path('media/<int:media_id>/caption/', MediaCaptionView.as_view(), name='media-caption'),
     path('media/<int:media_id>/share/', MediaShareView.as_view(), name='media-share'),
     path('media/<int:media_id>/public-thumbnail/', PublicMediaThumbnailView.as_view(), name='media-public-thumbnail'),
     path('media/<int:media_id>/file/', MediaFileView.as_view(), name='media-file'),

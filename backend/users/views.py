@@ -48,6 +48,7 @@ from .serializers import (
 )
 from .cloud_clients import get_file_from_cloud, NextcloudClient
 from .tasks import upload_media_task, delete_media_task, detect_faces_task, backfill_faces_periodic, generate_wedding_book_task
+from .wedding_book_utils import generate_caption_rpi5
 from .utils import process_profile_picture
 from .thumbnails import PROFILE_CACHE_KEY_PREFIX
 from .rate_limit import check_rate_limit, record_failed_attempt
@@ -1898,6 +1899,25 @@ class MediaShareView(APIView):
 </body>
 </html>"""
         return HttpResponse(html, content_type='text/html')
+
+
+# ==================== MEDIA CAPTION VIEW ====================
+
+class MediaCaptionView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, media_id):
+        try:
+            media = Media.objects.get(id=media_id, status='approved')
+        except Media.DoesNotExist:
+            return Response({'error': 'Media not found or not approved'}, status=status.HTTP_404_NOT_FOUND)
+
+        content, _ = get_file_from_cloud(media)
+        if content is None:
+            return Response({'error': 'Could not retrieve media file'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        caption = generate_caption_rpi5(content)
+        return Response({'caption': caption})
 
 
 # ==================== COOKIE CONSENT VIEWS ====================

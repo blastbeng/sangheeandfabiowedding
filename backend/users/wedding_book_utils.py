@@ -1171,9 +1171,10 @@ def _build_creative_caption(class_names):
     if not matched:
         return random.choice(FALLBACK_CAPTIONS)
 
-    # Randomly select up to 3 captions
+    # Randomly select up to 3 captions (vary how many to combine for diversity)
     random.shuffle(matched)
-    selected = matched[:3]
+    max_templates = random.choice([1, 2, 3])
+    selected = matched[:max_templates]
 
     # Build a sentence
     if len(selected) == 1:
