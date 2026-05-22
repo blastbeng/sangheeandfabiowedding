@@ -47,6 +47,7 @@ services:
       - sh
       - -c
       - |
+        /usr/local/bin/download_models.sh &&
         python manage.py migrate &&
         python manage.py create_default_admin &&
         python manage.py create_social_apps &&

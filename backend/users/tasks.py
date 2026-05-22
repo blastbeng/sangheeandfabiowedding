@@ -32,7 +32,7 @@ from config.settings import (
 )
 
 # Path to the MobileNetV2 feature vector model (used by similarity ordering and wedding book clustering)
-SIMILARITY_MODEL_PATH = os.path.join(django_settings.BASE_DIR, 'MobileNet-v2.tflite')
+SIMILARITY_MODEL_PATH = os.path.join(django_settings.BASE_DIR, 'models', 'MobileNet-v2.tflite')
 
 logger = logging.getLogger(__name__)
 
@@ -1253,8 +1253,8 @@ def compute_similarity_ordering():
     if not os.path.exists(SIMILARITY_MODEL_PATH):
         raise FileNotFoundError(
             f"Similarity model not found at {SIMILARITY_MODEL_PATH}. "
-            "Please download the MobileNetV2 feature vector TFLite model and save it as 'similarity_model.tflite' "
-            "in the 'models/' directory."
+            "Please ensure download_models.sh has run to download the MobileNetV2 TFLite model "
+            "into the 'models/' directory."
         )
     with open(SIMILARITY_MODEL_PATH, "rb") as f:
         header = f.read(4)
@@ -1392,8 +1392,8 @@ def _cluster_images_for_pages(media_list):
     if not os.path.exists(SIMILARITY_MODEL_PATH):
         raise FileNotFoundError(
             f"Similarity model not found at {SIMILARITY_MODEL_PATH}. "
-            "Please download the MobileNetV2 feature vector TFLite model and save it as 'similarity_model.tflite' "
-            "in the 'models/' directory."
+            "Please ensure download_models.sh has run to download the MobileNetV2 TFLite model "
+            "into the 'models/' directory."
         )
     with open(SIMILARITY_MODEL_PATH, "rb") as f:
         header = f.read(4)
