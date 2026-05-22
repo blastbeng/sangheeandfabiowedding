@@ -56,4 +56,24 @@ else
     fi
 fi
 
+# -------------------------------------------------------------------
+# Translation models (English → Italian, English → Korean)
+# Used by the wedding book caption generation.
+# -------------------------------------------------------------------
+echo "Pre-downloading translation models (English→Italian and English→Korean)..."
+python3 -c "
+import sys
+try:
+    from transformers import MarianTokenizer, MarianMTModel
+    print('Downloading Helsinki-NLP/opus-mt-tc-big-en-it...')
+    MarianTokenizer.from_pretrained('Helsinki-NLP/opus-mt-tc-big-en-it')
+    MarianMTModel.from_pretrained('Helsinki-NLP/opus-mt-tc-big-en-it')
+    print('Downloading Helsinki-NLP/opus-mt-tc-big-en-ko...')
+    MarianTokenizer.from_pretrained('Helsinki-NLP/opus-mt-tc-big-en-ko')
+    MarianMTModel.from_pretrained('Helsinki-NLP/opus-mt-tc-big-en-ko')
+    print('Translation models downloaded successfully.')
+except Exception as e:
+    print(f'WARNING: Translation model download failed: {e}', file=sys.stderr)
+"
+
 echo "All models ready."
