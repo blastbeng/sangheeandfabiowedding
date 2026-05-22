@@ -1238,7 +1238,25 @@ def compute_similarity_ordering():
     Compute visual similarity ordering for all approved images and videos
     using a MobileNetV2 feature extractor (TFLite).  Assigns a float position
     to each media item so that visually similar items appear near each other.
-    Runs every 24 hours (or as scheduled).
+    Falls back to random ordering if AI model fails to load.
+    """
+    try:
+        _compute_similarity_ordering_ai()
+    except Exception as e:
+        logger.warning(
+            f"[similarity] AI similarity ordering failed ({e}). Assigning random positions."
+        )
+        from .models import Media
+        approved = list(Media.objects.filter(status='approved'))
+        random.shuffle(approved)
+        for pos, media in enumerate(approved):
+            media.similarity_position = float(pos)
+            media.save(update_fields=['similarity_position'])
+
+
+def _compute_similarity_ordering_ai():
+    """
+    AI-powered similarity ordering using MobileNetV2 TFLite.
     """
     import tflite_runtime.interpreter as tflite
     from PIL import Image
@@ -1374,6 +1392,26 @@ def _cluster_images_for_pages(media_list):
     """
     Cluster a list of Media objects (images only) into groups of 1-3
     using MobileNetV2 embeddings. Returns a list of lists of Media objects.
+    Falls back to simple sequential grouping if AI model fails to load.
+    """
+    try:
+        return _cluster_images_for_pages_ai(media_list)
+    except Exception as e:
+        logger.warning(
+            f"[wedding_book] AI clustering failed ({e}). Falling back to simple sequential grouping."
+        )
+        groups = []
+        i = 0
+        while i < len(media_list):
+            size = min(random.randint(1, 3), len(media_list) - i)
+            groups.append(media_list[i:i + size])
+            i += size
+        return groups
+
+
+def _cluster_images_for_pages_ai(media_list):
+    """
+    AI-powered clustering using MobileNetV2 embeddings.
     """
     import tflite_runtime.interpreter as tflite
     import numpy as np
