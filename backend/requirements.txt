@@ -42,6 +42,7 @@ tflite-runtime>=2.14.0,<3
 transformers==4.40.0
 torch==2.2.0
 sentencepiece==0.1.99
+sacremoses>=0.1.1,<1
 reportlab==4.0.9
 
 # NumPy compatibility (tflite_runtime requires NumPy < 2)
