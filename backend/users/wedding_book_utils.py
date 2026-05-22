@@ -1142,35 +1142,54 @@ FALLBACK_CAPTIONS = [
 def _build_creative_caption(class_names):
     """
     Build a creative wedding caption from a list of ImageNet class names.
-    Uses the first matching template, then adds a second class if available.
+    Collects all matching templates, randomly picks up to 3, and combines them
+    with a random romantic adjective.
     """
     import random
+
+    # Collect all unique matching captions
     matched = []
+    seen = set()
     for name in class_names:
         name_lower = name.lower().replace('_', ' ').strip()
         # Check exact key or word match
         for key, caption in CAPTION_TEMPLATES.items():
             if key in name_lower or name_lower in key:
-                matched.append(caption)
+                if caption not in seen:
+                    matched.append(caption)
+                    seen.add(caption)
                 break
         else:
             for word in name_lower.split():
                 if word in CAPTION_TEMPLATES:
-                    matched.append(CAPTION_TEMPLATES[word])
+                    cap = CAPTION_TEMPLATES[word]
+                    if cap not in seen:
+                        matched.append(cap)
+                        seen.add(cap)
                     break
-        if len(matched) >= 2:
-            break
 
     if not matched:
         return random.choice(FALLBACK_CAPTIONS)
 
-    # Combine up to two matched captions into one sentence
-    if len(matched) == 1:
-        return matched[0]
-    # Remove trailing period from first, combine with "and"
-    first = matched[0].rstrip('.')
-    second = matched[1][0].lower() + matched[1][1:] if matched[1] else ''
-    return f"{first}, and {second}"
+    # Randomly select up to 3 captions
+    random.shuffle(matched)
+    selected = matched[:3]
+
+    # Build a sentence
+    if len(selected) == 1:
+        combined = selected[0]
+    elif len(selected) == 2:
+        combined = f"{selected[0].rstrip('.')}, and {selected[1][0].lower() + selected[1][1:]}"
+    else:
+        # three items: "A, B, and C"
+        first = selected[0].rstrip('.')
+        second = selected[1][0].lower() + selected[1][1:] if selected[1] else ''
+        third = selected[2][0].lower() + selected[2][1:] if selected[2] else ''
+        combined = f"{first}, {second}, and {third}"
+
+    # Prepend a random romantic adjective
+    adjective = random.choice(ROMANTIC_ADJECTIVES)
+    return f"A {adjective} moment: {combined}"
 
 
 def generate_caption_rpi5(image_bytes: bytes) -> str:
