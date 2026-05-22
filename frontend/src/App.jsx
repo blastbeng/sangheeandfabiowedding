@@ -124,8 +124,8 @@ function AppContent({ isAuthenticated, setIsAuthenticated, isAdmin, setIsAdmin, 
                   <Link to="/profile" className="hover:text-yellow-200 transition font-medium text-sm md:text-base whitespace-nowrap">{t('Profile')}</Link>
                   {isAdmin && (
                     <>
-                      <Link to="/admin" className="hover:text-yellow-200 transition font-medium text-sm md:text-base whitespace-nowrap">⭐ Admin</Link>
-                      <Link to="/admin/wedding-book" className="hover:text-yellow-200 transition font-medium text-sm md:text-base whitespace-nowrap">📖 Wedding Book</Link>
+                      <Link to="/admin" className="hover:text-yellow-200 transition font-medium text-sm md:text-base whitespace-nowrap">{t('Admin')}</Link>
+                      <Link to="/admin/wedding-book" className="hover:text-yellow-200 transition font-medium text-sm md:text-base whitespace-nowrap">{t('Wedding Book')}</Link>
                     </>
                   )}
                   <button onClick={handleLogout} className="border-2 border-white/80 text-white rounded-full px-3 md:px-4 py-2 text-xs md:text-sm font-semibold hover:bg-white/20 transition-all whitespace-nowrap">
