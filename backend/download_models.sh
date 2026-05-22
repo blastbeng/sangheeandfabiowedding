@@ -40,7 +40,7 @@ fi
 # ordering, and wedding-book clustering)
 # -------------------------------------------------------------------
 TFLITE_FILE="$MODELS_DIR/MobileNet-v2.tflite"
-TFLITE_URL="https://storage.googleapis.com/download.tensorflow.org/models/tflite_11_05_08/mobilenet_v2_1.0_224.tflite"
+TFLITE_URL="https://huggingface.co/qualcomm/MobileNet-v2/resolve/66db89e6808487c877f4e663a9f43d423b811f2f/MobileNet-v2.tflite"
 
 if [ -f "$TFLITE_FILE" ] && [ -s "$TFLITE_FILE" ]; then
     echo "MobileNetV2 TFLite model already exists and is non-empty, skipping download."
