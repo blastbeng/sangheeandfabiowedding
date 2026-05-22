@@ -119,9 +119,8 @@ def _load_caption_classifier():
     import os, json
     from django.conf import settings as django_settings
 
-    MODELS_DIR = os.path.join(django_settings.BASE_DIR, 'models')
-    MODEL_PATH = os.path.join(MODELS_DIR, 'caption_classifier.tflite')
-    LABELS_PATH = os.path.join(MODELS_DIR, 'imagenet_labels.json')
+    MODEL_PATH = os.path.join(django_settings.BASE_DIR, 'MobileNet-v2.tflite')
+    LABELS_PATH = os.path.join(django_settings.BASE_DIR, 'models', 'imagenet_labels.json')
 
     if not os.path.exists(MODEL_PATH):
         raise FileNotFoundError(
