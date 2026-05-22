@@ -81,9 +81,9 @@ def _load_translator(lang):
             from transformers import MarianMTModel, MarianTokenizer
             import torch
             logger.info("Loading English→Italian translation model (optimized)...")
-            _tokenizer_it = MarianTokenizer.from_pretrained("Helsinki-NLP/opus-mt-en-it")
+            _tokenizer_it = MarianTokenizer.from_pretrained("Helsinki-NLP/opus-mt-tc-big-en-it")
             _translator_it = MarianMTModel.from_pretrained(
-                "Helsinki-NLP/opus-mt-en-it",
+                "Helsinki-NLP/opus-mt-tc-big-en-it",
                 torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32
             )
             torch.set_num_threads(2)
@@ -98,9 +98,9 @@ def _load_translator(lang):
             from transformers import MarianMTModel, MarianTokenizer
             import torch
             logger.info("Loading English→Korean translation model (optimized)...")
-            _tokenizer_ko = MarianTokenizer.from_pretrained("Helsinki-NLP/opus-mt-en-ko")
+            _tokenizer_ko = MarianTokenizer.from_pretrained("Helsinki-NLP/opus-mt-tc-big-en-ko")
             _translator_ko = MarianMTModel.from_pretrained(
-                "Helsinki-NLP/opus-mt-en-ko",
+                "Helsinki-NLP/opus-mt-tc-big-en-ko",
                 torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32
             )
             torch.set_num_threads(2)
@@ -1178,7 +1178,7 @@ def generate_caption_rpi5(image_bytes: bytes) -> str:
         return random.choice(FALLBACK_CAPTIONS)
 
     except Exception as e:
-        logger.warning(f"Caption generation failed, using fallback: {e}")
+        logger.info(f"Caption generation failed, using fallback: {e}")
         import random
         return random.choice(FALLBACK_CAPTIONS)
 
