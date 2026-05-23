@@ -2002,8 +2002,10 @@ class WeddingBookGenerateView(APIView):
             )
 
         # Pass the provided IDs (or empty list) to the task; it will auto-select if needed.
+        theme = serializer.validated_data.get('theme', WeddingBook.Theme.ELEGANT)
         book = WeddingBook.objects.create(
             selected_media_ids=list(media_ids),
+            theme=theme,
             status=WeddingBook.Status.PENDING,
         )
         generate_wedding_book_task.delay(book.id)
@@ -2056,6 +2058,8 @@ class WeddingBookRegenerateView(APIView):
             )
 
         book.selected_media_ids = list(media_ids)
+        if 'theme' in request.data:
+            book.theme = request.data.get('theme')
         book.status = WeddingBook.Status.PENDING
         book.progress = 0
         book.error_message = ''

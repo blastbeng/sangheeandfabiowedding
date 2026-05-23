@@ -21,6 +21,7 @@ const WeddingBook = () => {
   const [pastBooks, setPastBooks] = useState([]);
   const [selectedBookIds, setSelectedBookIds] = useState([]);
   const [viewMode, setViewMode] = useState('gallery'); // 'gallery' | 'table'
+  const [theme, setTheme] = useState('elegant');
   const pollingRef = useRef(null);
 
   // Loading/error states for media
@@ -171,7 +172,7 @@ const WeddingBook = () => {
       const res = await authFetch(`${API_URL}/api/auth/admin/wedding-book/generate/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ media_ids: selectedIds }), // can be empty
+        body: JSON.stringify({ media_ids: selectedIds, theme }), // can be empty
       });
       const data = await res.json();
       if (res.ok) {
@@ -197,7 +198,7 @@ const WeddingBook = () => {
       const res = await authFetch(`${API_URL}/api/auth/admin/wedding-book/regenerate/${bookId}/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ media_ids: selectedIds }),
+        body: JSON.stringify({ media_ids: selectedIds, theme }),
       });
       if (res.ok) {
         startPolling(bookId);
@@ -301,6 +302,22 @@ const WeddingBook = () => {
                 : u.username}
             </option>
           ))}
+        </select>
+      </div>
+
+      {/* Theme selector */}
+      <div className="mb-4">
+        <label className="mr-2 text-sm">{t('Theme')}:</label>
+        <select
+          value={theme}
+          onChange={(e) => setTheme(e.target.value)}
+          className="wedding-input"
+        >
+          <option value="elegant">{t('Elegant')}</option>
+          <option value="classic">{t('Classic')}</option>
+          <option value="modern">{t('Modern')}</option>
+          <option value="vintage">{t('Vintage')}</option>
+          <option value="romantic">{t('Romantic')}</option>
         </select>
       </div>
 
@@ -521,7 +538,7 @@ const WeddingBook = () => {
                     />
                   </td>
                   <td className="py-3 text-gray-700">
-                    {item.username || item.user__username || t('unknown')}
+                    {item.uploader_username || t('unknown')}
                   </td>
                   <td className="py-3 text-gray-600 text-sm">{item.caption || '-'}</td>
                   <td className="py-3 text-gray-600 text-sm">

@@ -536,3 +536,8 @@ class GenerateWeddingBookSerializer(serializers.Serializer):
     media_ids = serializers.ListField(
         child=serializers.IntegerField(), allow_empty=True, required=False, default=[]
     )
+    theme = serializers.ChoiceField(
+        choices=WeddingBook.Theme.choices,
+        default=WeddingBook.Theme.ELEGANT,
+        required=False
+    )
