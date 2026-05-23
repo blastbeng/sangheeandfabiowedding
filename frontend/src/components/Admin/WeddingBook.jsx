@@ -545,20 +545,22 @@ const WeddingBook = () => {
             />
             <span className="ml-2 text-sm text-gray-600">{t('select_all')}</span>
           </div>
-          <div className="grid grid-cols-4 gap-2 mb-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-4">
             {filteredMedia.map(item => (
               <div
                 key={item.id}
                 className={`cursor-pointer border-2 ${selectedIds.includes(item.id) ? 'border-wedding-azure' : 'border-transparent'}`}
                 onClick={() => toggleSelect(item.id)}
               >
-                <ThumbnailImage
-                  mediaId={item.id}
-                  apiUrl={API_URL}
-                  alt={item.caption || t('beautiful_moment')}
-                  className="w-full h-32 object-cover"
-                  mediaType={item.media_type}
-                />
+                <div className="aspect-w-1 aspect-h-1 bg-gray-200">
+                  <ThumbnailImage
+                    mediaId={item.id}
+                    apiUrl={API_URL}
+                    alt={item.caption || t('beautiful_moment')}
+                    className="object-cover w-full h-full"
+                    mediaType={item.media_type}
+                  />
+                </div>
               </div>
             ))}
           </div>
