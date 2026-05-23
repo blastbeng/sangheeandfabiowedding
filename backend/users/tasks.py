@@ -40,14 +40,17 @@ logger = logging.getLogger(__name__)
 PAGE_THEMES = [
     {
         'name': 'elegant',
-        'bg_color': '#FDFBF7',      # warm cream
-        'pattern_color': '#F0EAD6',  # subtle lace dots
-        'border_color': '#C9A96E',   # gold
+        'bg_color': '#FDFBF7',
+        'pattern_color': '#F0EAD6',
+        'border_color': '#C9A96E',
         'corner_color': '#C9A96E',
-        'title_font': 'Cursive',
-        'caption_font': 'Georgia',
         'caption_color': '#5C4B3A',
         'page_number_color': '#C9A96E',
+        'background_style': 'elegant',
+        'cursive_file': 'GreatVibes-Regular.ttf',
+        'cursive_family': 'Cursive',
+        'serif_file': 'CrimsonText-Regular.ttf',
+        'serif_family': 'Georgia',
     },
     {
         'name': 'classic',
@@ -55,10 +58,13 @@ PAGE_THEMES = [
         'pattern_color': '#E8E0D5',
         'border_color': '#8B7355',
         'corner_color': '#8B7355',
-        'title_font': 'Cursive',
-        'caption_font': 'Georgia',
         'caption_color': '#3E3E3E',
         'page_number_color': '#8B7355',
+        'background_style': 'classic',
+        'cursive_file': 'Tangerine-Regular.ttf',
+        'cursive_family': 'Cursive',
+        'serif_file': 'PlayfairDisplay-Regular.ttf',
+        'serif_family': 'Georgia',
     },
     {
         'name': 'modern',
@@ -66,10 +72,13 @@ PAGE_THEMES = [
         'pattern_color': '#E0E0E0',
         'border_color': '#333333',
         'corner_color': '#333333',
-        'title_font': 'Helvetica-Bold',
-        'caption_font': 'Helvetica',
         'caption_color': '#222222',
         'page_number_color': '#333333',
+        'background_style': 'modern',
+        'cursive_file': 'Montserrat-Regular.ttf',
+        'cursive_family': 'Cursive',   # used for titles, but sans-serif
+        'serif_file': 'Raleway-Regular.ttf',
+        'serif_family': 'Georgia',
     },
     {
         'name': 'vintage',
@@ -77,10 +86,13 @@ PAGE_THEMES = [
         'pattern_color': '#D4C4A8',
         'border_color': '#A67C52',
         'corner_color': '#A67C52',
-        'title_font': 'Cursive',
-        'caption_font': 'Georgia',
         'caption_color': '#5C4033',
         'page_number_color': '#A67C52',
+        'background_style': 'vintage',
+        'cursive_file': 'Pacifico-Regular.ttf',
+        'cursive_family': 'Cursive',
+        'serif_file': 'OldStandardTT-Regular.ttf',
+        'serif_family': 'Georgia',
     },
     {
         'name': 'romantic',
@@ -88,10 +100,13 @@ PAGE_THEMES = [
         'pattern_color': '#FADADD',
         'border_color': '#D81B60',
         'corner_color': '#D81B60',
-        'title_font': 'Cursive',
-        'caption_font': 'Georgia',
         'caption_color': '#880E4F',
         'page_number_color': '#D81B60',
+        'background_style': 'romantic',
+        'cursive_file': 'DancingScript-Regular.ttf',
+        'cursive_family': 'Cursive',
+        'serif_file': 'Lora-Regular.ttf',
+        'serif_family': 'Georgia',
     },
 ]
 
@@ -1647,30 +1662,71 @@ def _cluster_images_for_pages_ai(media_list):
 
 # ---------- Wedding Book PDF Helpers ----------
 
-def _draw_elegant_background(c, width, height, theme):
-    """Draw a soft cream background with a thin gold border and a subtle monogram watermark."""
-    # Background
-    c.setFillColor(HexColor(theme['bg_color']))
+def _draw_theme_background(c, width, height, theme):
+    """Draw a theme‑specific page background."""
+    style = theme.get('background_style', 'elegant')
+    bg = theme['bg_color']
+    border = theme['border_color']
+    corner = theme['corner_color']
+
+    # Common: fill background
+    c.setFillColor(HexColor(bg))
     c.rect(0, 0, width, height, fill=1)
 
-    # Thin gold border with double‑line effect
-    c.setStrokeColor(HexColor(theme['border_color']))
-    c.setLineWidth(1.5)
-    c.rect(20, 20, width - 40, height - 40)
-    c.setLineWidth(0.5)
-    c.rect(23, 23, width - 46, height - 46)
+    if style == 'elegant':
+        # Double gold border + corner flourishes + monogram
+        c.setStrokeColor(HexColor(border))
+        c.setLineWidth(1.5)
+        c.rect(20, 20, width - 40, height - 40)
+        c.setLineWidth(0.5)
+        c.rect(23, 23, width - 46, height - 46)
+        for (cx, cy) in [(30, 30), (width - 30, 30), (30, height - 30), (width - 30, height - 30)]:
+            _draw_flourish(c, cx, cy, size=12, color=corner)
+        c.saveState()
+        c.setFillAlpha(0.03)
+        c.setFillColor(HexColor(border))
+        c.setFont('Helvetica-Bold', 80)
+        c.drawCentredString(width / 2, height / 2, "S&H")
+        c.restoreState()
 
-    # Corner flourishes (simple elegant curves)
-    for (cx, cy) in [(30, 30), (width - 30, 30), (30, height - 30), (width - 30, height - 30)]:
-        _draw_flourish(c, cx, cy, size=12, color=theme['corner_color'])
+    elif style == 'classic':
+        # Single thick border, simple corners
+        c.setStrokeColor(HexColor(border))
+        c.setLineWidth(2)
+        c.rect(25, 25, width - 50, height - 50)
+        # Small corner squares
+        c.setLineWidth(1)
+        for (cx, cy) in [(30, 30), (width - 30, 30), (30, height - 30), (width - 30, height - 30)]:
+            c.rect(cx - 5, cy - 5, 10, 10, fill=0)
 
-    # Faint monogram watermark in the centre
-    c.saveState()
-    c.setFillAlpha(0.03)
-    c.setFillColor(HexColor(theme['border_color']))
-    c.setFont('Helvetica-Bold', 80)
-    c.drawCentredString(width / 2, height / 2, "S&H")
-    c.restoreState()
+    elif style == 'modern':
+        # Minimal: thin line at top and bottom
+        c.setStrokeColor(HexColor(border))
+        c.setLineWidth(1)
+        c.line(40, height - 40, width - 40, height - 40)
+        c.line(40, 40, width - 40, 40)
+
+    elif style == 'vintage':
+        # Ornate border with dashed inner line
+        c.setStrokeColor(HexColor(border))
+        c.setLineWidth(2)
+        c.rect(20, 20, width - 40, height - 40)
+        c.setDash(4, 4)
+        c.setLineWidth(1)
+        c.rect(28, 28, width - 56, height - 56)
+        c.setDash()
+        # Corner flourishes
+        for (cx, cy) in [(30, 30), (width - 30, 30), (30, height - 30), (width - 30, height - 30)]:
+            _draw_flourish(c, cx, cy, size=14, color=corner)
+
+    elif style == 'romantic':
+        # Soft pink border with heart motifs in corners
+        c.setStrokeColor(HexColor(border))
+        c.setLineWidth(1.5)
+        c.rect(25, 25, width - 50, height - 50)
+        # Draw small hearts in corners
+        for (cx, cy) in [(40, 40), (width - 40, 40), (40, height - 40), (width - 40, height - 40)]:
+            _draw_heart(c, cx, cy, size=8, color=border)
 
 
 def _draw_flourish(c, x, y, size=12, color='#C9A96E'):
@@ -1679,6 +1735,24 @@ def _draw_flourish(c, x, y, size=12, color='#C9A96E'):
     c.setLineWidth(0.8)
     c.arc(x - size, y - size, x + size, y + size, 0, 90)
     c.arc(x - size, y - size, x + size, y + size, 180, 270)
+
+
+def _draw_heart(c, x, y, size=8, color='#D81B60'):
+    """Draw a tiny heart symbol using two arcs and a triangle."""
+    c.setStrokeColor(HexColor(color))
+    c.setFillColor(HexColor(color))
+    c.setLineWidth(0.5)
+    # Left lobe
+    c.arc(x - size/2, y, x, y + size/2, 0, 180)
+    # Right lobe
+    c.arc(x, y, x + size/2, y + size/2, 0, 180)
+    # Bottom point
+    p = c.beginPath()
+    p.moveTo(x - size/2, y + size/4)
+    p.lineTo(x, y - size/2)
+    p.lineTo(x + size/2, y + size/4)
+    p.close()
+    c.drawPath(p, fill=1, stroke=0)
 
 
 def _draw_photo_with_frame(c, x, y, w, h, img_reader, caption_it, caption_ko, caption_font_it, caption_font_ko, caption_color):
@@ -1794,27 +1868,43 @@ def generate_wedding_book_task(self, book_id):
         pdf_canvas = canvas.Canvas(buffer, pagesize=A4)
         width, height = A4
 
-        # Font setup
-        FONT_NAME = 'Helvetica'
-        FONT_ITALIC = 'Helvetica-Oblique'
-        # Register a cursive font if available (optional, fallback to Helvetica)
-        CURSIVE = FONT_ITALIC
-        FONTS_DIR = '/app/fonts'   # Docker volume mount point
+        # ---- Theme selection ----
+        theme_name = book.theme if book.theme in dict(WeddingBook.Theme.choices) else 'elegant'
+        theme = next((t for t in PAGE_THEMES if t['name'] == theme_name), PAGE_THEMES[0])
 
+        # ---- Load theme-specific fonts ----
+        FONTS_DIR = '/app/fonts'
+        from reportlab.pdfbase import pdfmetrics
+        from reportlab.pdfbase.ttfonts import TTFont
+
+        # Cursive / title font
+        CURSIVE = 'Helvetica-Oblique'  # fallback
         try:
-            from reportlab.pdfbase import pdfmetrics
-            from reportlab.pdfbase.ttfonts import TTFont
-            font_path = os.path.join(FONTS_DIR, 'GreatVibes-Regular.ttf')
-            pdfmetrics.registerFont(TTFont('Cursive', font_path))
-            CURSIVE = 'Cursive'
-        except Exception:
-            pass
+            cursive_path = os.path.join(FONTS_DIR, theme['cursive_file'])
+            if os.path.exists(cursive_path):
+                pdfmetrics.registerFont(TTFont(theme['cursive_family'], cursive_path))
+                CURSIVE = theme['cursive_family']
+            else:
+                logger.warning(f"Cursive font file missing: {cursive_path}")
+        except Exception as e:
+            logger.warning(f"Failed to load cursive font: {e}")
 
-        # Register Korean font
-        KOREAN_FONT = FONT_NAME  # fallback
+        # Serif / caption font
+        SERIF_FONT = 'Times-Roman'  # fallback
+        try:
+            serif_path = os.path.join(FONTS_DIR, theme['serif_file'])
+            if os.path.exists(serif_path):
+                pdfmetrics.registerFont(TTFont(theme['serif_family'], serif_path))
+                SERIF_FONT = theme['serif_family']
+            else:
+                logger.warning(f"Serif font file missing: {serif_path}")
+        except Exception as e:
+            logger.warning(f"Failed to load serif font: {e}")
+
+        # Korean font (shared across themes)
+        KOREAN_FONT = 'Helvetica'
         korean_font_loaded = False
 
-        # Helper to test if a font actually contains Korean glyphs
         def _font_has_korean(font_name, size=12):
             try:
                 from reportlab.pdfbase.pdfmetrics import stringWidth
@@ -1823,11 +1913,10 @@ def generate_wedding_book_task(self, book_id):
             except Exception:
                 return False
 
-        # 1. Try the downloaded font from the volume
         try:
-            korean_font_path = os.path.join(FONTS_DIR, 'NotoSansKR-Regular.ttf')
-            if os.path.exists(korean_font_path):
-                pdfmetrics.registerFont(TTFont('Korean', korean_font_path))
+            korean_path = os.path.join(FONTS_DIR, 'NotoSansKR-Regular.ttf')
+            if os.path.exists(korean_path):
+                pdfmetrics.registerFont(TTFont('Korean', korean_path))
                 if _font_has_korean('Korean'):
                     KOREAN_FONT = 'Korean'
                     korean_font_loaded = True
@@ -1837,7 +1926,6 @@ def generate_wedding_book_task(self, book_id):
         except Exception as e:
             logger.warning(f"Downloaded Korean font failed: {e}")
 
-        # 2. Fallback to system Noto Sans CJK (try different subfont indices)
         if not korean_font_loaded:
             try:
                 system_paths = [
@@ -1847,7 +1935,6 @@ def generate_wedding_book_task(self, book_id):
                 ]
                 for path in system_paths:
                     if os.path.exists(path):
-                        # subfontIndex 0=JP, 1=KR, 2=SC, 3=TC … try a few
                         for subfont_idx in range(5):
                             try:
                                 pdfmetrics.registerFont(TTFont('Korean', path, subfontIndex=subfont_idx))
@@ -1865,20 +1952,6 @@ def generate_wedding_book_task(self, book_id):
 
         if not korean_font_loaded:
             logger.warning("No Korean font available – Korean captions will be missing.")
-
-        # Register a serif font for captions
-        SERIF_FONT = 'Times-Roman'  # fallback
-        try:
-            serif_font_path = os.path.join(FONTS_DIR, 'Georgia.ttf')
-            pdfmetrics.registerFont(TTFont('Georgia', serif_font_path))
-            SERIF_FONT = 'Georgia'
-        except Exception:
-            logger.warning("Georgia font not found, using Times-Roman for captions.")
-
-
-        # ---- Theme selection ----
-        theme_name = book.theme if book.theme in dict(WeddingBook.Theme.choices) else 'elegant'
-        theme = next((t for t in PAGE_THEMES if t['name'] == theme_name), PAGE_THEMES[0])
 
         # ---- Cover Page ----
         cover_img = None
@@ -1927,7 +2000,7 @@ def generate_wedding_book_task(self, book_id):
         pdf_canvas.showPage()
 
         # ---- Title Page ----
-        _draw_elegant_background(pdf_canvas, width, height, theme)
+        _draw_theme_background(pdf_canvas, width, height, theme)
         pdf_canvas.setFont(CURSIVE, 48)
         pdf_canvas.setFillColor(HexColor(theme['border_color']))
         pdf_canvas.drawCentredString(width / 2, height - 200, "Sang Hee & Fabio")
@@ -1946,7 +2019,7 @@ def generate_wedding_book_task(self, book_id):
         page_groups = _cluster_images_for_pages(media_list)
 
         for page_idx, group in enumerate(page_groups):
-            _draw_elegant_background(pdf_canvas, width, height, theme)
+            _draw_theme_background(pdf_canvas, width, height, theme)
 
             group_size = len(group)
 
@@ -2046,7 +2119,7 @@ def generate_wedding_book_task(self, book_id):
             book.save()
 
         # ---- Back Cover ----
-        _draw_elegant_background(pdf_canvas, width, height, theme)
+        _draw_theme_background(pdf_canvas, width, height, theme)
         pdf_canvas.setFont(CURSIVE, 40)
         pdf_canvas.setFillColor(HexColor(theme['border_color']))
         pdf_canvas.drawCentredString(width / 2, height / 2 + 30, "Thank You")
