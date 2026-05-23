@@ -1780,10 +1780,12 @@ def generate_wedding_book_task(self, book_id):
         FONT_ITALIC = 'Helvetica-Oblique'
         # Register a cursive font if available (optional, fallback to Helvetica)
         CURSIVE = FONT_ITALIC
+        FONTS_DIR = '/app/fonts'   # Docker volume mount point
+
         try:
             from reportlab.pdfbase import pdfmetrics
             from reportlab.pdfbase.ttfonts import TTFont
-            font_path = os.path.join(django_settings.BASE_DIR, 'static', 'fonts', 'GreatVibes-Regular.ttf')
+            font_path = os.path.join(FONTS_DIR, 'GreatVibes-Regular.ttf')
             pdfmetrics.registerFont(TTFont('Cursive', font_path))
             CURSIVE = 'Cursive'
         except Exception:
@@ -1792,7 +1794,7 @@ def generate_wedding_book_task(self, book_id):
         # Register Korean font
         KOREAN_FONT = FONT_NAME  # fallback
         try:
-            korean_font_path = os.path.join(django_settings.BASE_DIR, 'static', 'fonts', 'NotoSansKR-Regular.ttf')
+            korean_font_path = os.path.join(FONTS_DIR, 'NotoSansKR-Regular.ttf')
             pdfmetrics.registerFont(TTFont('Korean', korean_font_path))
             KOREAN_FONT = 'Korean'
         except Exception:
@@ -1801,7 +1803,7 @@ def generate_wedding_book_task(self, book_id):
         # Register a serif font for captions
         SERIF_FONT = 'Times-Roman'  # fallback
         try:
-            serif_font_path = os.path.join(django_settings.BASE_DIR, 'static', 'fonts', 'Georgia.ttf')
+            serif_font_path = os.path.join(FONTS_DIR, 'Georgia.ttf')
             pdfmetrics.registerFont(TTFont('Georgia', serif_font_path))
             SERIF_FONT = 'Georgia'
         except Exception:

@@ -39,6 +39,9 @@ print('Face recognition models verified OK')"
 COPY download_models.sh /usr/local/bin/download_models.sh
 RUN chmod +x /usr/local/bin/download_models.sh
 
+COPY download_fonts.sh /usr/local/bin/download_fonts.sh
+RUN chmod +x /usr/local/bin/download_fonts.sh
+
 COPY . .
 
 # Verify manage.py exists

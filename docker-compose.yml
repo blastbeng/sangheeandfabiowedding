@@ -111,13 +111,14 @@ services:
     pull_policy: build
     build: ./backend
     container_name: wedding-celery
-    command: sh -c "/usr/local/bin/download_models.sh; celery -A config worker --loglevel=info"
+    command: sh -c "/usr/local/bin/download_fonts.sh; /usr/local/bin/download_models.sh; celery -A config worker --loglevel=info"
     devices:
       - /dev/dri:/dev/dri
     volumes:
       - ./backend/media:/app/media
       - models_data:/app/models
       - huggingface_cache:/root/.cache/huggingface
+      - fonts_data:/app/fonts
     environment:
       - PUID=1000
       - PGID=1000
@@ -259,3 +260,4 @@ networks:
 volumes:
   models_data:
   huggingface_cache:
+  fonts_data:
