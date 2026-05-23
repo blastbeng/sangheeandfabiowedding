@@ -489,7 +489,14 @@ const resources = {
       "Delete this wedding book?": "Eliminare questo libro di nozze?",
       "Generating...": "Generazione in corso...",
       "Need at least 20 approved media. Currently: {count}": "Servono almeno 20 media approvati. Attuali: {count}",
-      "Delete selected wedding books?": "Eliminare i libri di nozze selezionati?"
+      "Delete selected wedding books?": "Eliminare i libri di nozze selezionati?",
+      "Theme": "Tema",
+      "Elegant": "Elegante",
+      "Classic": "Classico",
+      "Modern": "Moderno",
+      "Vintage": "Vintage",
+      "Romantic": "Romantico",
+      "File Size": "Dimensione File"
     }
   },
   ko: {
@@ -979,7 +986,14 @@ const resources = {
       "Delete this wedding book?": "이 웨딩북을 삭제하시겠습니까?",
       "Generating...": "생성 중...",
       "Need at least 20 approved media. Currently: {count}": "승인된 미디어가 최소 20개 필요합니다. 현재: {count}",
-      "Delete selected wedding books?": "선택한 웨딩북을 삭제하시겠습니까?"
+      "Delete selected wedding books?": "선택한 웨딩북을 삭제하시겠습니까?",
+      "Theme": "테마",
+      "Elegant": "우아한",
+      "Classic": "클래식",
+      "Modern": "모던",
+      "Vintage": "빈티지",
+      "Romantic": "로맨틱",
+      "File Size": "파일 크기"
     }
   },
   en: {
@@ -1469,7 +1483,14 @@ const resources = {
       "Delete this wedding book?": "Delete this wedding book?",
       "Generating...": "Generating...",
       "Need at least 20 approved media. Currently: {count}": "Need at least 20 approved media. Currently: {count}",
-      "Delete selected wedding books?": "Delete selected wedding books?"
+      "Delete selected wedding books?": "Delete selected wedding books?",
+      "Theme": "Theme",
+      "Elegant": "Elegant",
+      "Classic": "Classic",
+      "Modern": "Modern",
+      "Vintage": "Vintage",
+      "Romantic": "Romantic",
+      "File Size": "File Size"
     }
   }
 };
