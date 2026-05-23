@@ -1810,6 +1810,13 @@ def generate_wedding_book_task(self, book_id):
         except Exception:
             logger.warning("Korean font not found, Korean text may not render correctly.")
 
+        # Ensure all themes use the actually available fonts
+        for theme in PAGE_THEMES:
+            if theme['title_font'] == 'Cursive':
+                theme['title_font'] = CURSIVE
+            if theme['caption_font'] == 'Cursive':
+                theme['caption_font'] = CURSIVE
+
         def _safe_font(font_name):
             """Return a font name that is guaranteed to be available."""
             standard = ['Helvetica', 'Helvetica-Bold', 'Helvetica-Oblique', 'Helvetica-BoldOblique',
@@ -1938,6 +1945,7 @@ def generate_wedding_book_task(self, book_id):
                     pdf_canvas.setFillColor(HexColor('#E8D5C4'))
                     pdf_canvas.rect(x, y, w, h, fill=1)
                     pdf_canvas.setFillColor(HexColor('#333333'))
+                    pdf_canvas.setFont('Helvetica', 10)
                     pdf_canvas.drawString(x + 10, y + h / 2, "Image missing")
 
             # ---- Captions area (for framed photos that don't have polaroid caption) ----
