@@ -296,6 +296,18 @@ class WeddingBook(models.Model):
         COMPLETED = 'completed', 'Completed'
         FAILED = 'failed', 'Failed'
 
+    class Theme(models.TextChoices):
+        ELEGANT = 'elegant', 'Elegant'
+        CLASSIC = 'classic', 'Classic'
+        MODERN = 'modern', 'Modern'
+        VINTAGE = 'vintage', 'Vintage'
+        ROMANTIC = 'romantic', 'Romantic'
+
+    theme = models.CharField(
+        max_length=20,
+        choices=Theme.choices,
+        default=Theme.ELEGANT,
+    )
     status = models.CharField(
         max_length=20,
         choices=Status.choices,
