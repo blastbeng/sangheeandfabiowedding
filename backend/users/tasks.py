@@ -1663,18 +1663,18 @@ def _cluster_images_for_pages_ai(media_list):
 # ---------- Wedding Book PDF Helpers ----------
 
 def _draw_theme_background(c, width, height, theme):
-    """Draw a theme‑specific page background."""
+    """Draw a theme‑specific page background – elegant, distinct, no monogram."""
     style = theme.get('background_style', 'elegant')
     bg = theme['bg_color']
     border = theme['border_color']
     corner = theme['corner_color']
 
-    # Common: fill background
+    # Fill background
     c.setFillColor(HexColor(bg))
     c.rect(0, 0, width, height, fill=1)
 
     if style == 'elegant':
-        # Double gold border + corner flourishes + monogram
+        # Double gold border with delicate corner flourishes
         c.setStrokeColor(HexColor(border))
         c.setLineWidth(1.5)
         c.rect(20, 20, width - 40, height - 40)
@@ -1682,32 +1682,29 @@ def _draw_theme_background(c, width, height, theme):
         c.rect(23, 23, width - 46, height - 46)
         for (cx, cy) in [(30, 30), (width - 30, 30), (30, height - 30), (width - 30, height - 30)]:
             _draw_flourish(c, cx, cy, size=12, color=corner)
-        c.saveState()
-        c.setFillAlpha(0.03)
-        c.setFillColor(HexColor(border))
-        c.setFont('Helvetica-Bold', 80)
-        c.drawCentredString(width / 2, height / 2, "S&H")
-        c.restoreState()
 
     elif style == 'classic':
-        # Single thick border, simple corners
+        # Navy/dark double border with small corner squares
         c.setStrokeColor(HexColor(border))
         c.setLineWidth(2)
         c.rect(25, 25, width - 50, height - 50)
-        # Small corner squares
         c.setLineWidth(1)
-        for (cx, cy) in [(30, 30), (width - 30, 30), (30, height - 30), (width - 30, height - 30)]:
-            c.rect(cx - 5, cy - 5, 10, 10, fill=0)
+        c.rect(30, 30, width - 60, height - 60)
+        for (cx, cy) in [(35, 35), (width - 35, 35), (35, height - 35), (width - 35, height - 35)]:
+            c.rect(cx - 4, cy - 4, 8, 8, fill=0)
 
     elif style == 'modern':
-        # Minimal: thin line at top and bottom
+        # Minimal: thin top and bottom lines, tiny corner dots
         c.setStrokeColor(HexColor(border))
         c.setLineWidth(1)
         c.line(40, height - 40, width - 40, height - 40)
         c.line(40, 40, width - 40, 40)
+        c.setFillColor(HexColor(border))
+        for (cx, cy) in [(40, 40), (width - 40, 40), (40, height - 40), (width - 40, height - 40)]:
+            c.circle(cx, cy, 2, fill=1)
 
     elif style == 'vintage':
-        # Ornate border with dashed inner line
+        # Ornate border with dashed inner line and corner flourishes
         c.setStrokeColor(HexColor(border))
         c.setLineWidth(2)
         c.rect(20, 20, width - 40, height - 40)
@@ -1715,7 +1712,6 @@ def _draw_theme_background(c, width, height, theme):
         c.setLineWidth(1)
         c.rect(28, 28, width - 56, height - 56)
         c.setDash()
-        # Corner flourishes
         for (cx, cy) in [(30, 30), (width - 30, 30), (30, height - 30), (width - 30, height - 30)]:
             _draw_flourish(c, cx, cy, size=14, color=corner)
 
@@ -1724,7 +1720,6 @@ def _draw_theme_background(c, width, height, theme):
         c.setStrokeColor(HexColor(border))
         c.setLineWidth(1.5)
         c.rect(25, 25, width - 50, height - 50)
-        # Draw small hearts in corners
         for (cx, cy) in [(40, 40), (width - 40, 40), (40, height - 40), (width - 40, height - 40)]:
             _draw_heart(c, cx, cy, size=8, color=border)
 
@@ -1803,6 +1798,71 @@ def _draw_polaroid_style(c, x, y, w, h, img_reader, caption_it, caption_ko, capt
     if caption_ko:
         c.setFont(caption_font_ko, 9)
         c.drawCentredString(x + w/2, y + 2, caption_ko[:50])
+
+
+def _load_korean_font():
+    """
+    Ensure a Korean-capable font is registered and return its name.
+    Downloads NotoSansKR-Regular.ttf if missing, then falls back to
+    system Noto Sans CJK.  Returns 'Helvetica' only as last resort.
+    """
+    FONTS_DIR = '/app/fonts'
+    korean_path = os.path.join(FONTS_DIR, 'NotoSansKR-Regular.ttf')
+
+    # 1. Download if missing
+    if not os.path.exists(korean_path):
+        logger.info("Korean font not found – attempting download...")
+        try:
+            os.makedirs(FONTS_DIR, exist_ok=True)
+            url = "https://github.com/google/fonts/raw/main/ofl/notosanskr/NotoSansKR-Regular.ttf"
+            r = requests.get(url, timeout=30)
+            if r.status_code == 200:
+                with open(korean_path, 'wb') as f:
+                    f.write(r.content)
+                logger.info("Korean font downloaded successfully.")
+            else:
+                logger.warning(f"Korean font download failed with status {r.status_code}")
+        except Exception as e:
+            logger.warning(f"Korean font download error: {e}")
+
+    # 2. Try the downloaded font
+    if os.path.exists(korean_path):
+        try:
+            from reportlab.pdfbase import pdfmetrics
+            from reportlab.pdfbase.ttfonts import TTFont
+            pdfmetrics.registerFont(TTFont('Korean', korean_path))
+            # Verify glyph coverage
+            from reportlab.pdfbase.pdfmetrics import stringWidth
+            if stringWidth('한', 'Korean', 12) > 0:
+                logger.info("Korean font loaded and verified.")
+                return 'Korean'
+            else:
+                logger.warning("Downloaded Korean font lacks glyphs – trying system fonts.")
+        except Exception as e:
+            logger.warning(f"Failed to register downloaded Korean font: {e}")
+
+    # 3. Fallback to system Noto Sans CJK
+    from reportlab.pdfbase import pdfmetrics
+    from reportlab.pdfbase.ttfonts import TTFont
+    from reportlab.pdfbase.pdfmetrics import stringWidth
+    system_paths = [
+        '/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc',
+        '/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc',
+        '/usr/share/fonts/noto-cjk/NotoSansCJK-Regular.ttc',
+    ]
+    for path in system_paths:
+        if os.path.exists(path):
+            for subfont_idx in range(5):   # 0=JP,1=KR,2=SC,3=TC,4=HK
+                try:
+                    pdfmetrics.registerFont(TTFont('Korean', path, subfontIndex=subfont_idx))
+                    if stringWidth('한', 'Korean', 12) > 0:
+                        logger.info(f"Using system Korean font: {path} subfont={subfont_idx}")
+                        return 'Korean'
+                except Exception:
+                    continue
+
+    logger.warning("No Korean font available – Korean captions will be missing.")
+    return 'Helvetica'
 
 
 @shared_task(bind=True, max_retries=1, soft_time_limit=5400, time_limit=5500)
@@ -1902,56 +1962,7 @@ def generate_wedding_book_task(self, book_id):
             logger.warning(f"Failed to load serif font: {e}")
 
         # Korean font (shared across themes)
-        KOREAN_FONT = 'Helvetica'
-        korean_font_loaded = False
-
-        def _font_has_korean(font_name, size=12):
-            try:
-                from reportlab.pdfbase.pdfmetrics import stringWidth
-                w = stringWidth('한', font_name, size)
-                return w > 0
-            except Exception:
-                return False
-
-        try:
-            korean_path = os.path.join(FONTS_DIR, 'NotoSansKR-Regular.ttf')
-            if os.path.exists(korean_path):
-                pdfmetrics.registerFont(TTFont('Korean', korean_path))
-                if _font_has_korean('Korean'):
-                    KOREAN_FONT = 'Korean'
-                    korean_font_loaded = True
-                    logger.info("Korean font loaded successfully from volume.")
-                else:
-                    logger.warning("Downloaded Korean font does not contain Korean glyphs.")
-        except Exception as e:
-            logger.warning(f"Downloaded Korean font failed: {e}")
-
-        if not korean_font_loaded:
-            try:
-                system_paths = [
-                    '/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc',
-                    '/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc',
-                    '/usr/share/fonts/noto-cjk/NotoSansCJK-Regular.ttc',
-                ]
-                for path in system_paths:
-                    if os.path.exists(path):
-                        for subfont_idx in range(5):
-                            try:
-                                pdfmetrics.registerFont(TTFont('Korean', path, subfontIndex=subfont_idx))
-                                if _font_has_korean('Korean'):
-                                    KOREAN_FONT = 'Korean'
-                                    korean_font_loaded = True
-                                    logger.info(f"Using system Korean font: {path} subfont={subfont_idx}")
-                                    break
-                            except Exception:
-                                continue
-                        if korean_font_loaded:
-                            break
-            except Exception as e:
-                logger.warning(f"System Korean font fallback failed: {e}")
-
-        if not korean_font_loaded:
-            logger.warning("No Korean font available – Korean captions will be missing.")
+        KOREAN_FONT = _load_korean_font()
 
         # ---- Cover Page ----
         cover_img = None
@@ -1964,11 +1975,18 @@ def generate_wedding_book_task(self, book_id):
 
         if cover_img:
             pdf_canvas.drawImage(cover_img, 0, 0, width, height, preserveAspectRatio=True, mask='auto')
-            # Soft gradient overlay (darker at bottom)
-            pdf_canvas.setFillColor(HexColor('#000000'))
-            pdf_canvas.setFillAlpha(0.3)
-            pdf_canvas.rect(0, 0, width, height, fill=1)
+            # Soft radial gradient overlay (darker at edges, lighter in center)
+            pdf_canvas.saveState()
+            for i in range(10):
+                alpha = 0.15 - i * 0.012
+                if alpha <= 0:
+                    break
+                margin = i * 15
+                pdf_canvas.setFillColor(HexColor('#000000'))
+                pdf_canvas.setFillAlpha(alpha)
+                pdf_canvas.rect(margin, margin, width - 2*margin, height - 2*margin, fill=1)
             pdf_canvas.setFillAlpha(1.0)
+            pdf_canvas.restoreState()
         else:
             pdf_canvas.setFillColor(HexColor('#1B2A4A'))
             pdf_canvas.rect(0, 0, width, height, fill=1)
