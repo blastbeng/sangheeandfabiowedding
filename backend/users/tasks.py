@@ -1662,8 +1662,10 @@ def _cluster_images_for_pages_ai(media_list):
 
 # ---------- Wedding Book PDF Helpers ----------
 
+# ---------- New elegant background helpers ----------
+
 def _draw_theme_background(c, width, height, theme):
-    """Draw a theme‑specific page background – elegant, distinct, no monogram."""
+    """Draw a theme‑specific page background – beautiful and distinct."""
     style = theme.get('background_style', 'elegant')
     bg = theme['bg_color']
     border = theme['border_color']
@@ -1674,66 +1676,106 @@ def _draw_theme_background(c, width, height, theme):
     c.rect(0, 0, width, height, fill=1)
 
     if style == 'elegant':
-        # Double gold border with delicate corner flourishes
-        c.setStrokeColor(HexColor(border))
-        c.setLineWidth(1.5)
-        c.rect(20, 20, width - 40, height - 40)
-        c.setLineWidth(0.5)
-        c.rect(23, 23, width - 46, height - 46)
+        # Gold gradient border (simulated with multiple thin rectangles)
+        for i in range(6):
+            alpha = 0.15 - i * 0.02
+            if alpha <= 0:
+                break
+            c.setStrokeColor(HexColor(border))
+            c.setLineWidth(0.5)
+            c.setStrokeAlpha(alpha)
+            c.rect(20 + i*2, 20 + i*2, width - 40 - i*4, height - 40 - i*4)
+        c.setStrokeAlpha(1.0)
+        # Delicate corner flourishes
         for (cx, cy) in [(30, 30), (width - 30, 30), (30, height - 30), (width - 30, height - 30)]:
-            _draw_flourish(c, cx, cy, size=12, color=corner)
+            _draw_elegant_corner(c, cx, cy, size=15, color=border)
 
     elif style == 'classic':
-        # Navy/dark double border with small corner squares
+        # Dark double border with a subtle inner line
         c.setStrokeColor(HexColor(border))
-        c.setLineWidth(2)
+        c.setLineWidth(2.5)
         c.rect(25, 25, width - 50, height - 50)
         c.setLineWidth(1)
         c.rect(30, 30, width - 60, height - 60)
+        # Small corner squares
+        c.setFillColor(HexColor(border))
         for (cx, cy) in [(35, 35), (width - 35, 35), (35, height - 35), (width - 35, height - 35)]:
-            c.rect(cx - 4, cy - 4, 8, 8, fill=0)
+            c.rect(cx - 5, cy - 5, 10, 10, fill=1, stroke=0)
 
     elif style == 'modern':
-        # Minimal: thin top and bottom lines, tiny corner dots
+        # Minimal: bold top and bottom lines, thin side lines
         c.setStrokeColor(HexColor(border))
-        c.setLineWidth(1)
-        c.line(40, height - 40, width - 40, height - 40)
-        c.line(40, 40, width - 40, 40)
+        c.setLineWidth(3)
+        c.line(30, height - 30, width - 30, height - 30)
+        c.line(30, 30, width - 30, 30)
+        c.setLineWidth(0.5)
+        c.line(30, 30, 30, height - 30)
+        c.line(width - 30, 30, width - 30, height - 30)
+        # Tiny corner dots
         c.setFillColor(HexColor(border))
-        for (cx, cy) in [(40, 40), (width - 40, 40), (40, height - 40), (width - 40, height - 40)]:
-            c.circle(cx, cy, 2, fill=1)
+        for (cx, cy) in [(30, 30), (width - 30, 30), (30, height - 30), (width - 30, height - 30)]:
+            c.circle(cx, cy, 3, fill=1)
 
     elif style == 'vintage':
-        # Ornate border with dashed inner line and corner flourishes
+        # Ornate border with a lace‑like pattern (dashed lines)
         c.setStrokeColor(HexColor(border))
         c.setLineWidth(2)
         c.rect(20, 20, width - 40, height - 40)
-        c.setDash(4, 4)
+        c.setDash(6, 4)
         c.setLineWidth(1)
         c.rect(28, 28, width - 56, height - 56)
         c.setDash()
+        # Corner flourishes
         for (cx, cy) in [(30, 30), (width - 30, 30), (30, height - 30), (width - 30, height - 30)]:
-            _draw_flourish(c, cx, cy, size=14, color=corner)
+            _draw_vintage_corner(c, cx, cy, size=16, color=border)
 
     elif style == 'romantic':
-        # Soft pink border with heart motifs in corners
+        # Soft pink border with a heart pattern along the edges
         c.setStrokeColor(HexColor(border))
         c.setLineWidth(1.5)
         c.rect(25, 25, width - 50, height - 50)
+        # Draw small hearts along the top and bottom edges
+        for x in range(60, int(width) - 60, 40):
+            _draw_heart(c, x, height - 25, size=6, color=border)
+            _draw_heart(c, x, 25, size=6, color=border)
+        # Corner hearts
         for (cx, cy) in [(40, 40), (width - 40, 40), (40, height - 40), (width - 40, height - 40)]:
-            _draw_heart(c, cx, cy, size=8, color=border)
+            _draw_heart(c, cx, cy, size=10, color=border)
 
 
-def _draw_flourish(c, x, y, size=12, color='#C9A96E'):
-    """Draw a small decorative corner flourish (curved lines)."""
+def _draw_elegant_corner(c, x, y, size=15, color='#C9A96E'):
+    """Draw an elegant corner flourish with curved lines and a small dot."""
     c.setStrokeColor(HexColor(color))
     c.setLineWidth(0.8)
+    # Outer arc
     c.arc(x - size, y - size, x + size, y + size, 0, 90)
-    c.arc(x - size, y - size, x + size, y + size, 180, 270)
+    # Inner arc
+    c.arc(x - size + 4, y - size + 4, x + size - 4, y + size - 4, 0, 90)
+    # Small dot at the corner
+    c.setFillColor(HexColor(color))
+    c.circle(x, y, 2, fill=1)
+
+
+def _draw_vintage_corner(c, x, y, size=16, color='#A67C52'):
+    """Draw a vintage corner flourish with a small leaf‑like shape."""
+    c.setStrokeColor(HexColor(color))
+    c.setLineWidth(1)
+    # Curved lines
+    c.arc(x - size, y - size, x + size, y + size, 0, 90)
+    c.arc(x - size + 6, y - size + 6, x + size - 6, y + size - 6, 0, 90)
+    # Small diamond
+    c.setFillColor(HexColor(color))
+    p = c.beginPath()
+    p.moveTo(x, y - 4)
+    p.lineTo(x + 4, y)
+    p.lineTo(x, y + 4)
+    p.lineTo(x - 4, y)
+    p.close()
+    c.drawPath(p, fill=1, stroke=0)
 
 
 def _draw_heart(c, x, y, size=8, color='#D81B60'):
-    """Draw a tiny heart symbol using two arcs and a triangle."""
+    """Draw a tiny heart symbol."""
     c.setStrokeColor(HexColor(color))
     c.setFillColor(HexColor(color))
     c.setLineWidth(0.5)
@@ -1751,53 +1793,57 @@ def _draw_heart(c, x, y, size=8, color='#D81B60'):
 
 
 def _draw_photo_with_frame(c, x, y, w, h, img_reader, caption_it, caption_ko, caption_font_it, caption_font_ko, caption_color):
-    """Draw a photo inside a thin white frame with a soft shadow, and bilingual captions below."""
-    # Shadow
+    """Draw a photo inside an elegant white frame with a gold accent line."""
+    # Soft shadow
     c.setFillColor(HexColor('#D4C9B8'))
-    c.roundRect(x + 3, y - 3, w, h, 6, fill=1)
+    c.roundRect(x + 4, y - 4, w, h, 8, fill=1)
     # White frame
     c.setFillColor(HexColor('#FFFFFF'))
-    c.roundRect(x, y, w, h, 6, fill=1, stroke=1)
+    c.roundRect(x, y, w, h, 8, fill=1, stroke=1)
     c.setStrokeColor(HexColor('#E0D6C8'))
     c.setLineWidth(0.5)
-    c.roundRect(x, y, w, h, 6)
-    # Photo (with padding)
-    padding = 8
+    c.roundRect(x, y, w, h, 8)
+    # Gold accent line inside the frame
+    c.setStrokeColor(HexColor('#C9A96E'))
+    c.setLineWidth(0.5)
+    c.roundRect(x + 4, y + 4, w - 8, h - 8, 6)
+    # Photo with padding
+    padding = 10
     c.drawImage(img_reader, x + padding, y + padding, w - 2*padding, h - 2*padding,
                 preserveAspectRatio=True, mask='auto')
     # Captions
     c.setFillColor(HexColor(caption_color))
     if caption_it:
         c.setFont(caption_font_it, 9)
-        c.drawCentredString(x + w/2, y - 14, caption_it[:60])
+        c.drawCentredString(x + w/2, y - 16, caption_it[:60])
     if caption_ko:
         c.setFont(caption_font_ko, 9)
-        c.drawCentredString(x + w/2, y - 26, caption_ko[:60])
+        c.drawCentredString(x + w/2, y - 28, caption_ko[:60])
 
 
 def _draw_polaroid_style(c, x, y, w, h, img_reader, caption_it, caption_ko, caption_font_it, caption_font_ko, caption_color):
-    """Draw a polaroid‑style photo with a wider bottom margin for bilingual captions."""
-    bottom_margin = 36
+    """Draw a polaroid‑style photo with a wider bottom margin and a subtle shadow."""
+    bottom_margin = 40
     # Shadow
     c.setFillColor(HexColor('#D4C9B8'))
-    c.roundRect(x + 3, y - 3, w, h + bottom_margin, 6, fill=1)
+    c.roundRect(x + 4, y - 4, w, h + bottom_margin, 8, fill=1)
     # White polaroid frame
     c.setFillColor(HexColor('#FFFFFF'))
-    c.roundRect(x, y, w, h + bottom_margin, 6, fill=1, stroke=1)
+    c.roundRect(x, y, w, h + bottom_margin, 8, fill=1, stroke=1)
     c.setStrokeColor(HexColor('#E0D6C8'))
     c.setLineWidth(0.5)
-    c.roundRect(x, y, w, h + bottom_margin, 6)
+    c.roundRect(x, y, w, h + bottom_margin, 8)
     # Photo
-    c.drawImage(img_reader, x + 10, y + bottom_margin + 5, w - 20, h - 15,
+    c.drawImage(img_reader, x + 12, y + bottom_margin + 8, w - 24, h - 20,
                 preserveAspectRatio=True, mask='auto')
     # Captions
     c.setFillColor(HexColor(caption_color))
     if caption_it:
         c.setFont(caption_font_it, 9)
-        c.drawCentredString(x + w/2, y + 14, caption_it[:50])
+        c.drawCentredString(x + w/2, y + 16, caption_it[:50])
     if caption_ko:
         c.setFont(caption_font_ko, 9)
-        c.drawCentredString(x + w/2, y + 2, caption_ko[:50])
+        c.drawCentredString(x + w/2, y + 4, caption_ko[:50])
 
 
 def _load_korean_font():
@@ -1830,12 +1876,15 @@ def _load_korean_font():
         try:
             from reportlab.pdfbase import pdfmetrics
             from reportlab.pdfbase.ttfonts import TTFont
-            pdfmetrics.registerFont(TTFont('Korean', korean_path))
+            # Use a unique font name to avoid conflicts
+            font_name = 'KoreanFont'
+            pdfmetrics.registerFont(TTFont(font_name, korean_path))
             # Verify glyph coverage
             from reportlab.pdfbase.pdfmetrics import stringWidth
-            if stringWidth('한', 'Korean', 12) > 0:
-                logger.info("Korean font loaded and verified.")
-                return 'Korean'
+            test_width = stringWidth('한', font_name, 12)
+            if test_width > 0:
+                logger.info(f"Korean font loaded and verified (width={test_width}).")
+                return font_name
             else:
                 logger.warning("Downloaded Korean font lacks glyphs – trying system fonts.")
         except Exception as e:
@@ -1854,10 +1903,11 @@ def _load_korean_font():
         if os.path.exists(path):
             for subfont_idx in range(5):   # 0=JP,1=KR,2=SC,3=TC,4=HK
                 try:
-                    pdfmetrics.registerFont(TTFont('Korean', path, subfontIndex=subfont_idx))
-                    if stringWidth('한', 'Korean', 12) > 0:
+                    font_name = f'KoreanFont{subfont_idx}'
+                    pdfmetrics.registerFont(TTFont(font_name, path, subfontIndex=subfont_idx))
+                    if stringWidth('한', font_name, 12) > 0:
                         logger.info(f"Using system Korean font: {path} subfont={subfont_idx}")
-                        return 'Korean'
+                        return font_name
                 except Exception:
                     continue
 
@@ -1975,21 +2025,31 @@ def generate_wedding_book_task(self, book_id):
 
         if cover_img:
             pdf_canvas.drawImage(cover_img, 0, 0, width, height, preserveAspectRatio=True, mask='auto')
-            # Soft radial gradient overlay (darker at edges, lighter in center)
+            # Soft vignette overlay
             pdf_canvas.saveState()
-            for i in range(10):
-                alpha = 0.15 - i * 0.012
+            for i in range(12):
+                alpha = 0.12 - i * 0.01
                 if alpha <= 0:
                     break
-                margin = i * 15
+                margin = i * 12
                 pdf_canvas.setFillColor(HexColor('#000000'))
                 pdf_canvas.setFillAlpha(alpha)
                 pdf_canvas.rect(margin, margin, width - 2*margin, height - 2*margin, fill=1)
             pdf_canvas.setFillAlpha(1.0)
             pdf_canvas.restoreState()
         else:
+            # Elegant gradient background if no cover image
             pdf_canvas.setFillColor(HexColor('#1B2A4A'))
             pdf_canvas.rect(0, 0, width, height, fill=1)
+            # Add a subtle gold gradient at the bottom
+            for i in range(20):
+                alpha = 0.05 - i * 0.0025
+                if alpha <= 0:
+                    break
+                pdf_canvas.setFillColor(HexColor('#C9A96E'))
+                pdf_canvas.setFillAlpha(alpha)
+                pdf_canvas.rect(0, i*5, width, 5, fill=1)
+            pdf_canvas.setFillAlpha(1.0)
 
         # Gold decorative border
         pdf_canvas.setStrokeColor(HexColor('#C9A96E'))
@@ -2000,7 +2060,7 @@ def generate_wedding_book_task(self, book_id):
 
         # Corner flourishes
         for (cx, cy) in [(30, 30), (width - 30, 30), (30, height - 30), (width - 30, height - 30)]:
-            _draw_flourish(pdf_canvas, cx, cy, size=20, color='#C9A96E')
+            _draw_elegant_corner(pdf_canvas, cx, cy, size=20, color='#C9A96E')
 
         # Title
         pdf_canvas.setFont(CURSIVE, 60)
@@ -2019,18 +2079,22 @@ def generate_wedding_book_task(self, book_id):
 
         # ---- Title Page ----
         _draw_theme_background(pdf_canvas, width, height, theme)
+        # Decorative top ornament
+        pdf_canvas.setStrokeColor(HexColor(theme['border_color']))
+        pdf_canvas.setLineWidth(1)
+        pdf_canvas.line(100, height - 100, width - 100, height - 100)
         pdf_canvas.setFont(CURSIVE, 48)
         pdf_canvas.setFillColor(HexColor(theme['border_color']))
-        pdf_canvas.drawCentredString(width / 2, height - 200, "Sang Hee & Fabio")
+        pdf_canvas.drawCentredString(width / 2, height - 140, "Sang Hee & Fabio")
         pdf_canvas.setFont(SERIF_FONT, 18)
         pdf_canvas.setFillColor(HexColor('#4A4A4A'))
-        pdf_canvas.drawCentredString(width / 2, height - 250, "A celebration of love and joy")
+        pdf_canvas.drawCentredString(width / 2, height - 190, "A celebration of love and joy")
         # Decorative line
         pdf_canvas.setStrokeColor(HexColor(theme['border_color']))
         pdf_canvas.setLineWidth(1)
-        pdf_canvas.line(150, height - 270, width - 150, height - 270)
+        pdf_canvas.line(150, height - 210, width - 150, height - 210)
         pdf_canvas.setFont(SERIF_FONT, 14)
-        pdf_canvas.drawCentredString(width / 2, height - 300, "2026")
+        pdf_canvas.drawCentredString(width / 2, height - 240, "2026")
         pdf_canvas.showPage()
 
         # ---- Interior Pages ----
