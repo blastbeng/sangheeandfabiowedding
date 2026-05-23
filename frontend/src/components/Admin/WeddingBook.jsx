@@ -33,7 +33,7 @@ const WeddingBook = () => {
   useEffect(() => {
     setMediaLoading(true);
     setMediaError('');
-    authFetch(`${API_URL}/api/auth/media/public/?status=approved&page_size=1000&ordering=similarity`)
+    authFetch(`${API_URL}/api/auth/media/public/?status=approved&page_size=10000&ordering=similarity`)
       .then(res => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();
