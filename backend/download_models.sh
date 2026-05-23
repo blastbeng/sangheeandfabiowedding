@@ -60,20 +60,43 @@ fi
 # Translation models (English → Italian, English → Korean)
 # Used by the wedding book caption generation.
 # -------------------------------------------------------------------
-echo "Pre-downloading translation models (English→Italian and English→Korean)..."
+echo "Checking translation models..."
 python3 -c "
-import sys
-try:
+import os, sys
+from pathlib import Path
+
+# Hugging Face cache location (respects HF_HOME, defaults to ~/.cache/huggingface)
+cache_home = Path(os.environ.get('HF_HOME', Path.home() / '.cache' / 'huggingface'))
+hub_dir = cache_home / 'hub'
+
+models = [
+    'Helsinki-NLP/opus-mt-tc-big-en-it',
+    'Helsinki-NLP/opus-mt-tc-big-en-ko',
+]
+
+all_cached = True
+for model_id in models:
+    # Transformers stores models under models--org--model
+    dir_name = 'models--' + model_id.replace('/', '--')
+    model_dir = hub_dir / dir_name
+    # A valid cache contains a 'snapshots' directory with at least one snapshot
+    if model_dir.is_dir() and (model_dir / 'snapshots').is_dir() and any((model_dir / 'snapshots').iterdir()):
+        print(f'{model_id} already cached, skipping.')
+    else:
+        all_cached = False
+        print(f'{model_id} not cached, will download.')
+
+if all_cached:
+    print('All translation models are cached.')
+    sys.exit(0)
+else:
+    print('Downloading missing translation models...')
     from transformers import MarianTokenizer, MarianMTModel
-    print('Downloading Helsinki-NLP/opus-mt-tc-big-en-it...')
-    MarianTokenizer.from_pretrained('Helsinki-NLP/opus-mt-tc-big-en-it')
-    MarianMTModel.from_pretrained('Helsinki-NLP/opus-mt-tc-big-en-it')
-    print('Downloading Helsinki-NLP/opus-mt-tc-big-en-ko...')
-    MarianTokenizer.from_pretrained('Helsinki-NLP/opus-mt-tc-big-en-ko')
-    MarianMTModel.from_pretrained('Helsinki-NLP/opus-mt-tc-big-en-ko')
+    for model_id in models:
+        print(f'Downloading {model_id}...')
+        MarianTokenizer.from_pretrained(model_id)
+        MarianMTModel.from_pretrained(model_id)
     print('Translation models downloaded successfully.')
-except Exception as e:
-    print(f'WARNING: Translation model download failed: {e}', file=sys.stderr)
 "
 
 echo "All models ready."
