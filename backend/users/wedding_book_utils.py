@@ -1204,7 +1204,7 @@ def generate_caption_rpi5(image_bytes: bytes) -> str:
         output_details = interpreter.get_output_details()
 
         img = Image.open(io.BytesIO(image_bytes)).convert('RGB').resize((224, 224))
-        img_array = np.array(img, dtype=np.uint8)
+        img_array = np.array(img, dtype=np.float32) / 127.5 - 1.0
         img_array = np.expand_dims(img_array, axis=0)
 
         interpreter.set_tensor(input_details[0]['index'], img_array)
