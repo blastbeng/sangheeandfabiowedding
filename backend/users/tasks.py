@@ -41,13 +41,57 @@ PAGE_THEMES = [
     {
         'name': 'elegant',
         'bg_color': '#FFFFFF',
-        'pattern_color': '#F5F0EB',   # subtle warm grey for subtle pattern
-        'border_color': '#C9A96E',    # muted gold
+        'pattern_color': '#F5F0EB',
+        'border_color': '#C9A96E',
         'corner_color': '#C9A96E',
-        'title_font': 'Cursive',      # will be replaced by actual available font
-        'caption_font': 'Georgia',    # serif for captions
+        'title_font': 'Cursive',
+        'caption_font': 'Georgia',
         'caption_color': '#4A4A4A',
         'page_number_color': '#C9A96E',
+    },
+    {
+        'name': 'classic',
+        'bg_color': '#FAFAF5',
+        'pattern_color': '#E8E0D5',
+        'border_color': '#8B7355',
+        'corner_color': '#8B7355',
+        'title_font': 'Cursive',
+        'caption_font': 'Georgia',
+        'caption_color': '#3E3E3E',
+        'page_number_color': '#8B7355',
+    },
+    {
+        'name': 'modern',
+        'bg_color': '#FFFFFF',
+        'pattern_color': '#E0E0E0',
+        'border_color': '#333333',
+        'corner_color': '#333333',
+        'title_font': 'Helvetica-Bold',
+        'caption_font': 'Helvetica',
+        'caption_color': '#222222',
+        'page_number_color': '#333333',
+    },
+    {
+        'name': 'vintage',
+        'bg_color': '#FDF8F0',
+        'pattern_color': '#D4C4A8',
+        'border_color': '#A67C52',
+        'corner_color': '#A67C52',
+        'title_font': 'Cursive',
+        'caption_font': 'Georgia',
+        'caption_color': '#5C4033',
+        'page_number_color': '#A67C52',
+    },
+    {
+        'name': 'romantic',
+        'bg_color': '#FFF5F7',
+        'pattern_color': '#FADADD',
+        'border_color': '#D81B60',
+        'corner_color': '#D81B60',
+        'title_font': 'Cursive',
+        'caption_font': 'Georgia',
+        'caption_color': '#880E4F',
+        'page_number_color': '#D81B60',
     },
 ]
 
@@ -1782,6 +1826,9 @@ def generate_wedding_book_task(self, book_id):
                 return font_name
             return 'Helvetica'
 
+        # Select the theme matching the book's theme field (default to elegant)
+        theme_name = book.theme if book.theme in dict(WeddingBook.Theme.choices) else 'elegant'
+        theme = next((t for t in PAGE_THEMES if t['name'] == theme_name), PAGE_THEMES[0])
 
         # ---- Cover Page ----
         # Use the first image as full‑bleed cover photo
@@ -1838,8 +1885,6 @@ def generate_wedding_book_task(self, book_id):
         # Keep the clustered order for a coherent flow (no shuffle)
 
         for page_idx, group in enumerate(page_groups):
-            # ---- Use the single elegant theme ----
-            theme = PAGE_THEMES[0]
 
             # ---- Background ----
             _draw_page_background(pdf_canvas, width, height, theme)
