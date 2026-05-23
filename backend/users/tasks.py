@@ -1648,34 +1648,35 @@ def _cluster_images_for_pages_ai(media_list):
 # ---------- Wedding Book PDF Helpers ----------
 
 def _draw_elegant_background(c, width, height, theme):
-    """Draw a soft cream background with a subtle lace pattern and gold double border."""
+    """Draw a soft cream background with a thin gold border and a subtle monogram watermark."""
     # Background
     c.setFillColor(HexColor(theme['bg_color']))
     c.rect(0, 0, width, height, fill=1)
 
-    # Subtle lace pattern (small dots in a grid)
-    c.setFillColor(HexColor(theme['pattern_color']))
-    for x in range(30, int(width), 40):
-        for y in range(30, int(height), 40):
-            c.circle(x, y, 0.8, fill=1)
-
-    # Double gold border
+    # Thin gold border with double‑line effect
     c.setStrokeColor(HexColor(theme['border_color']))
     c.setLineWidth(1.5)
-    c.rect(25, 25, width - 50, height - 50)
+    c.rect(20, 20, width - 40, height - 40)
     c.setLineWidth(0.5)
-    c.rect(30, 30, width - 60, height - 60)
+    c.rect(23, 23, width - 46, height - 46)
 
-    # Corner flourishes
-    for (cx, cy) in [(35, 35), (width - 35, 35), (35, height - 35), (width - 35, height - 35)]:
-        _draw_flourish(c, cx, cy, size=15, color=theme['corner_color'])
+    # Corner flourishes (simple elegant curves)
+    for (cx, cy) in [(30, 30), (width - 30, 30), (30, height - 30), (width - 30, height - 30)]:
+        _draw_flourish(c, cx, cy, size=12, color=theme['corner_color'])
+
+    # Faint monogram watermark in the centre
+    c.saveState()
+    c.setFillAlpha(0.03)
+    c.setFillColor(HexColor(theme['border_color']))
+    c.setFont('Helvetica-Bold', 80)
+    c.drawCentredString(width / 2, height / 2, "S&H")
+    c.restoreState()
 
 
-def _draw_flourish(c, x, y, size=15, color='#C9A96E'):
+def _draw_flourish(c, x, y, size=12, color='#C9A96E'):
     """Draw a small decorative corner flourish (curved lines)."""
     c.setStrokeColor(HexColor(color))
-    c.setLineWidth(1)
-    # Simple curved lines
+    c.setLineWidth(0.8)
     c.arc(x - size, y - size, x + size, y + size, 0, 90)
     c.arc(x - size, y - size, x + size, y + size, 180, 270)
 
@@ -1811,29 +1812,59 @@ def generate_wedding_book_task(self, book_id):
 
         # Register Korean font
         KOREAN_FONT = FONT_NAME  # fallback
+        korean_font_loaded = False
+
+        # Helper to test if a font actually contains Korean glyphs
+        def _font_has_korean(font_name, size=12):
+            try:
+                from reportlab.pdfbase.pdfmetrics import stringWidth
+                w = stringWidth('한', font_name, size)
+                return w > 0
+            except Exception:
+                return False
+
+        # 1. Try the downloaded font from the volume
         try:
             korean_font_path = os.path.join(FONTS_DIR, 'NotoSansKR-Regular.ttf')
-            pdfmetrics.registerFont(TTFont('Korean', korean_font_path))
-            KOREAN_FONT = 'Korean'
-        except Exception:
-            logger.warning("Korean font not found, Korean text may not render correctly.")
+            if os.path.exists(korean_font_path):
+                pdfmetrics.registerFont(TTFont('Korean', korean_font_path))
+                if _font_has_korean('Korean'):
+                    KOREAN_FONT = 'Korean'
+                    korean_font_loaded = True
+                    logger.info("Korean font loaded successfully from volume.")
+                else:
+                    logger.warning("Downloaded Korean font does not contain Korean glyphs.")
+        except Exception as e:
+            logger.warning(f"Downloaded Korean font failed: {e}")
 
-        # Fallback to system Korean font if the downloaded one failed
-        if KOREAN_FONT == FONT_NAME:
+        # 2. Fallback to system Noto Sans CJK (try different subfont indices)
+        if not korean_font_loaded:
             try:
-                system_korean_paths = [
+                system_paths = [
                     '/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc',
                     '/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc',
                     '/usr/share/fonts/noto-cjk/NotoSansCJK-Regular.ttc',
                 ]
-                for path in system_korean_paths:
+                for path in system_paths:
                     if os.path.exists(path):
-                        pdfmetrics.registerFont(TTFont('Korean', path))
-                        KOREAN_FONT = 'Korean'
-                        logger.info(f"Using system Korean font: {path}")
-                        break
-            except Exception:
-                logger.warning("No Korean font available – Korean captions will be missing.")
+                        # subfontIndex 0=JP, 1=KR, 2=SC, 3=TC … try a few
+                        for subfont_idx in range(5):
+                            try:
+                                pdfmetrics.registerFont(TTFont('Korean', path, subfontIndex=subfont_idx))
+                                if _font_has_korean('Korean'):
+                                    KOREAN_FONT = 'Korean'
+                                    korean_font_loaded = True
+                                    logger.info(f"Using system Korean font: {path} subfont={subfont_idx}")
+                                    break
+                            except Exception:
+                                continue
+                        if korean_font_loaded:
+                            break
+            except Exception as e:
+                logger.warning(f"System Korean font fallback failed: {e}")
+
+        if not korean_font_loaded:
+            logger.warning("No Korean font available – Korean captions will be missing.")
 
         # Register a serif font for captions
         SERIF_FONT = 'Times-Roman'  # fallback
@@ -1938,17 +1969,28 @@ def generate_wedding_book_task(self, book_id):
                     (start_x + photo_w + spacing, y, photo_w, photo_h, 'polaroid')
                 ]]
             else:  # 3 photos
-                # One large top, two smaller bottom
                 large_w, large_h = 360, 280
                 small_w, small_h = 220, 200
                 spacing = 20
-                # Top large centered
+                caption_space = 30          # room for captions below the large photo
+                gap = 40                    # vertical gap between large and small photos
+                polaroid_margin = 36        # extra height added by polaroid style
+
+                # Total height of the whole block (large photo + captions + gap + polaroid)
+                block_height = large_h + caption_space + gap + small_h + polaroid_margin
+
+                # Center the block vertically on the page
+                top_y = (height - block_height) / 2
+
+                # Large photo at the top
                 top_x = (width - large_w) / 2
-                top_y = height - 180
-                # Bottom two
-                bottom_y = top_y - small_h - 40
+
+                # Small photos at the bottom (y is the bottom of the polaroid frame)
+                bottom_y = top_y + large_h + caption_space + gap
+
                 total_bottom_w = 2 * small_w + spacing
                 bottom_start_x = (width - total_bottom_w) / 2
+
                 layouts = [[
                     (top_x, top_y, large_w, large_h, 'frame'),
                     (bottom_start_x, bottom_y, small_w, small_h, 'polaroid'),
