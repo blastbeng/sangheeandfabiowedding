@@ -6,6 +6,7 @@ import authFetch from '../../utils/authFetch';
 const CONCURRENCY = 6;          // upload up to 6 files simultaneously
 const POLL_INTERVAL = 1000;     // ms between status checks
 const STORAGE_KEY = 'pendingUploadTasks';
+const MAX_FILES = 100;          // maximum number of files per upload
 
 const Upload = () => {
   const { t } = useTranslation();
@@ -172,7 +173,14 @@ const Upload = () => {
   // ---------- file selection ----------
   const handleFileSelect = (e) => {
     const selectedFiles = Array.from(e.target.files);
-    setFiles(prev => [...prev, ...selectedFiles]);
+    setFiles(prev => {
+      const combined = [...prev, ...selectedFiles];
+      if (combined.length > MAX_FILES) {
+        setError(`${t('max_files_exceeded')} (${MAX_FILES})`);
+        return combined.slice(0, MAX_FILES);
+      }
+      return combined;
+    });
   };
 
   const removeFile = (fileName) => {
@@ -182,6 +190,10 @@ const Upload = () => {
   // ---------- start uploading all files ----------
   const handleUpload = async () => {
     if (files.length === 0) return;
+    if (files.length > MAX_FILES) {
+      setError(`${t('max_files_exceeded')} (${MAX_FILES})`);
+      return;
+    }
     setUploading(true);
     setError('');
     setSuccess('');
@@ -387,6 +399,7 @@ const Upload = () => {
 
               {/* General upload size notice */}
               <p className="text-sm text-gray-500 mt-2">ℹ️ {t('upload_size_notice')}</p>
+              <p className="text-sm text-gray-500 mt-1">📋 {t('max_files_notice', { max: MAX_FILES })}</p>
             </div>
 
             {files.length > 0 && (
