@@ -6,7 +6,7 @@ import authFetch from '../../utils/authFetch';
 const CONCURRENCY = 6;          // upload up to 6 files simultaneously
 const POLL_INTERVAL = 1000;     // ms between status checks
 const STORAGE_KEY = 'pendingUploadTasks';
-const MAX_FILES = 100;          // maximum number of files per upload
+const MAX_FILES = 1000;          // maximum number of files per upload
 
 const Upload = () => {
   const { t } = useTranslation();
