@@ -170,11 +170,40 @@ const Upload = () => {
     }
   }, [fileStatuses, uploading, navigate, t]);
 
+  const ALLOWED_EXTENSIONS = [
+    'jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg',
+    'mp4', 'webm', 'mov', 'avi', 'mkv', '3gp', 'ogg'
+  ];
+
+  const isValidMediaFile = (file) => {
+    if (file.type.startsWith('image/') || file.type.startsWith('video/')) {
+      return true;
+    }
+    // Fallback for files with empty MIME type (common from file explorers)
+    const ext = file.name.split('.').pop()?.toLowerCase();
+    return ALLOWED_EXTENSIONS.includes(ext);
+  };
+
   // ---------- file selection ----------
   const handleFileSelect = (e) => {
     const selectedFiles = Array.from(e.target.files);
+    const validFiles = [];
+    const invalidNames = [];
+
+    selectedFiles.forEach(file => {
+      if (isValidMediaFile(file)) {
+        validFiles.push(file);
+      } else {
+        invalidNames.push(file.name);
+      }
+    });
+
+    if (invalidNames.length > 0) {
+      setError(`${t('unsupported_file_type')}: ${invalidNames.join(', ')}`);
+    }
+
     setFiles(prev => {
-      const combined = [...prev, ...selectedFiles];
+      const combined = [...prev, ...validFiles];
       if (combined.length > MAX_FILES) {
         setError(`${t('max_files_exceeded')} (${MAX_FILES})`);
         return combined.slice(0, MAX_FILES);
@@ -394,7 +423,7 @@ const Upload = () => {
           <>
             <div className="mb-6">
               <label htmlFor="file-upload" className="block text-gray-700 text-sm font-bold mb-2">📸 {t('select_photos_videos')}</label>
-              <input id="file-upload" type="file" multiple accept="image/*,video/*" onChange={handleFileSelect} className="wedding-input w-full py-4" />
+              <input id="file-upload" type="file" multiple accept="*/*" onChange={handleFileSelect} className="wedding-input w-full py-4" />
               <p className="text-sm text-gray-500 mt-2">✨ {t('supported_formats')}</p>
 
               {/* General upload size notice */}
