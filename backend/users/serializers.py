@@ -170,7 +170,7 @@ class PublicUserSerializer(serializers.ModelSerializer):
         if obj.profile_picture and obj.profile_picture.name != 'profile_pics/default.png':
             request = self.context.get('request')
             if request:
-                return request.build_absolute_uri(f'/api/auth/users/{obj.id}/profile-thumbnail/')
+                return _build_https_uri(request, f'/api/auth/users/{obj.id}/profile-thumbnail/')
             return f'/api/auth/users/{obj.id}/profile-thumbnail/'
         return None
 
@@ -500,7 +500,7 @@ class WeddingBookSerializer(serializers.ModelSerializer):
         if obj.status == WeddingBook.Status.COMPLETED and obj.pdf_file:
             request = self.context.get('request')
             if request:
-                return request.build_absolute_uri(obj.pdf_file.url)
+                return _build_https_uri(request, obj.pdf_file.url)
             return obj.pdf_file.url
         return None
 
@@ -522,7 +522,7 @@ class WeddingBookListSerializer(serializers.ModelSerializer):
         if obj.status == WeddingBook.Status.COMPLETED and obj.pdf_file:
             request = self.context.get('request')
             if request:
-                return request.build_absolute_uri(obj.pdf_file.url)
+                return _build_https_uri(request, obj.pdf_file.url)
             return obj.pdf_file.url
         return None
 
