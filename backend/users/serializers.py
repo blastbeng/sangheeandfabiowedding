@@ -12,6 +12,19 @@ from .nsfw_utils import check_nsfw_image, is_image_file
 logger = logging.getLogger(__name__)
 
 
+def _build_https_uri(request, path):
+    """
+    Build an absolute URI from a request and a relative path,
+    forcing the scheme to https to avoid mixed-content warnings.
+    """
+    if request is None:
+        return path
+    uri = request.build_absolute_uri(path)
+    if uri.startswith('http://'):
+        uri = 'https://' + uri[7:]
+    return uri
+
+
 class CustomUserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=False, allow_blank=True)
     password_confirm = serializers.CharField(write_only=True, required=False, allow_blank=True)
@@ -38,7 +51,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
         if obj.profile_picture and obj.profile_picture.name != 'profile_pics/default.png':
             request = self.context.get('request')
             if request:
-                return request.build_absolute_uri(f'/api/auth/users/{obj.id}/profile-thumbnail/')
+                return _build_https_uri(request, f'/api/auth/users/{obj.id}/profile-thumbnail/')
             return f'/api/auth/users/{obj.id}/profile-thumbnail/'
         return None
 
@@ -218,7 +231,7 @@ class PublicMediaSerializer(serializers.ModelSerializer):
         if obj.user and obj.user.profile_picture and obj.user.profile_picture.name != 'profile_pics/default.png':
             request = self.context.get('request')
             if request:
-                return request.build_absolute_uri(f'/api/auth/users/{obj.user.id}/profile-thumbnail/')
+                return _build_https_uri(request, f'/api/auth/users/{obj.user.id}/profile-thumbnail/')
             return f'/api/auth/users/{obj.user.id}/profile-thumbnail/'
         return None
 
@@ -240,7 +253,7 @@ class PublicMediaSerializer(serializers.ModelSerializer):
             request = self.context.get('request')
             url = group.thumbnail.url
             if request:
-                return request.build_absolute_uri(url)
+                return _build_https_uri(request, url)
             return url
         except Exception as e:
             logger.error(f"Failed to get thumbnail URL for FaceGroup {group.id}: {e}")
@@ -289,7 +302,7 @@ class AdminUserSerializer(serializers.ModelSerializer):
         if obj.profile_picture and obj.profile_picture.name != 'profile_pics/default.png':
             request = self.context.get('request')
             if request:
-                return request.build_absolute_uri(f'/api/auth/users/{obj.id}/profile-thumbnail/')
+                return _build_https_uri(request, f'/api/auth/users/{obj.id}/profile-thumbnail/')
             return f'/api/auth/users/{obj.id}/profile-thumbnail/'
         return None
 
@@ -425,7 +438,7 @@ class FaceGroupSerializer(serializers.ModelSerializer):
             try:
                 request = self.context.get('request')
                 if request:
-                    return request.build_absolute_uri(obj.thumbnail.url)
+                    return _build_https_uri(request, obj.thumbnail.url)
                 return obj.thumbnail.url
             except Exception as e:
                 logger.error(f"Failed to get thumbnail URL for FaceGroup {obj.id}: {e}")
@@ -434,7 +447,7 @@ class FaceGroupSerializer(serializers.ModelSerializer):
             url = staticfiles_storage.url('images/default_face_thumbnail.png')
             request = self.context.get('request')
             if request:
-                return request.build_absolute_uri(url)
+                return _build_https_uri(request, url)
             return url
         except Exception:
             return None
@@ -459,7 +472,7 @@ class FaceTagSerializer(serializers.ModelSerializer):
             request = self.context.get('request')
             url = obj.thumbnail.url
             if request:
-                return request.build_absolute_uri(url)
+                return _build_https_uri(request, url)
             return url
         return None
 
