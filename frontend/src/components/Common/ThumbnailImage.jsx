@@ -103,11 +103,19 @@ const ThumbnailImage = ({ mediaId, apiUrl, alt, className, mediaType, onFinalErr
           setImgSrc(objectUrl);
           setStatus('loaded');
         } catch (err) {
-          // Network error (e.g., TLS/cert failure) – don't retry, fail immediately
+          // Network error (e.g., TLS/cert failure) – retry up to MAX_RETRIES
           if (!mountedRef.current || cancelled) return;
-          console.error('[ThumbnailImage] Network error, not retrying:', err);
-          setStatus('error');
-          if (onFinalErrorRef.current) onFinalErrorRef.current(mediaId);
+          if (retryCount < MAX_RETRIES) {
+            timer = setTimeout(() => {
+              if (mountedRef.current) {
+                setRetryCount(prev => prev + 1);
+              }
+            }, RETRY_DELAY);
+          } else {
+            console.error('[ThumbnailImage] Network error, giving up after retries:', err);
+            setStatus('error');
+            if (onFinalErrorRef.current) onFinalErrorRef.current(mediaId);
+          }
         }
       })();
     }
