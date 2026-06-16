@@ -55,6 +55,10 @@ DEBUG = int(os.environ.get('DEBUG', 0))
 
 ALLOWED_HOSTS = ['*']
 
+# Trust the X-Forwarded-Proto header set by the reverse proxy (nginx / Cloudflare / etc.)
+# so that request.build_absolute_uri() generates https:// URLs.
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_X_FORWARDED_HOST = True
 
 # Application definition
 
