@@ -1055,6 +1055,7 @@ class SocialLoginCallbackView(APIView):
 # ==================== PUBLIC USER VIEWS ====================
 
 class PublicUserListView(APIView):
+    authentication_classes = []
     permission_classes = [AllowAny]
 
     def get(self, request):
@@ -1069,6 +1070,7 @@ class PublicUserListView(APIView):
 
 
 class PublicUserDetailView(APIView):
+    authentication_classes = []
     permission_classes = [AllowAny]
 
     def get(self, request, user_id):
@@ -1078,6 +1080,7 @@ class PublicUserDetailView(APIView):
 
 
 class UserProfilePictureView(APIView):
+    authentication_classes = []
     permission_classes = [AllowAny]
 
     def get(self, request, user_id):
@@ -1118,6 +1121,7 @@ class UserProfilePictureView(APIView):
 
 
 class UserProfileThumbnailView(APIView):
+    authentication_classes = []
     permission_classes = [AllowAny]
 
     def get(self, request, user_id):
@@ -1328,6 +1332,7 @@ class MediaModerateSingleView(APIView):
 
 
 class MediaFileView(APIView):
+    authentication_classes = []
     permission_classes = [AllowAny]
 
     def get(self, request, media_id):
@@ -1404,6 +1409,7 @@ class MediaFileView(APIView):
 
 
 class MediaThumbnailView(APIView):
+    authentication_classes = []
     permission_classes = [AllowAny]
 
     def get(self, request, media_id):
@@ -1417,6 +1423,7 @@ class MediaThumbnailView(APIView):
 
 
 class PublicMediaListView(APIView):
+    authentication_classes = []
     permission_classes = [AllowAny]
 
     def get(self, request):
@@ -1741,6 +1748,7 @@ class MediaDetectFacesView(APIView):
 
 
 class FaceGroupListView(APIView):
+    authentication_classes = []
     permission_classes = [AllowAny]
 
     def get(self, request):
@@ -1863,6 +1871,7 @@ class RegenerateSimilarityOrderingView(APIView):
 
 
 class PublicMediaThumbnailView(APIView):
+    authentication_classes = []
     permission_classes = [AllowAny]
 
     def get(self, request, media_id):
@@ -1876,6 +1885,7 @@ class PublicMediaThumbnailView(APIView):
 
 
 class MediaShareView(APIView):
+    authentication_classes = []
     permission_classes = [AllowAny]
 
     def get(self, request, media_id):
