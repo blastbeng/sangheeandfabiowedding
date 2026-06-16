@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import authFetch from '../../utils/authFetch';
 
 const MAX_RETRIES = 10;
 const RETRY_DELAY = 2000; // 2 seconds
@@ -9,6 +10,7 @@ const ThumbnailImage = ({ mediaId, apiUrl, alt, className, mediaType, onFinalErr
   const [imgSrc, setImgSrc] = useState(null);
   const mountedRef = useRef(true);
   const onFinalErrorRef = useRef(onFinalError);
+  const objectUrlRef = useRef(null);
 
   // Keep the ref updated without causing re-renders
   useEffect(() => {
@@ -17,7 +19,13 @@ const ThumbnailImage = ({ mediaId, apiUrl, alt, className, mediaType, onFinalErr
 
   useEffect(() => {
     mountedRef.current = true;
-    return () => { mountedRef.current = false; };
+    return () => {
+      mountedRef.current = false;
+      if (objectUrlRef.current) {
+        URL.revokeObjectURL(objectUrlRef.current);
+        objectUrlRef.current = null;
+      }
+    };
   }, []);
 
   // Reset state when mediaId or src changes
@@ -31,33 +39,81 @@ const ThumbnailImage = ({ mediaId, apiUrl, alt, className, mediaType, onFinalErr
     if (status === 'loaded' || status === 'error') return;
 
     let timer = null;
+    let cancelled = false;
     const url = src || `${apiUrl}/api/auth/media/${mediaId}/thumbnail/?retry=${retryCount}`;
-    const img = new Image();
 
-    img.onload = () => {
-      if (mountedRef.current) {
-        setImgSrc(url);
-        setStatus('loaded');
-      }
-    };
+    if (src) {
+      // Direct src URL – use Image loading (no auth headers needed)
+      const img = new Image();
 
-    img.onerror = () => {
-      if (!mountedRef.current) return;
-      if (retryCount < MAX_RETRIES) {
-        timer = setTimeout(() => {
-          if (mountedRef.current) {
-            setRetryCount(prev => prev + 1);
+      img.onload = () => {
+        if (mountedRef.current && !cancelled) {
+          setImgSrc(url);
+          setStatus('loaded');
+        }
+      };
+
+      img.onerror = () => {
+        if (!mountedRef.current || cancelled) return;
+        if (retryCount < MAX_RETRIES) {
+          timer = setTimeout(() => {
+            if (mountedRef.current) {
+              setRetryCount(prev => prev + 1);
+            }
+          }, RETRY_DELAY);
+        } else {
+          setStatus('error');
+          if (onFinalErrorRef.current) onFinalErrorRef.current(mediaId);
+        }
+      };
+
+      img.src = url;
+    } else {
+      // API URL – use authFetch to load as blob (enables auth + error handling)
+      (async () => {
+        try {
+          const response = await authFetch(url);
+          if (!mountedRef.current || cancelled) return;
+
+          if (!response.ok) {
+            // HTTP error – retry up to MAX_RETRIES
+            if (retryCount < MAX_RETRIES) {
+              timer = setTimeout(() => {
+                if (mountedRef.current) {
+                  setRetryCount(prev => prev + 1);
+                }
+              }, RETRY_DELAY);
+            } else {
+              setStatus('error');
+              if (onFinalErrorRef.current) onFinalErrorRef.current(mediaId);
+            }
+            return;
           }
-        }, RETRY_DELAY);
-      } else {
-        setStatus('error');
-        if (onFinalErrorRef.current) onFinalErrorRef.current(mediaId);
-      }
-    };
 
-    img.src = url;
+          const blob = await response.blob();
+          if (!mountedRef.current || cancelled) return;
+
+          // Revoke previous object URL if any
+          if (objectUrlRef.current) {
+            URL.revokeObjectURL(objectUrlRef.current);
+          }
+
+          const objectUrl = URL.createObjectURL(blob);
+          objectUrlRef.current = objectUrl;
+          setImgSrc(objectUrl);
+          setStatus('loaded');
+        } catch (err) {
+          // Network error (e.g., TLS/cert failure) – don't retry, fail immediately
+          if (!mountedRef.current || cancelled) return;
+          console.error('[ThumbnailImage] Network error, not retrying:', err);
+          setStatus('error');
+          if (onFinalErrorRef.current) onFinalErrorRef.current(mediaId);
+        }
+      })();
+    }
 
     return () => {
+      cancelled = true;
       if (timer) clearTimeout(timer);
     };
   }, [retryCount, apiUrl, mediaId, status, src]);
