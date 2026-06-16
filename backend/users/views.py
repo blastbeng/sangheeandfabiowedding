@@ -1130,7 +1130,9 @@ class UserProfileThumbnailView(APIView):
                     data = f.read()
             except Exception:
                 raise Http404("Profile picture not found")
-        return HttpResponse(data, content_type='image/jpeg')
+        response = FileResponse(BytesIO(data), content_type='image/jpeg')
+        response['Content-Length'] = len(data)
+        return response
 
 
 # ==================== MEDIA VIEWS ====================
@@ -1394,7 +1396,9 @@ class MediaFileView(APIView):
                 response['Content-Length'] = str(length)
                 return response
 
-        response = HttpResponse(content, content_type=content_type)
+        file_obj = BytesIO(content)
+        response = FileResponse(file_obj, content_type=content_type)
+        response['Content-Length'] = len(content)
         response['Accept-Ranges'] = 'bytes'
         return response
 
@@ -1407,7 +1411,9 @@ class MediaThumbnailView(APIView):
         data = get_thumbnail(media_id)
         if data is None:
             return Response(status=status.HTTP_404_NOT_FOUND)
-        return HttpResponse(data, content_type='image/jpeg')
+        response = FileResponse(BytesIO(data), content_type='image/jpeg')
+        response['Content-Length'] = len(data)
+        return response
 
 
 class PublicMediaListView(APIView):
@@ -1864,7 +1870,9 @@ class PublicMediaThumbnailView(APIView):
         data = get_thumbnail(media_id)
         if data is None:
             return Response(status=status.HTTP_404_NOT_FOUND)
-        return HttpResponse(data, content_type='image/jpeg')
+        response = FileResponse(BytesIO(data), content_type='image/jpeg')
+        response['Content-Length'] = len(data)
+        return response
 
 
 class MediaShareView(APIView):
