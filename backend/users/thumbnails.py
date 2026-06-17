@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 THUMBNAIL_SIZE = (1200, 1200)   # max width/height
 JPEG_QUALITY = 95
-CACHE_TIMEOUT = 60 * 60 * 24 * 7  # 7 days
+CACHE_TIMEOUT = 60 * 60 * 24 * 30  # 30 days (~1 month)
 CACHE_KEY_PREFIX = "media_thumbnail:v4"
 
 

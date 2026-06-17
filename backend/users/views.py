@@ -1863,9 +1863,30 @@ class RegenerateSimilarityOrderingView(APIView):
 
     def post(self, request):
         from .tasks import compute_similarity_ordering
+        from .thumbnails import CACHE_KEY_PREFIX
+
+        # Clear all media thumbnail cache so they are regenerated on next request
+        try:
+            redis_client = redis.Redis(
+                host=django_settings.REDIS_HOST,
+                port=django_settings.REDIS_PORT,
+            )
+            pattern = f"{CACHE_KEY_PREFIX}:*"
+            cursor = 0
+            deleted = 0
+            while True:
+                cursor, keys = redis_client.scan(cursor, match=pattern, count=1000)
+                if keys:
+                    deleted += redis_client.delete(*keys)
+                if cursor == 0:
+                    break
+            logger.info("Cleared %d media thumbnail cache keys", deleted)
+        except Exception as e:
+            logger.error("Failed to clear media thumbnail cache: %s", e)
+
         compute_similarity_ordering.delay()
         return Response(
-            {'message': 'Similarity ordering regeneration started.'},
+            {'message': 'Similarity ordering regeneration started. Thumbnail cache cleared.'},
             status=status.HTTP_200_OK
         )
 
