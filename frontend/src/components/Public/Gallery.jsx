@@ -27,6 +27,8 @@ const Gallery = () => {
   const [viewMode, setViewMode] = useState('grid'); // 'gallery' | 'grid'
   const [selectedMedia, setSelectedMedia] = useState(null);
   const [modalImageState, setModalImageState] = useState('loading'); // 'loading' | 'thumbnail' | 'full'
+  const [fullImageLoading, setFullImageLoading] = useState(false);
+  const [pendingFullscreen, setPendingFullscreen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [copyFeedback, setCopyFeedback] = useState(false);
   const API_URL = import.meta.env.VITE_API_URL;
@@ -308,75 +310,70 @@ const Gallery = () => {
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
 
-  // Preload modal media and manage loading state
+  // Preload modal media – only load thumbnail initially for fast display
   useEffect(() => {
     if (!selectedMedia) {
       setModalImageState('loading');
+      setFullImageLoading(false);
+      setPendingFullscreen(false);
       return;
     }
     setModalImageState('loading');
-    const fullUrl = `${API_URL}/api/auth/media/${selectedMedia.id}/file/`;
+    setFullImageLoading(false);
+    setPendingFullscreen(false);
+
     if (selectedMedia.media_type === 'image') {
       const thumbUrl = `${API_URL}/api/auth/media/${selectedMedia.id}/thumbnail/?retry=0`;
-      let thumbLoaded = false;
-      let fullLoaded = false;
       let cancelled = false;
 
-      const transition = () => {
-        if (cancelled) return;
-        if (fullLoaded) {
-          setModalImageState('full');
-        } else if (thumbLoaded) {
-          setModalImageState('thumbnail');
-        }
-      };
-
-      // Preload thumbnail
       const thumbImg = new Image();
       thumbImg.onload = () => {
-        thumbLoaded = true;
-        transition();
+        if (!cancelled) setModalImageState('thumbnail');
       };
       thumbImg.onerror = () => {
-        // Thumbnail failed – go straight to full (will show full image loading)
-        fullLoaded = true;
-        transition();
+        // Even if thumbnail fails, stay in 'thumbnail' state (broken image)
+        if (!cancelled) setModalImageState('thumbnail');
       };
       thumbImg.src = thumbUrl;
       if (thumbImg.complete) {
-        // Already cached – fire immediately
-        thumbLoaded = true;
-        transition();
-      }
-
-      // Preload full image
-      const fullImg = new Image();
-      fullImg.onload = () => {
-        fullLoaded = true;
-        transition();
-      };
-      fullImg.onerror = () => {
-        fullLoaded = true; // ProtectedMediaPreview handles errors
-        transition();
-      };
-      fullImg.src = fullUrl;
-      if (fullImg.complete) {
-        fullLoaded = true;
-        transition();
+        if (!cancelled) setModalImageState('thumbnail');
       }
 
       return () => {
         cancelled = true;
         thumbImg.onload = null;
         thumbImg.onerror = null;
-        fullImg.onload = null;
-        fullImg.onerror = null;
       };
     } else {
-      // For video, start streaming immediately
+      // Video: load immediately (no thumbnail/full distinction)
       setModalImageState('full');
     }
   }, [selectedMedia, API_URL]);
+
+  // Trigger fullscreen after full image finishes loading
+  useEffect(() => {
+    if (modalImageState === 'full' && pendingFullscreen) {
+      setPendingFullscreen(false);
+      // Wait for the DOM to update with the full image, then request fullscreen
+      requestAnimationFrame(() => {
+        const el = mediaRef.current;
+        if (!el) return;
+        try {
+          if (el.requestFullscreen) {
+            el.requestFullscreen().catch(err =>
+              logger.error('[Gallery] Fullscreen request failed:', err)
+            );
+          } else if (el.webkitRequestFullscreen) {
+            el.webkitRequestFullscreen();
+          } else if (el.msRequestFullscreen) {
+            el.msRequestFullscreen();
+          }
+        } catch (err) {
+          logger.error('[Gallery] Fullscreen error:', err);
+        }
+      });
+    }
+  }, [modalImageState, pendingFullscreen]);
 
   const handleShare = async () => {
     const shareUrl = `${window.location.origin}/api/auth/media/${selectedMedia.id}/share/`;
@@ -402,13 +399,35 @@ const Gallery = () => {
   };
 
   const handleFullscreen = () => {
+    // For images that haven't loaded the full resolution yet, start loading it now
+    if (selectedMedia.media_type === 'image' && modalImageState !== 'full') {
+      if (fullImageLoading) return; // already loading
+      setFullImageLoading(true);
+
+      const fullUrl = `${API_URL}/api/auth/media/${selectedMedia.id}/file/`;
+      const img = new Image();
+      img.onload = () => {
+        setFullImageLoading(false);
+        setModalImageState('full');
+        setPendingFullscreen(true);
+      };
+      img.onerror = () => {
+        setFullImageLoading(false);
+        setModalImageState('full'); // show broken image
+        setPendingFullscreen(true);
+      };
+      img.src = fullUrl;
+      return;
+    }
+
+    // Already full (or video) – just request fullscreen immediately
     const el = mediaRef.current;
     if (!el) return;
     try {
       if (el.requestFullscreen) {
-        el.requestFullscreen().catch(err => {
-          logger.error('[Gallery] Fullscreen request failed:', err);
-        });
+        el.requestFullscreen().catch(err =>
+          logger.error('[Gallery] Fullscreen request failed:', err)
+        );
       } else if (el.webkitRequestFullscreen) {
         el.webkitRequestFullscreen();
       } else if (el.msRequestFullscreen) {
@@ -807,6 +826,7 @@ const Gallery = () => {
               onTouchEnd={handleTouchEnd}
               style={isFullscreen ? { touchAction: 'none' } : undefined}
             >
+              {/* Exit fullscreen button (only when already in fullscreen) */}
               {isFullscreen && (
                 <button
                   onClick={(e) => {
@@ -823,6 +843,8 @@ const Gallery = () => {
                   ✕
                 </button>
               )}
+
+              {/* Media content based on state */}
               {modalImageState === 'loading' ? (
                 <div className="absolute inset-0 flex items-center justify-center bg-gray-200">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500"></div>
@@ -859,17 +881,27 @@ const Gallery = () => {
                       onTouchEnd={handleTouchEnd}
                     />
                   )}
-                  {/* Fullscreen button */}
-                  <button
-                    onClick={(e) => { e.stopPropagation(); handleFullscreen(); }}
-                    onTouchStart={(e) => e.stopPropagation()}
-                    onTouchEnd={(e) => e.stopPropagation()}
-                    className="absolute bottom-2 right-2 z-10 bg-black bg-opacity-50 text-white rounded-full p-2 hover:bg-opacity-75 transition-opacity"
-                    title="Fullscreen"
-                  >
-                    ⛶
-                  </button>
                 </>
+              )}
+
+              {/* Fullscreen button – always visible except during initial loading */}
+              {modalImageState !== 'loading' && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleFullscreen(); }}
+                  onTouchStart={(e) => e.stopPropagation()}
+                  onTouchEnd={(e) => e.stopPropagation()}
+                  className="absolute bottom-2 right-2 z-10 bg-black bg-opacity-50 text-white rounded-full p-2 hover:bg-opacity-75 transition-opacity"
+                  title="Fullscreen"
+                >
+                  ⛶
+                </button>
+              )}
+
+              {/* Loading overlay while full image is being fetched */}
+              {fullImageLoading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 z-20">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500"></div>
+                </div>
               )}
             </div>
 
