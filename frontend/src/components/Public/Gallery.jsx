@@ -31,6 +31,10 @@ const Gallery = () => {
   const [pendingFullscreen, setPendingFullscreen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [copyFeedback, setCopyFeedback] = useState(false);
+  // Pinch-to-zoom state
+  const [scale, setScale] = useState(1);
+  const [translateX, setTranslateX] = useState(0);
+  const [translateY, setTranslateY] = useState(0);
   const API_URL = import.meta.env.VITE_API_URL;
 
   const sentinelRef = useRef(null);
@@ -41,6 +45,71 @@ const Gallery = () => {
   const touchCountRef = useRef(0);
   const ignoreNextClickRef = useRef(false);
   const mediaRef = useRef(null);
+  const naturalWidth = useRef(0);
+  const naturalHeight = useRef(0);
+  const containerWidth = useRef(0);
+  const containerHeight = useRef(0);
+  const pinchStartDistance = useRef(0);
+  const pinchStartScale = useRef(1);
+  const pinchStartTranslateX = useRef(0);
+  const pinchStartTranslateY = useRef(0);
+  const pinchMidpoint = useRef({ x: 0, y: 0 });
+  const isPinching = useRef(false);
+  const isPanning = useRef(false);
+  const lastPanX = useRef(0);
+  const lastPanY = useRef(0);
+  const mediaTouchStartX = useRef(0);
+
+  const clampTranslation = useCallback((s, tx, ty, cw, ch, nw, nh) => {
+    if (nw === 0 || nh === 0) return { x: tx, y: ty };
+    const imageAspect = nw / nh;
+    const containerAspect = cw / ch;
+    let fittedWidth, fittedHeight;
+    if (imageAspect > containerAspect) {
+      fittedWidth = cw;
+      fittedHeight = cw / imageAspect;
+    } else {
+      fittedHeight = ch;
+      fittedWidth = ch * imageAspect;
+    }
+    const scaledWidth = fittedWidth * s;
+    const scaledHeight = fittedHeight * s;
+    let minX, maxX, minY, maxY;
+    if (scaledWidth <= cw) {
+      minX = (cw - scaledWidth) / 2;
+      maxX = minX;
+    } else {
+      minX = -(scaledWidth - cw);
+      maxX = 0;
+    }
+    if (scaledHeight <= ch) {
+      minY = (ch - scaledHeight) / 2;
+      maxY = minY;
+    } else {
+      minY = -(scaledHeight - ch);
+      maxY = 0;
+    }
+    return {
+      x: Math.min(maxX, Math.max(minX, tx)),
+      y: Math.min(maxY, Math.max(minY, ty)),
+    };
+  }, []);
+
+  // Reset zoom when media changes
+  useEffect(() => {
+    setScale(1);
+    setTranslateX(0);
+    setTranslateY(0);
+    naturalWidth.current = 0;
+    naturalHeight.current = 0;
+  }, [selectedMedia?.id]);
+
+  // Reset zoom when entering/exiting fullscreen
+  useEffect(() => {
+    setScale(1);
+    setTranslateX(0);
+    setTranslateY(0);
+  }, [isFullscreen]);
 
   const scrollFaceRow = (direction) => {
     if (faceRowRef.current) {
@@ -477,6 +546,109 @@ const Gallery = () => {
     }
   };
 
+  const handleMediaTouchStart = (e) => {
+    e.stopPropagation();
+    const touches = e.touches;
+    if (touches.length === 2) {
+      isPinching.current = true;
+      const dx = touches[0].clientX - touches[1].clientX;
+      const dy = touches[0].clientY - touches[1].clientY;
+      pinchStartDistance.current = Math.sqrt(dx * dx + dy * dy);
+      pinchStartScale.current = scale;
+      pinchStartTranslateX.current = translateX;
+      pinchStartTranslateY.current = translateY;
+      const rect = mediaRef.current.getBoundingClientRect();
+      const midpointX = (touches[0].clientX + touches[1].clientX) / 2 - rect.left;
+      const midpointY = (touches[0].clientY + touches[1].clientY) / 2 - rect.top;
+      pinchMidpoint.current = { x: midpointX, y: midpointY };
+      containerWidth.current = rect.width;
+      containerHeight.current = rect.height;
+    } else if (touches.length === 1) {
+      if (scale > 1) {
+        isPanning.current = true;
+        lastPanX.current = touches[0].clientX;
+        lastPanY.current = touches[0].clientY;
+      } else {
+        mediaTouchStartX.current = touches[0].clientX;
+      }
+    }
+  };
+
+  const handleMediaTouchMove = (e) => {
+    e.stopPropagation();
+    if (isPinching.current && e.touches.length === 2) {
+      e.preventDefault();
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      const newDist = Math.sqrt(dx * dx + dy * dy);
+      const newScale = Math.min(5, Math.max(1, pinchStartScale.current * (newDist / pinchStartDistance.current)));
+      const rect = mediaRef.current.getBoundingClientRect();
+      const midpointX = (e.touches[0].clientX + e.touches[1].clientX) / 2 - rect.left;
+      const midpointY = (e.touches[0].clientY + e.touches[1].clientY) / 2 - rect.top;
+      const focalX = (pinchMidpoint.current.x - pinchStartTranslateX.current) / pinchStartScale.current;
+      const focalY = (pinchMidpoint.current.y - pinchStartTranslateY.current) / pinchStartScale.current;
+      let newTranslateX = midpointX - focalX * newScale;
+      let newTranslateY = midpointY - focalY * newScale;
+      const clamped = clampTranslation(newScale, newTranslateX, newTranslateY, rect.width, rect.height, naturalWidth.current, naturalHeight.current);
+      setScale(newScale);
+      setTranslateX(clamped.x);
+      setTranslateY(clamped.y);
+    } else if (isPanning.current && e.touches.length === 1) {
+      e.preventDefault();
+      const deltaX = e.touches[0].clientX - lastPanX.current;
+      const deltaY = e.touches[0].clientY - lastPanY.current;
+      lastPanX.current = e.touches[0].clientX;
+      lastPanY.current = e.touches[0].clientY;
+      const rect = mediaRef.current.getBoundingClientRect();
+      const newTranslateX = translateX + deltaX;
+      const newTranslateY = translateY + deltaY;
+      const clamped = clampTranslation(scale, newTranslateX, newTranslateY, rect.width, rect.height, naturalWidth.current, naturalHeight.current);
+      setTranslateX(clamped.x);
+      setTranslateY(clamped.y);
+    }
+  };
+
+  const handleMediaTouchEnd = (e) => {
+    e.stopPropagation();
+    if (isPinching.current) {
+      isPinching.current = false;
+      if (scale <= 1.05) {
+        setScale(1);
+        setTranslateX(0);
+        setTranslateY(0);
+      } else {
+        const rect = mediaRef.current.getBoundingClientRect();
+        const clamped = clampTranslation(scale, translateX, translateY, rect.width, rect.height, naturalWidth.current, naturalHeight.current);
+        setTranslateX(clamped.x);
+        setTranslateY(clamped.y);
+      }
+    } else if (isPanning.current) {
+      isPanning.current = false;
+      const rect = mediaRef.current.getBoundingClientRect();
+      const clamped = clampTranslation(scale, translateX, translateY, rect.width, rect.height, naturalWidth.current, naturalHeight.current);
+      setTranslateX(clamped.x);
+      setTranslateY(clamped.y);
+    } else if (e.touches.length === 0 && scale > 1) {
+      // Single tap while zoomed → reset zoom
+      const deltaX = Math.abs((e.changedTouches[0]?.clientX || 0) - (mediaTouchStartX.current || 0));
+      if (deltaX < 10) {
+        setScale(1);
+        setTranslateX(0);
+        setTranslateY(0);
+      }
+    } else if (e.touches.length === 0 && scale === 1) {
+      // Swipe detection for navigation
+      const deltaX = (e.changedTouches[0]?.clientX || 0) - (mediaTouchStartX.current || 0);
+      if (Math.abs(deltaX) > 50) {
+        if (deltaX > 0 && currentIndex > 0) {
+          goToPrev();
+        } else if (deltaX < 0 && currentIndex < navigableMedia.length - 1) {
+          goToNext();
+        }
+      }
+    }
+  };
+
   if (loading) {
     return (
       <div className="text-center py-20">
@@ -845,10 +1017,11 @@ const Gallery = () => {
           >
             {/* Media area – fixed height, no scroll */}
             <div
-              className="flex-1 min-h-0 relative bg-black"
+              className="flex-1 min-h-0 relative bg-black overflow-hidden"
               ref={mediaRef}
-              onTouchStart={(e) => { e.stopPropagation(); handleTouchStart(e); }}
-              onTouchEnd={(e) => { e.stopPropagation(); handleTouchEnd(e); }}
+              onTouchStart={handleMediaTouchStart}
+              onTouchMove={handleMediaTouchMove}
+              onTouchEnd={handleMediaTouchEnd}
             >
               {/* Exit fullscreen button (only when already in fullscreen) */}
               {isFullscreen && (
@@ -890,20 +1063,29 @@ const Gallery = () => {
                       playsInline
                       className="absolute inset-0 w-full h-full object-contain"
                       onError={() => setModalImageState('loading')}
-                      onTouchStart={handleTouchStart}
-                      onTouchEnd={handleTouchEnd}
                     >
                       Your browser does not support the video tag.
                     </video>
                   ) : (
-                    <img
-                      key={selectedMedia.id}
-                      src={`${API_URL}/api/auth/media/${selectedMedia.id}/file/`}
-                      alt={selectedMedia.caption || t('beautiful_moment')}
-                      className="absolute inset-0 w-full h-full object-contain"
-                      onTouchStart={handleTouchStart}
-                      onTouchEnd={handleTouchEnd}
-                    />
+                    <div
+                      style={{
+                        transform: `scale(${scale}) translate(${translateX}px, ${translateY}px)`,
+                        transformOrigin: '0 0',
+                        position: 'absolute',
+                        inset: 0,
+                      }}
+                    >
+                      <img
+                        key={selectedMedia.id}
+                        src={`${API_URL}/api/auth/media/${selectedMedia.id}/file/`}
+                        alt={selectedMedia.caption || t('beautiful_moment')}
+                        className="w-full h-full object-contain"
+                        onLoad={(e) => {
+                          naturalWidth.current = e.target.naturalWidth;
+                          naturalHeight.current = e.target.naturalHeight;
+                        }}
+                      />
+                    </div>
                   )}
                 </>
               )}
