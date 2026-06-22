@@ -38,6 +38,8 @@ const Gallery = () => {
   const faceRowRef = useRef(null);
   const touchStartX = useRef(0);
   const isSwiping = useRef(false);
+  const touchCountRef = useRef(0);
+  const ignoreNextClickRef = useRef(false);
   const mediaRef = useRef(null);
 
   const scrollFaceRow = (direction) => {
@@ -262,9 +264,27 @@ const Gallery = () => {
   };
 
   const handleTouchStart = (e) => {
-    touchStartX.current = e.touches[0].clientX;
+    touchCountRef.current = e.touches.length;
+    if (e.touches.length === 1) {
+      touchStartX.current = e.touches[0].clientX;
+    } else {
+      touchStartX.current = null; // ignore multi-touch for swipe detection
+    }
   };
   const handleTouchEnd = (e) => {
+    // If fingers are still on the screen, this isn't the final lift – ignore.
+    if (e.touches.length > 0) return;
+
+    // If the gesture involved multiple touches (pinch), ignore and prevent the
+    // subsequent click from closing the modal.
+    if (touchCountRef.current > 1) {
+      ignoreNextClickRef.current = true;
+      touchCountRef.current = 0;
+      return;
+    }
+
+    // Single‑touch gesture
+    touchCountRef.current = 0;
     const deltaX = e.changedTouches[0].clientX - touchStartX.current;
     if (Math.abs(deltaX) > 50) {
       isSwiping.current = true;
@@ -770,7 +790,10 @@ const Gallery = () => {
         <div
           className="fixed inset-0 z-50 bg-black bg-opacity-90 flex items-center justify-center p-4"
           onClick={() => {
-            if (isSwiping.current) return;
+            if (isSwiping.current || ignoreNextClickRef.current) {
+              ignoreNextClickRef.current = false;
+              return;
+            }
             setSelectedMedia(null);
           }}
           onTouchStart={handleTouchStart}
@@ -817,14 +840,15 @@ const Gallery = () => {
           <div
             className="relative max-w-4xl w-full h-full max-h-full overflow-hidden bg-white rounded-lg shadow-2xl flex flex-col"
             onClick={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
+            onTouchEnd={(e) => e.stopPropagation()}
           >
             {/* Media area – fixed height, no scroll */}
             <div
               className="flex-1 min-h-0 relative bg-black"
               ref={mediaRef}
-              onTouchStart={handleTouchStart}
-              onTouchEnd={handleTouchEnd}
-              style={isFullscreen ? { touchAction: 'none' } : undefined}
+              onTouchStart={(e) => { e.stopPropagation(); handleTouchStart(e); }}
+              onTouchEnd={(e) => { e.stopPropagation(); handleTouchEnd(e); }}
             >
               {/* Exit fullscreen button (only when already in fullscreen) */}
               {isFullscreen && (
