@@ -382,7 +382,6 @@ const Gallery = () => {
     if (!selectedMedia) {
       setModalImageState('loading');
       setFullImageLoading(false);
-      setPendingFullscreen(false);
       return;
     }
     setModalImageState('loading');
