@@ -82,6 +82,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      redis-dummy-wedding:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - app-network
@@ -127,6 +129,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      redis-dummy-wedding:
+        condition: service_healthy
     networks:
       - app-network
     restart: unless-stopped
@@ -166,6 +170,8 @@ services:
       - NEXTCLOUD_FOLDER=${NEXTCLOUD_FOLDER}
     depends_on:
       db:
+        condition: service_healthy
+      redis-dummy-wedding:
         condition: service_healthy
     networks:
       - app-network
@@ -228,6 +234,17 @@ services:
     restart: unless-stopped
     networks:
       - app-network
+  redis-dummy-wedding:
+    image: alpine
+    container_name: redis-dummy-wedding
+    command: sh -c "until nc -z 192.168.1.13 6379; do echo 'Waiting for redis...'; sleep 2; done; echo 'Redis found!'; sleep infinity"
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z 192.168.1.13 6379"]
+      interval: 30s
+      timeout: 5s
+      retries: 12
 
 networks:
   app-network:
