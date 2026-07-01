@@ -453,6 +453,7 @@ def delete_media_task(media_id):
         redis_client = redis.Redis(
             host=os.getenv('REDIS_HOST', 'localhost'),
             port=int(os.getenv('REDIS_PORT', 6379)),
+            db=1,
             decode_responses=False
         )
         cache_key = f"media_cache:{media.id}"
