@@ -93,7 +93,7 @@ def get_thumbnail(media_id: int) -> bytes | None:
 
 PROFILE_THUMBNAIL_SIZE = (128, 128)
 PROFILE_CACHE_KEY_PREFIX = "user_profile_thumbnail:v1"
-PROFILE_CACHE_TIMEOUT = 60 * 60 * 24 * 7  # 7 days
+PROFILE_CACHE_TIMEOUT = 60 * 60 * 24 * 30  # 30 days
 
 
 def generate_profile_thumbnail(user) -> bytes | None:
