@@ -19,24 +19,6 @@ services:
     networks:
       - app-network
 
-  redis:
-    image: redis:7-alpine
-    container_name: wedding-redis
-    volumes:
-      - ./redis_data:/data
-    ports:
-      - "6379:6379"
-    command: redis-server --maxmemory 1gb --maxmemory-policy allkeys-lru
-    healthcheck:
-      test: ["CMD-SHELL", "redis-cli ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
-    restart: unless-stopped
-    networks:
-      - app-network
-
   web:
     image: "blastbeng/sangheeandfabiowedding-backend:1.0.0"
     pull_policy: build
@@ -64,7 +46,7 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
       - DEBUG=${DEBUG}
-      - REDIS_HOST=redis
+      - REDIS_HOST=${REDIS_HOST}
       - REDIS_PORT=6379
       - TIME_ZONE=Europe/Rome
       - DEFAULT_LANGUAGE=it
@@ -100,8 +82,6 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      redis:
-        condition: service_healthy
     restart: unless-stopped
     networks:
       - app-network
@@ -127,7 +107,7 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
       - DEBUG=${DEBUG}
-      - REDIS_HOST=redis
+      - REDIS_HOST=${REDIS_HOST}
       - REDIS_PORT=6379
       - TIME_ZONE=Europe/Rome
       - DEFAULT_LANGUAGE=it
@@ -146,8 +126,6 @@ services:
       - NEXTCLOUD_FOLDER=${NEXTCLOUD_FOLDER}
     depends_on:
       db:
-        condition: service_healthy
-      redis:
         condition: service_healthy
     networks:
       - app-network
@@ -176,7 +154,7 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
       - DEBUG=${DEBUG}
-      - REDIS_HOST=redis
+      - REDIS_HOST=${REDIS_HOST}
       - REDIS_PORT=6379
       - TIME_ZONE=Europe/Rome
       - DEFAULT_LANGUAGE=it
@@ -188,8 +166,6 @@ services:
       - NEXTCLOUD_FOLDER=${NEXTCLOUD_FOLDER}
     depends_on:
       db:
-        condition: service_healthy
-      redis:
         condition: service_healthy
     networks:
       - app-network
