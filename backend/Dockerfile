@@ -20,16 +20,9 @@ WORKDIR /app
 
 # Build latest stable dlib from source with RPi5 optimizations (NEON, BLAS, LAPACK)
 # Use 4 parallel build jobs
-RUN CMAKE_ARGS="-DCMAKE_BUILD_TYPE=Release \
-                -DBUILD_SHARED_LIBS=ON \
-                -DDLIB_NO_GUI_SUPPORT=ON \
-                -DDLIB_USE_BLAS=ON \
-                -DDLIB_USE_LAPACK=ON" \
+RUN CMAKE_ARGS="-DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=ON -DDLIB_NO_GUI_SUPPORT=ON -DUSE_NEON=ON -DUSE_AVX=OFF -DUSE_SSE2=OFF -DUSE_SSE4=OFF -DUSE_AVX2=OFF -DDLIB_USE_BLAS=ON -DDLIB_USE_LAPACK=ON" \
     CMAKE_BUILD_PARALLEL_LEVEL=4 \
-    pip wheel --no-cache-dir --no-binary :all: dlib --wheel-dir=/app/dlib-whl
-
-# 2. Installa il pacchetto partendo dal file .whl appena creato (ci metterà un secondo)
-RUN pip install --no-cache-dir /app/dlib-whl/dlib-*.whl
+    pip install --no-cache-dir --no-binary dlib dlib
 
 COPY requirements.txt .
 
