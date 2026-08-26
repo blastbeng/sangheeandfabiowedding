@@ -1259,6 +1259,7 @@ def unload_models():
     import torch
     global _caption_feature_extractor, _caption_tokenizer, _caption_model
     global _translator_it, _translator_ko, _tokenizer_it, _tokenizer_ko
+    global _caption_classifier_interpreter, _caption_classifier_labels
     _caption_feature_extractor = None
     _caption_tokenizer = None
     _caption_model = None
@@ -1266,6 +1267,10 @@ def unload_models():
     _translator_ko = None
     _tokenizer_it = None
     _tokenizer_ko = None
+    # Also drop the MobileNetV2 TFLite caption classifier so its native memory
+    # can be reclaimed.
+    _caption_classifier_interpreter = None
+    _caption_classifier_labels = None
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
 

@@ -229,26 +229,44 @@ def _align_face(image_array, top, right, bottom, left, target_size=256, landmark
         return None
 
 
+# Cached MediaPipe FaceDetection instance. Creating it is expensive, so we
+# build it once and reuse it across calls instead of re-instantiating on every
+# image (and every rotation fallback). Kept as a module-level lazy singleton.
+_mediapipe_face_detector = None
+_mediapipe_imported = False
+
+
+def _get_face_detector():
+    """Return a lazily-initialized, reusable MediaPipe FaceDetection instance."""
+    global _mediapipe_face_detector, _mediapipe_imported
+    if _mediapipe_face_detector is None:
+        import mediapipe as mp
+        _mediapipe_imported = True
+        _mediapipe_face_detector = mp.solutions.face_detection.FaceDetection(
+            model_selection=1, min_detection_confidence=0.2
+        )
+    return _mediapipe_face_detector
+
+
 def _detect_faces_robust(img_array):
     """
     Detect faces using MediaPipe first, then HOG fallback,
     then rotation fallback. Returns list of (top, right, bottom, left)
     in dlib order.
     """
-    # Lazy imports: face_recognition (dlib) and mediapipe are heavy; load them
-    # only when this task actually runs, never at module import time.
+    # Lazy import: face_recognition (dlib) is heavy; load it only when this
+    # task actually runs, never at module import time. MediaPipe is loaded
+    # once and cached (see _get_face_detector).
     import face_recognition
-    import mediapipe as mp
+
+    face_detector = _get_face_detector()
 
     h, w = img_array.shape[:2]
     face_locations = []
 
     # --- Stage 1: MediaPipe with low confidence ---
     try:
-        with mp.solutions.face_detection.FaceDetection(
-            model_selection=1, min_detection_confidence=0.2
-        ) as face_detection:
-            results = face_detection.process(img_array)
+        results = face_detector.process(img_array)
         if results.detections:
             for detection in results.detections:
                 bbox = detection.location_data.relative_bounding_box
@@ -292,10 +310,7 @@ def _detect_faces_robust(img_array):
             else:
                 rotated = cv2.rotate(img_array, cv2.ROTATE_90_COUNTERCLOCKWISE)
             try:
-                with mp.solutions.face_detection.FaceDetection(
-                    model_selection=1, min_detection_confidence=0.2
-                ) as face_detection:
-                    results = face_detection.process(rotated)
+                results = face_detector.process(rotated)
                 if results.detections:
                     rh, rw = rotated.shape[:2]
                     for detection in results.detections:
@@ -2227,9 +2242,6 @@ def generate_wedding_book_task(self, book_id):
         book.progress = 100
         book.save()
 
-        # Unload AI models to free memory on Raspberry Pi
-        unload_models()
-
     except SoftTimeLimitExceeded:
         logger.warning(f"[wedding_book] Soft time limit exceeded for book {book_id}")
         try:
@@ -2248,3 +2260,11 @@ def generate_wedding_book_task(self, book_id):
             book.save()
         except Exception:
             pass
+    finally:
+        # Always unload heavy AI models (caption/translation) to free memory on
+        # the Raspberry Pi, whether generation succeeded or failed. Otherwise the
+        # loaded torch models would stay resident in the worker indefinitely.
+        try:
+            unload_models()
+        except Exception:
+            logger.warning("[wedding_book] unload_models() failed during cleanup")
