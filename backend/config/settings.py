@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 import os
 import warnings
 from pathlib import Path
+from celery.schedules import crontab
 from dotenv import load_dotenv
 from datetime import timedelta
 
@@ -269,14 +270,32 @@ CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_TIME_LIMIT = 30 * 60  # 30 minutes max per task
 
 # Celery Beat Schedule
+# Consolidated here (single source of truth). Frequencies tuned to keep
+# background CPU usage low: heavy tasks (dedup, similarity) run at most daily.
 CELERY_BEAT_SCHEDULE = {
-    'backfill-faces-every-hour': {
+    'backfill-faces-periodic': {
         'task': 'users.tasks.backfill_faces_periodic',
-        'schedule': 3600.0,  # every hour
+        'schedule': 21600.0,  # every 6 hours
     },
-    'deduplicate-faces-every-hour': {
+    'deduplicate-faces-daily': {
         'task': 'users.tasks.deduplicate_faces',
-        'schedule': 3600.0,  # every hour
+        'schedule': 86400.0,  # every 24 hours (O(n^2), keep infrequent)
+    },
+    'cleanup-empty-face-groups-daily': {
+        'task': 'users.tasks.cleanup_empty_face_groups',
+        'schedule': 86400.0,  # every 24 hours
+    },
+    'backfill-content-hashes-daily': {
+        'task': 'users.tasks.backfill_content_hashes',
+        'schedule': 86400.0,  # every 24 hours
+    },
+    'clean-orphaned-facetag-files-daily': {
+        'task': 'users.tasks.clean_orphaned_facetag_files',
+        'schedule': crontab(hour=3, minute=0),  # daily at 3 AM
+    },
+    'compute-similarity-ordering-daily': {
+        'task': 'users.tasks.compute_similarity_ordering',
+        'schedule': 86400.0,  # every 24 hours
     },
 }
 

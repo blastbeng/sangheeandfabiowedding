@@ -1,7 +1,6 @@
 import os
 from celery import Celery
 from celery.signals import worker_ready
-from celery.schedules import crontab
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 
@@ -9,32 +8,8 @@ app = Celery('config')
 
 app.config_from_object('django.conf:settings', namespace='CELERY')
 
-app.conf.beat_schedule = {
-    'cleanup-empty-face-groups-every-hour': {
-        'task': 'users.tasks.cleanup_empty_face_groups',
-        'schedule': 3600.0,  # every hour
-    },
-    'backfill-content-hashes-daily': {
-        'task': 'users.tasks.backfill_content_hashes',
-        'schedule': 86400.0,  # every 24 hours
-    },
-    'clean-orphaned-facetag-files-daily': {
-        'task': 'users.tasks.clean_orphaned_facetag_files',
-        'schedule': crontab(hour=3, minute=0),  # daily at 3 AM
-    },
-    'compute-similarity-ordering-daily': {
-        'task': 'users.tasks.compute_similarity_ordering',
-        'schedule': crontab(minute=0, hour='*/12'),  # every 12 hours
-    },
-    # 'cleanup-missing-cloud-files-every-hour': {
-    #     'task': 'users.tasks.cleanup_missing_cloud_files',
-    #     'schedule': crontab(minute=0, hour='*'),  # every hour
-    # },
-    # 'deduplicate-faces-every-hour': {
-    #     'task': 'users.tasks.deduplicate_faces',
-    #     'schedule': crontab(minute=0, hour='*'),  # every hour
-    # },
-}
+# The beat schedule is defined once, in django.conf.settings (CELERY_BEAT_SCHEDULE).
+# Keep it out of this file to avoid conflicting/overriding schedules.
 
 app.autodiscover_tasks()
 
