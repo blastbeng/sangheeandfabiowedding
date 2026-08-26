@@ -1,4 +1,9 @@
-FROM node:18-alpine
+# syntax=docker/dockerfile:1
+
+##############################
+# Stage 1: builder — install dev deps and build the static bundle
+##############################
+FROM node:18-alpine AS builder
 
 WORKDIR /app
 
@@ -12,7 +17,6 @@ ENV VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID
 
 COPY package*.json ./
 
-RUN rm -rf node_modules package-lock.json
 RUN npm install
 
 COPY . .
@@ -25,7 +29,18 @@ RUN npm run build
 # Verify dist folder exists
 RUN ls -la /app/dist/
 
-COPY health-server.cjs .
+##############################
+# Stage 2: runtime
+# Only the built static bundle and the static server are needed.
+# health-server.cjs uses only Node built-ins, so no node_modules are required.
+##############################
+FROM node:18-alpine AS runtime
+
+WORKDIR /app
+ENV NODE_ENV=production
+
+COPY --from=builder /app/dist ./dist
+COPY health-server.cjs ./health-server.cjs
 
 EXPOSE 5173
 

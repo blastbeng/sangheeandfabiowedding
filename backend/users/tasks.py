@@ -12,8 +12,6 @@ import math
 import random
 import requests
 import cv2
-import face_recognition
-import mediapipe as mp
 import numpy as np
 import pickle
 from PIL import Image, ImageOps
@@ -237,6 +235,11 @@ def _detect_faces_robust(img_array):
     then rotation fallback. Returns list of (top, right, bottom, left)
     in dlib order.
     """
+    # Lazy imports: face_recognition (dlib) and mediapipe are heavy; load them
+    # only when this task actually runs, never at module import time.
+    import face_recognition
+    import mediapipe as mp
+
     h, w = img_array.shape[:2]
     face_locations = []
 
@@ -529,6 +532,9 @@ def detect_faces_task(self, media_id, force=False):
             return
 
     logger.info(f"[detect_faces] Downloaded content for media {media_id} ({len(content)} bytes)")
+
+    # Lazy import: face_recognition (dlib) is heavy; load only when needed.
+    import face_recognition
 
     # Load image with PIL and convert to RGB numpy array, applying EXIF orientation
     try:

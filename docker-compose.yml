@@ -89,9 +89,8 @@ services:
       - app-network
 
   celery:
-    image: "blastbeng/sangheeandfabiowedding-celery:1.0.0"
-    pull_policy: build
-    build: ./backend
+    image: "blastbeng/sangheeandfabiowedding-backend:1.0.0"
+    pull_policy: never
     container_name: wedding-celery
     command: sh -c "/usr/local/bin/download_fonts.sh; /usr/local/bin/download_models.sh; celery -A config worker --loglevel=info"
     devices:
@@ -142,9 +141,8 @@ services:
       start_period: 40s
 
   celery-beat:
-    image: "blastbeng/sangheeandfabiowedding-celery-beat:1.0.0"
-    pull_policy: build
-    build: ./backend
+    image: "blastbeng/sangheeandfabiowedding-backend:1.0.0"
+    pull_policy: never
     container_name: wedding-celery-beat
     command: celery -A config beat --loglevel=info
     volumes:
@@ -177,7 +175,7 @@ services:
       - app-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "ps aux | grep '[c]elery beat' || exit 1"]
+      test: ["CMD-SHELL", "python -c \"import sys,glob; sys.exit(0 if any('beat' in open(f,'rb').read().decode('utf-8','ignore') for f in glob.glob('/proc/[0-9]*/cmdline')) else 1)\""]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -221,7 +219,7 @@ services:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./backend/media:/app/media:ro
     healthcheck:
-      test: ["CMD-SHELL", "nc -z localhost 80 || exit 1"]
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 80 || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 5
