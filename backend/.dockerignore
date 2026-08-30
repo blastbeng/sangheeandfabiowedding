@@ -7,4 +7,9 @@ __pycache__/
 .gitignore
 db.sqlite3
 staticfiles/
+# User uploads and runtime data live in volumes, never bake them into the image
+media/
+models/
+fonts/
+*.log
 

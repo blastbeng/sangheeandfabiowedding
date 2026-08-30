@@ -54,8 +54,8 @@ FROM python:3.11-slim AS runtime
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libgl1 \
     libglib2.0-0 \
-    libopenblas-dev \
-    liblapack-dev \
+    libopenblas0-pthread \
+    liblapack3 \
     libgfortran5 \
     wget \
     curl \

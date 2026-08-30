@@ -1,0 +1,22 @@
+---
+# Build compose file: defines the build contexts for the custom images.
+# It is NOT used to run the stack (use docker-compose.yml for that).
+#
+# Usage:
+#   docker compose -f docker-compose.build.yml build
+#   docker push blastbeng/sangheeandfabiowedding-backend:latest
+#   docker push blastbeng/sangheeandfabiowedding-frontend:latest
+services:
+  web:
+    image: "blastbeng/sangheeandfabiowedding-backend:latest"
+    pull_policy: build
+    build: ./backend
+
+  frontend:
+    image: "blastbeng/sangheeandfabiowedding-frontend:latest"
+    pull_policy: build
+    build:
+      context: ./frontend
+      args:
+        - VITE_API_URL=
+        - VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}

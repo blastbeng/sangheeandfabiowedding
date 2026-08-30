@@ -17,7 +17,7 @@ ENV VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID
 
 COPY package*.json ./
 
-RUN npm install
+RUN npm install --no-audit --no-fund
 
 COPY . .
 
