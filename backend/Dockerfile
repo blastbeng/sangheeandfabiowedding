@@ -23,12 +23,15 @@ ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-# Build latest stable dlib from source with RPi5 optimizations (NEON, BLAS, LAPACK).
+# Build latest stable dlib from source with BLAS/LAPACK.
 # Use 4 parallel build jobs. Install into an isolated venv so the runtime
 # image can reuse the exact compiled artifacts without the build toolchain.
+# SIMD flags are architecture specific: the default targets the RPi5 (arm64),
+# override the arg to build for x86_64.
+ARG DLIB_SIMD_CMAKE_ARGS="-DUSE_NEON=ON -DUSE_AVX=OFF -DUSE_SSE2=OFF -DUSE_SSE4=OFF -DUSE_AVX2=OFF"
 RUN python -m venv /opt/venv \
     && . /opt/venv/bin/activate \
-    && CMAKE_ARGS="-DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=ON -DDLIB_NO_GUI_SUPPORT=ON -DUSE_NEON=ON -DUSE_AVX=OFF -DUSE_SSE2=OFF -DUSE_SSE4=OFF -DUSE_AVX2=OFF -DDLIB_USE_BLAS=ON -DDLIB_USE_LAPACK=ON" \
+    && CMAKE_ARGS="-DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=ON -DDLIB_NO_GUI_SUPPORT=ON -DDLIB_USE_BLAS=ON -DDLIB_USE_LAPACK=ON $DLIB_SIMD_CMAKE_ARGS" \
        CMAKE_BUILD_PARALLEL_LEVEL=4 \
        pip install --no-cache-dir --no-binary dlib dlib
 

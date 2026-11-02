@@ -8,6 +8,7 @@ services:
   db:
     image: postgres:15-alpine
     container_name: wedding-db
+    mem_limit: 512m
     volumes:
       - ./postgres_data:/var/lib/postgresql/data
     environment:
@@ -27,6 +28,7 @@ services:
   web:
     image: "blastbeng/sangheeandfabiowedding-backend:latest"
     container_name: wedding-backend
+    mem_limit: 1g
     privileged: true
     command:
       - sh
@@ -94,7 +96,8 @@ services:
   celery:
     image: "blastbeng/sangheeandfabiowedding-backend:latest"
     container_name: wedding-celery
-    command: sh -c "/usr/local/bin/download_fonts.sh; /usr/local/bin/download_models.sh; celery -A config worker --loglevel=info"
+    mem_limit: 2g
+    command: sh -c "/usr/local/bin/download_fonts.sh; /usr/local/bin/download_models.sh; celery -A config worker --loglevel=info --concurrency=1"
     devices:
       - /dev/dri:/dev/dri
     volumes:
@@ -145,6 +148,7 @@ services:
   celery-beat:
     image: "blastbeng/sangheeandfabiowedding-backend:latest"
     container_name: wedding-celery-beat
+    mem_limit: 256m
     command: celery -A config beat --loglevel=info
     volumes:
       - models_data:/app/models
@@ -185,6 +189,7 @@ services:
   frontend:
     image: "blastbeng/sangheeandfabiowedding-frontend:latest"
     container_name: wedding-frontend
+    mem_limit: 512m
     command: node health-server.cjs
     environment:
       - VITE_API_URL=
@@ -208,6 +213,7 @@ services:
   nginx:
     image: nginx:alpine
     container_name: wedding-nginx
+    mem_limit: 128m
     ports:
       - "5232:80"
     volumes:
@@ -230,6 +236,7 @@ services:
   redis-dummy-wedding:
     image: alpine
     container_name: redis-dummy-wedding
+    mem_limit: 128m
     command: sh -c "until nc -z 192.168.1.13 6379; do echo 'Waiting for redis...'; sleep 2; done; echo 'Redis found!'; sleep infinity"
     networks:
       - app-network
