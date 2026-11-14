@@ -91,7 +91,8 @@ const UserProfile = () => {
   }, [id, fetchMedia]);
 
   useEffect(() => {
-    if (!hasMoreMedia || loadingMoreMedia) return;
+    // The sentinel only exists once the first media page has rendered.
+    if (mediaLoading || !hasMoreMedia || loadingMoreMedia) return;
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && hasMoreMedia && !loadingMoreMedia) {
@@ -108,7 +109,7 @@ const UserProfile = () => {
     return () => {
       if (currentSentinel) observer.unobserve(currentSentinel);
     };
-  }, [hasMoreMedia, loadingMoreMedia, mediaPage, fetchMedia]);
+  }, [hasMoreMedia, loadingMoreMedia, mediaPage, fetchMedia, mediaLoading]);
 
   useEffect(() => {
     window.scrollTo(0, 0);

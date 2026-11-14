@@ -290,7 +290,9 @@ const Gallery = () => {
   }, [API_URL]);
 
   useEffect(() => {
-    if (!hasMore || loadingMore) return;
+    // Wait until the first page has rendered: while `loading` is true the
+    // sentinel is not in the DOM and there is nothing to observe yet.
+    if (loading || !hasMore || loadingMore) return;
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && hasMore && !loadingMore) {
@@ -307,7 +309,7 @@ const Gallery = () => {
     return () => {
       if (currentSentinel) observer.unobserve(currentSentinel);
     };
-  }, [hasMore, loadingMore, page, fetchMedia]);
+  }, [hasMore, loadingMore, page, fetchMedia, loading]);
 
   // Map i18n language to locale string for date formatting
   const localeMap = { it: 'it-IT', ko: 'ko-KR', en: 'en-US' };
