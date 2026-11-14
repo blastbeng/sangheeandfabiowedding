@@ -5,7 +5,6 @@ import base64
 import re
 import hashlib
 import requests
-import redis
 import shutil
 from io import BytesIO
 from datetime import timedelta
@@ -50,7 +49,12 @@ from .cloud_clients import get_file_from_cloud, NextcloudClient
 from .tasks import upload_media_task, delete_media_task, detect_faces_task, backfill_faces_periodic, generate_wedding_book_task
 from .wedding_book_utils import generate_caption_rpi5
 from .utils import process_profile_picture
-from .thumbnails import PROFILE_CACHE_KEY_PREFIX
+from .thumbnails import (
+    PROFILE_CACHE_KEY_PREFIX,
+    get_thumbnail_path,
+    delete_thumbnail_files,
+    clear_thumbnail_cache,
+)
 from .rate_limit import check_rate_limit, record_failed_attempt
 
 logger = logging.getLogger(__name__)
@@ -753,12 +757,7 @@ class ProfileView(APIView):
                 from .tasks import detect_faces_profile_picture
                 detect_faces_profile_picture.delay(request.user.id)
             # Invalidate profile picture cache
-            redis_client = redis.Redis(
-                host=django_settings.REDIS_HOST,
-                port=django_settings.REDIS_PORT,
-            )
-            cache_key = f"user_profile_pic:{request.user.id}"
-            redis_client.delete(cache_key)
+            cache.delete(f"user_profile_pic:{request.user.id}")
             logger.info(f"Profile updated for user: {request.user.username}")
             return Response(serializer.data)
         logger.error(f"Profile update failed: {serializer.errors}")
@@ -1088,13 +1087,8 @@ class UserProfilePictureView(APIView):
 
         # If user has a custom picture and the file exists, serve it (with caching)
         if user.profile_picture and user.profile_picture.storage.exists(user.profile_picture.name):
-            redis_client = redis.Redis(
-                host=django_settings.REDIS_HOST,
-                port=django_settings.REDIS_PORT,
-                decode_responses=False
-            )
             cache_key = f"user_profile_pic:{user.id}"
-            cached = redis_client.get(cache_key)
+            cached = cache.get(cache_key)
             if cached:
                 ext = os.path.splitext(user.profile_picture.name)[1].lower()
                 content_type = 'image/jpeg' if ext in ['.jpg', '.jpeg'] else 'image/png'
@@ -1106,7 +1100,7 @@ class UserProfilePictureView(APIView):
             except Exception:
                 raise Http404("Profile picture not found")
 
-            redis_client.setex(cache_key, 3600, content)
+            cache.set(cache_key, content, 3600)
             ext = os.path.splitext(user.profile_picture.name)[1].lower()
             content_type = 'image/jpeg' if ext in ['.jpg', '.jpeg'] else 'image/png'
             return HttpResponse(content, content_type=content_type)
@@ -1302,17 +1296,8 @@ class MediaModerateSingleView(APIView):
         if media.nextcloud_file_id:
             nc.delete_file(media.nextcloud_file_id)
 
-        # Delete from Redis cache
-        try:
-            redis_client = redis.Redis(
-                host=django_settings.REDIS_HOST,
-                port=django_settings.REDIS_PORT,
-                decode_responses=False
-            )
-            cache_key = f"media_cache:{media.id}"
-            redis_client.delete(cache_key)
-        except Exception as e:
-            logger.error(f"Redis cache delete error: {e}")
+        # Remove cached renditions from the shared media volume
+        delete_thumbnail_files(media.id)
 
         # Delete from database
         media.delete()
@@ -1346,17 +1331,9 @@ class MediaFileView(APIView):
         ):
             raise Http404("Media not available")
 
-        redis_client = redis.Redis(
-            host=django_settings.REDIS_HOST,
-            port=django_settings.REDIS_PORT,
-            decode_responses=False
-        )
-        cache_key = f"media_cache:{media.id}"
-        cached = redis_client.get(cache_key)
-        if cached:
-            content_type = 'video/mp4' if media.media_type == 'video' else 'image/jpeg'
-            return HttpResponse(cached, content_type=content_type)
-
+        # Originals are intentionally not cached in Redis: a single 14 MB photo
+        # (or a large video) would evict thumbnails and LiteLLM cache entries.
+        # The gallery uses the small disk-backed renditions instead.
         content, content_type = get_file_from_cloud(media)
         if content is None:
             # Fallback to local file storage
@@ -1376,7 +1353,6 @@ class MediaFileView(APIView):
                     content_type = 'application/octet-stream'
             else:
                 raise Http404("File not found")
-        redis_client.set(cache_key, content)
         media.view_count += 1
         media.save(update_fields=['view_count'])
 
@@ -1413,12 +1389,26 @@ class MediaThumbnailView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request, media_id):
-        from .thumbnails import get_thumbnail
-        data = get_thumbnail(media_id)
-        if data is None:
+        size = request.query_params.get('size', 'grid')
+        if size not in ('grid', 'large'):
+            return Response({'error': 'invalid size'}, status=status.HTTP_400_BAD_REQUEST)
+
+        path = get_thumbnail_path(media_id, size)
+        if path is None:
             return Response(status=status.HTTP_404_NOT_FOUND)
-        response = FileResponse(BytesIO(data), content_type='image/jpeg')
-        response['Content-Length'] = len(data)
+
+        # Let nginx serve the cached file with sendfile and long-lived headers.
+        # The file lives on the shared media volume, so this avoids sending the
+        # image bytes through the Django worker on every request.
+        if os.environ.get('USE_X_ACCEL', '1') == '1':
+            response = HttpResponse()
+            response['X-Accel-Redirect'] = f'/derived/{os.path.basename(path)}'
+            response['Content-Type'] = 'image/jpeg'
+            response['Cache-Control'] = 'public, max-age=31536000, immutable'
+            return response
+
+        response = FileResponse(open(path, 'rb'), content_type='image/jpeg')
+        response['Cache-Control'] = 'public, max-age=31536000, immutable'
         return response
 
 
@@ -1428,6 +1418,14 @@ class PublicMediaListView(APIView):
 
     def get(self, request):
         queryset = Media.objects.filter(status='approved')
+
+        media_id = request.query_params.get('id')
+        if media_id:
+            try:
+                queryset = queryset.filter(id=int(media_id))
+            except (TypeError, ValueError):
+                queryset = queryset.none()
+
         user_id = request.query_params.get('user_id')
         date_from = request.query_params.get('date_from')
         date_to = request.query_params.get('date_to')
@@ -1453,16 +1451,53 @@ class PublicMediaListView(APIView):
             for gid in face_group_ids:
                 queryset = queryset.filter(face_tags__face_group_id=gid)
             queryset = queryset.distinct()
+
         media_type = request.query_params.get('media_type')
         if media_type and media_type != 'all':
             queryset = queryset.filter(media_type=media_type)
+
         ordering = request.query_params.get('ordering', 'newest')
         if ordering == 'similarity':
-            queryset = queryset.order_by(F('similarity_position').asc(nulls_last=True), '-uploaded_at')
+            queryset = queryset.order_by(
+                F('similarity_position').asc(nulls_last=True),
+                '-uploaded_at',
+                '-id',
+            )
         else:
-            queryset = queryset.order_by('-uploaded_at')
-        serializer = PublicMediaSerializer(queryset, many=True, context={'request': request})
-        return Response(serializer.data)
+            queryset = queryset.order_by('-uploaded_at', '-id')
+
+        # Avoid the N+1 queries that made the public list take ~10 seconds for
+        # 884 media items.  One query for media + user, one for face tags.
+        queryset = queryset.select_related('user').prefetch_related('face_tags__face_group')
+
+        total = queryset.count()
+
+        try:
+            page = int(request.query_params.get('page', 1))
+        except (TypeError, ValueError):
+            page = 1
+        try:
+            page_size = int(request.query_params.get('page_size', 20))
+        except (TypeError, ValueError):
+            page_size = 20
+        page = max(page, 1)
+        # 1000 is enough for the wedding-book export (884 media today) while
+        # still preventing an accidental full-table response.
+        page_size = min(max(page_size, 1), 1000)
+
+        start = (page - 1) * page_size
+        end = start + page_size
+        items = queryset[start:end]
+        serializer = PublicMediaSerializer(items, many=True, context={'request': request})
+
+        return Response({
+            'count': total,
+            'page': page,
+            'page_size': page_size,
+            'next': page + 1 if end < total else None,
+            'previous': page - 1 if page > 1 else None,
+            'results': serializer.data,
+        })
 
 
 class TaskStatusView(APIView):
@@ -1578,12 +1613,7 @@ class AdminUserDetailView(APIView):
             # Invalidate profile thumbnail cache
             cache.delete(f"{PROFILE_CACHE_KEY_PREFIX}:{user.id}")
             # Invalidate the cached profile picture so the new one is served immediately
-            redis_client = redis.Redis(
-                host=django_settings.REDIS_HOST,
-                port=django_settings.REDIS_PORT,
-            )
-            cache_key = f"user_profile_pic:{user.id}"
-            redis_client.delete(cache_key)
+            cache.delete(f"user_profile_pic:{user.id}")
             return Response(AdminUserSerializer(user, context={'request': request}).data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -1863,24 +1893,12 @@ class RegenerateSimilarityOrderingView(APIView):
 
     def post(self, request):
         from .tasks import compute_similarity_ordering
-        from .thumbnails import CACHE_KEY_PREFIX
 
-        # Clear all media thumbnail cache so they are regenerated on next request
+        # Clear all disk-backed renditions so they are regenerated on the next
+        # request after the similarity ordering changes.
         try:
-            redis_client = redis.Redis(
-                host=django_settings.REDIS_HOST,
-                port=django_settings.REDIS_PORT,
-            )
-            pattern = f"{CACHE_KEY_PREFIX}:*"
-            cursor = 0
-            deleted = 0
-            while True:
-                cursor, keys = redis_client.scan(cursor, match=pattern, count=1000)
-                if keys:
-                    deleted += redis_client.delete(*keys)
-                if cursor == 0:
-                    break
-            logger.info("Cleared %d media thumbnail cache keys", deleted)
+            deleted = clear_thumbnail_cache()
+            logger.info("Cleared %d cached media thumbnail files", deleted)
         except Exception as e:
             logger.error("Failed to clear media thumbnail cache: %s", e)
 
@@ -1896,12 +1914,17 @@ class PublicMediaThumbnailView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request, media_id):
-        from .thumbnails import get_thumbnail
-        data = get_thumbnail(media_id)
-        if data is None:
+        path = get_thumbnail_path(media_id, 'large')
+        if path is None:
             return Response(status=status.HTTP_404_NOT_FOUND)
-        response = FileResponse(BytesIO(data), content_type='image/jpeg')
-        response['Content-Length'] = len(data)
+        if os.environ.get('USE_X_ACCEL', '1') == '1':
+            response = HttpResponse()
+            response['X-Accel-Redirect'] = f'/derived/{os.path.basename(path)}'
+            response['Content-Type'] = 'image/jpeg'
+            response['Cache-Control'] = 'public, max-age=31536000, immutable'
+            return response
+        response = FileResponse(open(path, 'rb'), content_type='image/jpeg')
+        response['Cache-Control'] = 'public, max-age=31536000, immutable'
         return response
 
 

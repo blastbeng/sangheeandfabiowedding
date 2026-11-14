@@ -43,7 +43,7 @@ const UserProfile = () => {
         setMedia(newMedia);
         setFailedMediaIds(new Set());
       }
-      setHasMoreMedia(newMedia.length === PAGE_SIZE);
+      setHasMoreMedia(Array.isArray(data) ? newMedia.length === PAGE_SIZE : Boolean(data.next));
     } catch (err) {
       logger.warn('[UserProfile] Media fetch error:', err);
       if (!append) setMedia([]);

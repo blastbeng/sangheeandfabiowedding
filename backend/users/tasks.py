@@ -1,5 +1,4 @@
 import logging
-import redis
 
 from celery import shared_task
 from celery.exceptions import SoftTimeLimitExceeded
@@ -24,6 +23,7 @@ from reportlab.lib.colors import HexColor
 
 from .models import Media, CustomUser, FaceTag, FaceGroup, WeddingBook
 from .cloud_clients import NextcloudClient, get_file_from_cloud
+from .thumbnails import delete_thumbnail_files
 from .wedding_book_utils import generate_caption_rpi5, translate_text, unload_models, auto_select_media
 from django.conf import settings as django_settings
 from config.settings import (
@@ -466,18 +466,8 @@ def delete_media_task(media_id):
     if media.nextcloud_file_id:
         nextcloud_client.delete_file(media.nextcloud_file_id)
 
-    # Delete from Redis cache
-    try:
-        redis_client = redis.Redis(
-            host=os.getenv('REDIS_HOST', 'localhost'),
-            port=int(os.getenv('REDIS_PORT', 6379)),
-            db=1,
-            decode_responses=False
-        )
-        cache_key = f"media_cache:{media.id}"
-        redis_client.delete(cache_key)
-    except Exception as e:
-        logger.error(f"Redis cache delete error: {e}")
+    # Remove cached renditions from the shared media volume
+    delete_thumbnail_files(media.id)
 
     media.delete()
     logger.info(f"Media {media_id} deleted successfully")

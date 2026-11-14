@@ -135,7 +135,9 @@ const Gallery = () => {
         setFailedMediaIds(new Set());
         setFaceGroupsVersion(v => v + 1);
       }
-      setHasMore(newMedia.length === PAGE_SIZE);
+      // The API returns a paginated object; fall back to the old length check
+      // for compatibility with an older backend during a rolling deploy.
+      setHasMore(Array.isArray(data) ? newMedia.length === PAGE_SIZE : Boolean(data.next));
       setLoading(false);
       setLoadingMore(false);
     } catch (err) {
@@ -377,37 +379,41 @@ const Gallery = () => {
     }
   }, [selectedMedia, currentIndex, navigableMedia.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Preload modal media – only load thumbnail initially for fast display
+  // Show the already-cached grid rendition immediately, then upgrade to the
+  // larger rendition once it has been preloaded in the background.
   useEffect(() => {
     if (!selectedMedia) {
       setModalImageState('loading');
       setFullImageLoading(false);
       return;
     }
-    setModalImageState('loading');
     setFullImageLoading(false);
 
     if (selectedMedia.media_type === 'image') {
-      const thumbUrl = `${API_URL}/api/auth/media/${selectedMedia.id}/thumbnail/?retry=0`;
+      const largeUrl = `${API_URL}/api/auth/media/${selectedMedia.id}/thumbnail/?size=large&v=5`;
       let cancelled = false;
 
-      const thumbImg = new Image();
-      thumbImg.onload = () => {
-        if (!cancelled) setModalImageState('thumbnail');
+      // The grid image is normally already in the browser cache, so display
+      // it without waiting for a network round-trip.
+      setModalImageState('thumbnail');
+      setFullImageLoading(true);
+
+      const largeImg = new Image();
+      largeImg.onload = () => {
+        if (!cancelled) {
+          setModalImageState('full');
+          setFullImageLoading(false);
+        }
       };
-      thumbImg.onerror = () => {
-        // Even if thumbnail fails, stay in 'thumbnail' state (broken image)
-        if (!cancelled) setModalImageState('thumbnail');
+      largeImg.onerror = () => {
+        if (!cancelled) setFullImageLoading(false);
       };
-      thumbImg.src = thumbUrl;
-      if (thumbImg.complete) {
-        if (!cancelled) setModalImageState('thumbnail');
-      }
+      largeImg.src = largeUrl;
 
       return () => {
         cancelled = true;
-        thumbImg.onload = null;
-        thumbImg.onerror = null;
+        largeImg.onload = null;
+        largeImg.onerror = null;
       };
     } else {
       // Video: load immediately (no thumbnail/full distinction)
@@ -941,8 +947,10 @@ const Gallery = () => {
                 </div>
               ) : modalImageState === 'thumbnail' ? (
                 <img
-                  src={`${API_URL}/api/auth/media/${selectedMedia.id}/thumbnail/`}
+                  src={`${API_URL}/api/auth/media/${selectedMedia.id}/thumbnail/?size=grid&v=5`}
                   alt=""
+                  loading="eager"
+                  decoding="async"
                   className="absolute inset-0 w-full h-full object-contain"
                 />
               ) : (
@@ -970,8 +978,10 @@ const Gallery = () => {
                     >
                       <img
                         key={selectedMedia.id}
-                        src={`${API_URL}/api/auth/media/${selectedMedia.id}/file/`}
+                        src={`${API_URL}/api/auth/media/${selectedMedia.id}/thumbnail/?size=large&v=5`}
                         alt={selectedMedia.caption || t('beautiful_moment')}
+                        loading="eager"
+                        decoding="async"
                         className="w-full h-full object-contain"
                         onLoad={(e) => {
                           naturalWidth.current = e.target.naturalWidth;
@@ -985,8 +995,8 @@ const Gallery = () => {
 
               {/* Loading overlay while full image is being fetched */}
               {fullImageLoading && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 z-20">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500"></div>
+                <div className="absolute top-3 right-3 z-20 bg-black/40 rounded-full p-2">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-pink-400"></div>
                 </div>
               )}
             </div>

@@ -22,8 +22,8 @@ const MediaView = () => {
         return res.json();
       })
       .then(data => {
-        // The endpoint returns an array; find the matching item
-        const item = Array.isArray(data) ? data.find(m => m.id === parseInt(id)) : data;
+        const items = Array.isArray(data) ? data : (data.results || []);
+        const item = items.find(m => m.id === parseInt(id)) || (!Array.isArray(data) && data.id === parseInt(id) ? data : null);
         if (item) {
           setMedia(item);
         } else {
@@ -77,12 +77,26 @@ const MediaView = () => {
             />
           ) : (
             <img
-              src={`${API_URL}${media.file_url}`}
+              src={`${API_URL}/api/auth/media/${media.id}/thumbnail/?size=large&v=5`}
               alt={media.caption || t('beautiful_moment')}
+              loading="eager"
+              decoding="async"
               className="max-w-full max-h-[70vh] object-contain rounded-lg shadow-lg"
             />
           )}
         </div>
+
+        {media.media_type === 'image' && (
+          <div className="text-center mb-4">
+            <a
+              href={`${API_URL}${media.file_url}`}
+              download
+              className="inline-flex items-center gap-1 px-3 py-1 text-sm bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors"
+            >
+              ⬇️ {t('download') || 'Download'}
+            </a>
+          </div>
+        )}
 
         <div className="space-y-3">
           {media.uploader_username && (

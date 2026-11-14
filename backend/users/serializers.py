@@ -236,7 +236,9 @@ class PublicMediaSerializer(serializers.ModelSerializer):
         return None
 
     def get_face_tags(self, obj):
-        tags = obj.face_tags.select_related('face_group').all()
+        # Use the prefetched relation (prefetch_related('face_tags__face_group'))
+        # instead of issuing one query per media item.
+        tags = obj.face_tags.all()
         result = []
         for tag in tags:
             if tag.face_group:

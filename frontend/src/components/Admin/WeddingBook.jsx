@@ -41,9 +41,8 @@ const WeddingBook = () => {
       })
       .then(data => {
         // Only images are allowed in the wedding book
-        const imagesOnly = Array.isArray(data)
-          ? data.filter(item => item.media_type === 'image')
-          : [];
+        const items = Array.isArray(data) ? data : (data.results || []);
+        const imagesOnly = items.filter(item => item.media_type === 'image');
         setMedia(imagesOnly);
         setMediaLoading(false);
       })

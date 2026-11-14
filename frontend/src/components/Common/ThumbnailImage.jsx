@@ -1,150 +1,90 @@
-import { useState, useEffect, useRef } from 'react';
-import authFetch from '../../utils/authFetch';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
-const MAX_RETRIES = 10;
-const RETRY_DELAY = 2000; // 2 seconds
+const MAX_RETRIES = 2;
+const RETRY_DELAY = 1500;
 
-const ThumbnailImage = ({ mediaId, apiUrl, alt, className, mediaType, onFinalError, src, fallbackSrc, rootClassName }) => {
+const ThumbnailImage = ({
+  mediaId,
+  apiUrl,
+  alt,
+  className,
+  mediaType,
+  onFinalError,
+  src,
+  fallbackSrc,
+  rootClassName,
+  size = 'grid',
+  loading = 'lazy',
+  fetchPriority,
+}) => {
+  const baseUrl = useMemo(() => {
+    if (src) return src;
+    if (!mediaId) return null;
+    // `v=5` is part of the URL so the browser can cache the rendition
+    // forever (immutable); bump it when the generation changes.
+    return `${apiUrl}/api/auth/media/${mediaId}/thumbnail/?size=${size}&v=5`;
+  }, [src, mediaId, apiUrl, size]);
+
   const [status, setStatus] = useState('loading'); // 'loading' | 'loaded' | 'error'
   const [retryCount, setRetryCount] = useState(0);
-  const [imgSrc, setImgSrc] = useState(null);
-  const mountedRef = useRef(true);
-  const onFinalErrorRef = useRef(onFinalError);
-  const objectUrlRef = useRef(null);
+  const imgRef = useRef(null);
 
-  // Keep the ref updated without causing re-renders
-  useEffect(() => {
-    onFinalErrorRef.current = onFinalError;
-  }, [onFinalError]);
-
-  useEffect(() => {
-    mountedRef.current = true;
-    return () => {
-      mountedRef.current = false;
-      if (objectUrlRef.current) {
-        URL.revokeObjectURL(objectUrlRef.current);
-        objectUrlRef.current = null;
-      }
-    };
-  }, []);
-
-  // Reset state when mediaId or src changes
   useEffect(() => {
     setStatus('loading');
     setRetryCount(0);
-    setImgSrc(null);
-  }, [mediaId, src]);
+  }, [baseUrl]);
 
+  // A cached image can be complete before React attaches onLoad.
   useEffect(() => {
-    if (status === 'loaded' || status === 'error') return;
-
-    let timer = null;
-    let cancelled = false;
-    const url = src || `${apiUrl}/api/auth/media/${mediaId}/thumbnail/?retry=${retryCount}`;
-
-    if (src) {
-      // Direct src URL – use Image loading (no auth headers needed)
-      const img = new Image();
-
-      img.onload = () => {
-        if (mountedRef.current && !cancelled) {
-          setImgSrc(url);
-          setStatus('loaded');
-        }
-      };
-
-      img.onerror = () => {
-        if (!mountedRef.current || cancelled) return;
-        if (retryCount < MAX_RETRIES) {
-          timer = setTimeout(() => {
-            if (mountedRef.current) {
-              setRetryCount(prev => prev + 1);
-            }
-          }, RETRY_DELAY);
-        } else {
-          setStatus('error');
-          if (onFinalErrorRef.current) onFinalErrorRef.current(mediaId);
-        }
-      };
-
-      img.src = url;
-    } else {
-      // API URL – use authFetch to load as blob (enables auth + error handling)
-      (async () => {
-        try {
-          const response = await authFetch(url);
-          if (!mountedRef.current || cancelled) return;
-
-          if (!response.ok) {
-            // HTTP error – retry up to MAX_RETRIES
-            if (retryCount < MAX_RETRIES) {
-              timer = setTimeout(() => {
-                if (mountedRef.current) {
-                  setRetryCount(prev => prev + 1);
-                }
-              }, RETRY_DELAY);
-            } else {
-              setStatus('error');
-              if (onFinalErrorRef.current) onFinalErrorRef.current(mediaId);
-            }
-            return;
-          }
-
-          const blob = await response.blob();
-          if (!mountedRef.current || cancelled) return;
-
-          // Revoke previous object URL if any
-          if (objectUrlRef.current) {
-            URL.revokeObjectURL(objectUrlRef.current);
-          }
-
-          const objectUrl = URL.createObjectURL(blob);
-          objectUrlRef.current = objectUrl;
-          setImgSrc(objectUrl);
-          setStatus('loaded');
-        } catch (err) {
-          // Network error (e.g., TLS/cert failure) – retry up to MAX_RETRIES
-          if (!mountedRef.current || cancelled) return;
-          if (retryCount < MAX_RETRIES) {
-            timer = setTimeout(() => {
-              if (mountedRef.current) {
-                setRetryCount(prev => prev + 1);
-              }
-            }, RETRY_DELAY);
-          } else {
-            console.error('[ThumbnailImage] Network error, giving up after retries:', err);
-            setStatus('error');
-            if (onFinalErrorRef.current) onFinalErrorRef.current(mediaId);
-          }
-        }
-      })();
+    const img = imgRef.current;
+    if (img && img.complete && img.naturalWidth > 0) {
+      setStatus('loaded');
     }
+  }, [baseUrl, retryCount]);
 
-    return () => {
-      cancelled = true;
-      if (timer) clearTimeout(timer);
-    };
-  }, [retryCount, apiUrl, mediaId, status, src]);
+  const url = retryCount > 0 && baseUrl ? `${baseUrl}&retry=${retryCount}` : baseUrl;
 
-  if (status === 'loading') {
-    return (
-      <div className={`${className} bg-gray-200 animate-pulse flex items-center justify-center`}>
-        <span className="text-gray-400 text-2xl">⏳</span>
-      </div>
-    );
-  }
+  const handleError = () => {
+    if (retryCount < MAX_RETRIES) {
+      window.setTimeout(() => setRetryCount((count) => count + 1), RETRY_DELAY);
+      return;
+    }
+    setStatus('error');
+    if (onFinalError) onFinalError(mediaId);
+  };
+
+  if (!baseUrl) return null;
 
   if (status === 'error') {
     if (fallbackSrc) {
-      return <img src={fallbackSrc} alt={alt} className={className} />;
+      return <img src={fallbackSrc} alt={alt} className={className} loading={loading} />;
     }
-    return null; // parent will show failed placeholder via onFinalError
+    return null;
   }
 
   return (
     <div className={`relative ${rootClassName || ''}`}>
-      <img src={imgSrc} alt={alt} className={className} />
-      {mediaType === 'video' && (
+      {status === 'loading' && (
+        <div className="absolute inset-0 bg-gray-200 animate-pulse flex items-center justify-center">
+          <span className="text-gray-400 text-2xl">⏳</span>
+        </div>
+      )}
+      <img
+        ref={imgRef}
+        src={url}
+        alt={alt}
+        className={className}
+        loading={loading}
+        decoding="async"
+        fetchPriority={fetchPriority}
+        onLoad={() => setStatus('loaded')}
+        onError={handleError}
+        style={{
+          opacity: status === 'loaded' ? 1 : 0,
+          transition: 'opacity 150ms ease-in',
+        }}
+      />
+      {mediaType === 'video' && status === 'loaded' && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/20 hover:bg-black/40 transition-colors">
           <div className="text-white text-5xl drop-shadow-lg">▶</div>
         </div>
